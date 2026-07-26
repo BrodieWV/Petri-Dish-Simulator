@@ -15,10 +15,15 @@ namespace PetriDish.Presentation
         private Text metrics;
         private Text temperatureValue;
         private Text outcome;
+        private Text inspection;
         private Text speedLabel;
         private Slider temperature;
         private Button moisture;
         private Font font;
+        private SimulationSnapshot currentSnapshot;
+        private bool hasSnapshot;
+        private int selectedX = -1;
+        private int selectedY = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartRuntime()
@@ -38,13 +43,17 @@ namespace PetriDish.Presentation
             BuildUI();
             controller.SnapshotUpdated += OnSnapshot;
             controller.StageChanged += OnStage;
+            renderer.DishTapped += OnDishTapped;
         }
 
         private void OnDestroy()
         {
-            if (controller == null) return;
-            controller.SnapshotUpdated -= OnSnapshot;
-            controller.StageChanged -= OnStage;
+            if (controller != null)
+            {
+                controller.SnapshotUpdated -= OnSnapshot;
+                controller.StageChanged -= OnStage;
+            }
+            if (renderer != null) renderer.DishTapped -= OnDishTapped;
         }
 
         private void CreateEventSystem()
@@ -85,6 +94,14 @@ namespace PetriDish.Presentation
             dish.GetComponent<AspectRatioFitter>().aspectRatio = 1f;
             renderer = dish.GetComponent<DishRenderer>();
 
+            var inspectionPanel = Image(dishPanel.transform, "InspectionPanel", new Color(0.03f, 0.05f, 0.04f, 0.88f));
+            inspectionPanel.raycastTarget = false;
+            SetRect(inspectionPanel.rectTransform, new Vector2(0.04f, 0.04f), new Vector2(0.96f, 0.24f));
+            inspection = Text(inspectionPanel.transform, "Inspection", 22, TextAnchor.MiddleLeft);
+            inspection.raycastTarget = false;
+            SetRect(inspection.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.94f));
+            inspection.text = "Tap the dish to inspect a local cell.";
+
             outcome = Text(bg.transform, "Outcome", 28, TextAnchor.MiddleCenter);
             SetRect(outcome.rectTransform, new Vector2(0.06f, 0.315f), new Vector2(0.94f, 0.35f));
 
@@ -122,12 +139,35 @@ namespace PetriDish.Presentation
             moisture.interactable = false;
         }
 
-        private void OnSnapshot(SimulationSnapshot s)
+        private void OnSnapshot(SimulationSnapshot snapshot)
         {
-            renderer.Render(s);
-            condition.text = GetCondition(s);
-            metrics.text = $"{s.Temperature:0.0}°C • Coverage {s.Coverage * 100f:0}%\nMoisture {s.AverageMoisture * 100f:0}% • Nutrients {s.AverageNutrients * 100f:0}%";
+            currentSnapshot = snapshot;
+            hasSnapshot = true;
+            renderer.Render(snapshot);
+            condition.text = GetCondition(snapshot);
+            metrics.text = $"{snapshot.Temperature:0.0}°C • Coverage {snapshot.Coverage * 100f:0}%\nMoisture {snapshot.AverageMoisture * 100f:0}% • Nutrients {snapshot.AverageNutrients * 100f:0}%";
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
+            RefreshInspection();
+        }
+
+        private void OnDishTapped(Vector2 normalizedPoint)
+        {
+            if (!hasSnapshot) return;
+            SimulationSaveData save = controller.Simulation.CaptureSave();
+            if (!DishInspection.TryInspect(currentSnapshot, save, normalizedPoint.x, normalizedPoint.y, out CellInspection cell))
+                return;
+
+            selectedX = cell.X;
+            selectedY = cell.Y;
+            inspection.text = cell.ToDisplayText();
+        }
+
+        private void RefreshInspection()
+        {
+            if (!hasSnapshot || selectedX < 0 || selectedY < 0) return;
+            SimulationSaveData save = controller.Simulation.CaptureSave();
+            if (DishInspection.TryInspect(currentSnapshot, save, selectedX, selectedY, out CellInspection cell))
+                inspection.text = cell.ToDisplayText();
         }
 
         private void OnStage(GuidedStage stage, string message)
@@ -139,13 +179,13 @@ namespace PetriDish.Presentation
                 : stage == GuidedStage.Failed ? "Experiment ended — review the limiting factors and retry." : string.Empty;
         }
 
-        private static string GetCondition(SimulationSnapshot s)
+        private static string GetCondition(SimulationSnapshot snapshot)
         {
-            if (s.Temperature > 34f) return "Heat stressed";
-            if (s.AverageMoisture < 0.30f) return "Too dry";
-            if (s.AverageNutrients < 0.18f) return "Nutrient limited";
-            if (s.AverageHealth < 0.45f) return "Declining";
-            if (s.Temperature >= 24f && s.Temperature <= 29f) return "Growing well";
+            if (snapshot.Temperature > 34f) return "Heat stressed";
+            if (snapshot.AverageMoisture < 0.30f) return "Too dry";
+            if (snapshot.AverageNutrients < 0.18f) return "Nutrient limited";
+            if (snapshot.AverageHealth < 0.45f) return "Declining";
+            if (snapshot.Temperature >= 24f && snapshot.Temperature <= 29f) return "Growing well";
             return "Growing slowly";
         }
 
