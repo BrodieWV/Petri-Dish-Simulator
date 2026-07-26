@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PetriDish.Application;
 using PetriDish.Simulation;
 using UnityEngine;
@@ -8,6 +9,9 @@ namespace PetriDish.Presentation
 {
     public sealed class RuntimeBootstrap : MonoBehaviour
     {
+        private const string TextScalePreferenceKey = "PetriDish.TextScaleMode";
+
+        private readonly Dictionary<Text, int> baseFontSizes = new Dictionary<Text, int>();
         private ExperimentController controller;
         private DishRenderer renderer;
         private Text instruction;
@@ -19,10 +23,12 @@ namespace PetriDish.Presentation
         private Text speedLabel;
         private Text pauseLabel;
         private Text simulationState;
+        private Text textScaleLabel;
         private Slider temperature;
         private Button moisture;
         private Font font;
         private SimulationSnapshot currentSnapshot;
+        private TextScaleMode textScaleMode;
         private bool hasSnapshot;
         private int selectedX = -1;
         private int selectedY = -1;
@@ -41,6 +47,7 @@ namespace PetriDish.Presentation
         {
             font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             controller = GetComponent<ExperimentController>();
+            textScaleMode = TextScalePolicy.FromStoredValue(PlayerPrefs.GetInt(TextScalePreferenceKey, 0));
             CreateEventSystem();
             BuildUI();
             controller.SnapshotUpdated += OnSnapshot;
@@ -80,8 +87,12 @@ namespace PetriDish.Presentation
             SetRect(bg.rectTransform, Vector2.zero, Vector2.one);
 
             instruction = Text(bg.transform, "Instruction", 34, TextAnchor.MiddleCenter);
-            SetRect(instruction.rectTransform, new Vector2(0.04f, 0.89f), new Vector2(0.96f, 0.98f));
+            SetRect(instruction.rectTransform, new Vector2(0.04f, 0.89f), new Vector2(0.76f, 0.98f));
             instruction.text = "The Comfortable Range";
+
+            var textScale = CreateButton(bg.transform, TextScalePolicy.ButtonLabel(textScaleMode), CycleTextScale);
+            SetRect(textScale.GetComponent<RectTransform>(), new Vector2(0.78f, 0.91f), new Vector2(0.96f, 0.97f));
+            textScaleLabel = textScale.GetComponentInChildren<Text>();
 
             condition = Text(bg.transform, "Condition", 29, TextAnchor.MiddleLeft);
             SetRect(condition.rectTransform, new Vector2(0.05f, 0.82f), new Vector2(0.55f, 0.89f));
@@ -144,6 +155,7 @@ namespace PetriDish.Presentation
 
             temperature.value = 21f;
             moisture.interactable = false;
+            ApplyTextScale();
         }
 
         private void OnSnapshot(SimulationSnapshot snapshot)
@@ -202,6 +214,24 @@ namespace PetriDish.Presentation
             RefreshPlaybackState();
         }
 
+        private void CycleTextScale()
+        {
+            textScaleMode = TextScalePolicy.Next(textScaleMode);
+            PlayerPrefs.SetInt(TextScalePreferenceKey, (int)textScaleMode);
+            PlayerPrefs.Save();
+            textScaleLabel.text = TextScalePolicy.ButtonLabel(textScaleMode);
+            ApplyTextScale();
+        }
+
+        private void ApplyTextScale()
+        {
+            foreach (KeyValuePair<Text, int> entry in baseFontSizes)
+            {
+                if (entry.Key != null)
+                    entry.Key.fontSize = TextScalePolicy.ScaleFontSize(entry.Value, textScaleMode);
+            }
+        }
+
         private void Load()
         {
             controller.Load();
@@ -243,11 +273,12 @@ namespace PetriDish.Presentation
             var text = new GameObject(name, typeof(RectTransform), typeof(Text)).GetComponent<Text>();
             text.transform.SetParent(parent, false);
             text.font = font;
-            text.fontSize = size;
+            text.fontSize = TextScalePolicy.ScaleFontSize(size, textScaleMode);
             text.alignment = anchor;
             text.color = Color.white;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
+            baseFontSizes[text] = size;
             return text;
         }
 
