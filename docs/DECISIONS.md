@@ -29,3 +29,6 @@ Accepted; this package defines implementation.
 
 ## D-010 — Temporary live-tuning controls
 Accepted for rapid UI and simulation adjustment during development.
+
+## D-011 — Unity 6.3 LTS is the production baseline
+Accepted on 27 July 2026. The repository targets Unity `6000.3.20f1`. Unity 2022 and Unity 2023 are not supported project baselines. Unity 6.3 LTS was selected over the newer Unity 6 Update stream to prioritise long-term support and production stability.
