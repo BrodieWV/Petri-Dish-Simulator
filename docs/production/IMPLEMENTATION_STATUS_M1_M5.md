@@ -49,7 +49,7 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, and speed-control cycling
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, and dish-inspection mapping
 
 Review pending:
 
@@ -91,13 +91,16 @@ Implemented:
 - Plain-language condition labels
 - Coverage, temperature, moisture, and nutrient metrics
 - Save and load controls
+- Tap-driven local cell inspection
+- Local biomass, health, moisture, nutrient, coordinate, and limiting-factor readout
+- Selected-cell readout refreshes as the simulation advances
 
 Review pending:
 
-- Local tap inspection panel
 - Haptic and audio feedback
 - Accessibility pass
 - Unity 6 Input System migration if production controls require it
+- Device usability review of inspection-panel size and placement
 
 ## M5 — The Comfortable Range vertical slice
 
