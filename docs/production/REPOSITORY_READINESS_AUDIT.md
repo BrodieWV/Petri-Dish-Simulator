@@ -2,11 +2,23 @@
 
 ## Audit date
 
-26 July 2026
+Updated 27 July 2026
 
 ## Current status
 
-The repository is ready for Unity project initialization and Milestone M1 implementation. Product, simulation, content, UX, safety, testing, and agent boundaries are defined well enough that an implementation agent should not need to invent the core vertical slice.
+The repository contains the Phase 0 foundation and a first-pass implementation of Milestones M1–M5. Product, simulation, content, UX, safety, and agent boundaries are defined. The next stage is Unity 6 import, compilation, Codex review, and correction.
+
+## Locked Unity setup decisions
+
+- Editor baseline: Unity 6.3 LTS
+- Exact project marker: `6000.3.20f1`
+- Project location: repository root
+- Layout: portrait-first mobile
+- UI: GameObject-based Unity UI (`com.unity.ugui`)
+- Rendering: built-in rendering for the first prototype unless Codex identifies a clear need for URP
+- Runtime AI: none for MVP
+
+Do not downgrade the project to Unity 2022 or Unity 2023.
 
 ## Available foundations
 
@@ -49,6 +61,7 @@ The repository is ready for Unity project initialization and Milestone M1 implem
 - Unity build brief
 - Codex review brief
 - M1/M2 Codex implementation prompt
+- M1–M5 implementation handoff
 - Acceptance criteria for M0–M7
 
 ### Content and safety
@@ -66,83 +79,65 @@ The repository is ready for Unity project initialization and Milestone M1 implem
 | Area | Status | Notes |
 |---|---|---|
 | Game vision | Ready | Clear audience and product ladder |
-| Vertical slice | Ready | One full guided experiment specified |
-| Simulation scope | Ready | Simplified deterministic grid selected |
-| Starting balance | Ready for prototyping | Values explicitly provisional |
-| Architecture | Ready | Simulation separated from Unity presentation |
-| UI flow | Ready for functional implementation | Final visual design remains open |
-| Unity hierarchy | Ready | Scenes and prefabs specified |
-| Art production | Ready for placeholders | Final style exploration still required |
-| Audio production | Ready for placeholders | Asset list exists |
-| Tutorial copy | Ready | First experiment copy complete |
-| Testing | Ready | Determinism and golden scenarios defined |
+| Vertical slice | Implemented first pass | One guided experiment in code |
+| Simulation scope | Implemented first pass | Simplified deterministic grid |
+| Starting balance | Ready for tuning | Values explicitly provisional |
+| Architecture | Implemented first pass | Simulation separated from presentation |
+| UI flow | Functional first pass | Final visual design remains open |
+| Unity hierarchy | Runtime generated | Production prefabs remain optional |
+| Art production | Placeholder | Final style exploration required |
+| Audio production | Pending | Asset list exists |
+| Tutorial copy | Implemented in part | Full copy verification pending |
+| Testing | Deferred | Determinism and golden scenarios defined |
 | Safety | Ready | Strong scope and review controls |
 | Monetisation | Deferred correctly | Not part of prototype |
 | Online services | Deferred correctly | Not required for core play |
 
-## Remaining decisions before Unity initialization
+## Remaining Unity production decisions
 
-These are implementation setup choices rather than unresolved game design:
+1. Minimum Android API level and target-device baseline
+2. Whether to adopt the Unity Input System for production controls
+3. Final text rendering and redistributable font
+4. Whether the visual target justifies moving from built-in rendering to URP
+5. Build Profile setup for Android and desktop development builds
 
-1. Exact Unity LTS editor version
-2. Render pipeline: Built-in or URP
-3. Portrait-only versus portrait-preferred responsive orientation for the first mobile build
-4. Minimum Android API level and target device baseline
-5. Input System package versus legacy input for initial prototype
-6. Repository strategy for Unity project at root versus a named subdirectory
-7. Text rendering package and initial redistributable font selection
+## Required next review
 
-Recommended defaults:
+1. Open with Unity `6000.3.20f1`.
+2. Allow Unity 6 to resolve core packages.
+3. Compile all scripts.
+4. Run `Petri Dish > Setup Vertical Slice Project`.
+5. Record compiler errors and API migration warnings.
+6. Have Codex correct Unity 6 compatibility issues.
+7. Run the guided experiment in Play Mode.
+8. Review architecture, saving, generated UI, and balance.
 
-- Current stable Unity LTS
-- URP only if transparent dish effects and planned visual work justify it; otherwise Built-in keeps the prototype lighter
-- Portrait-first mobile layout
-- Unity Input System
-- Unity project at repository root unless multiple products are expected
-- TextMeshPro with a properly licensed font
-
-These defaults should be recorded in `docs/DECISIONS.md` when selected.
-
-## Known design uncertainties
+## Known implementation uncertainties
 
 ### Colony rendering method
 
-Options include texture painting, mesh generation, cell sprites, shader field rendering, or a hybrid. The simulation architecture does not depend on the choice. M3 should prototype at least two approaches against readability and mobile performance.
+The current version uses CPU texture updates. Codex should compare this with a shader-driven or GPU-assisted field renderer before larger content is added.
 
 ### Global versus local temperature
 
-The vertical slice can use global temperature. The grid still allows local temperature values for future gradients. Do not build complex heat diffusion until a challenge requires it.
+The vertical slice uses global temperature. The grid architecture can later support gradients.
 
 ### Moisture field timing
 
-The vertical slice requires edge drying and moisture diffusion by M4. M2 can begin with uniform moisture if the state model already supports per-cell values.
+The first pass includes local moisture and edge drying. Values require tuning after running in Unity.
 
 ### Health display
 
-The player-facing health percentage combines multiple internal signals. Usability testing should determine whether `Health`, `Condition`, or growth trend is the clearest primary indicator.
+The player-facing condition combines internal signals. Usability testing should determine the best terminology.
 
-## Risks before coding
+## Risks
 
-- Selecting a sophisticated rendering approach before testing basic growth readability
-- Mixing Unity authoring definitions with mutable simulation state
-- Treating provisional balance values as scientific constants
-- Expanding M1/M2 into complete game systems
-- Committing generated Unity folders or large unlicensed assets
-
-## Recommended implementation sequence
-
-1. Record Unity setup decisions.
-2. Initialize the Unity project and `.gitignore`.
-3. Build responsive static dish scene.
-4. Build a separate Simulation Lab.
-5. Implement deterministic clock and state.
-6. Add environment and population tests.
-7. Connect read-only snapshots to placeholder visuals.
-8. Tune the six validation scenarios.
-9. Begin M3 colony rendering prototypes.
+- Unity 6 API or package differences may produce initial import errors.
+- Runtime-generated UI can become difficult to maintain if it grows without conversion to prefabs or UI documents.
+- Provisional balance values may produce poor pacing until tuned in Play Mode.
+- CPU texture updates may become expensive on lower-end mobile devices.
+- Committing generated Unity folders or unlicensed assets must be avoided.
 
 ## Audit conclusion
 
-**Phase 0 is complete enough to begin implementation.**
-
-The next repository action should be initialization of the Unity project followed by the M1/M2 Codex prompt. No additional large design phase is required before coding, although final visual design and scientific source notes will continue alongside production.
+The project is correctly targeted to Unity 6.3 LTS and is ready for editor import and Codex hardening. The earlier Unity 2022 marker was incorrect and has been replaced.
