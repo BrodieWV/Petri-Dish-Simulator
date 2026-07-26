@@ -49,7 +49,7 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, and accessible status presentation
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, accessible status presentation, and text-scale policy behaviour
 
 Review pending:
 
@@ -98,14 +98,16 @@ Implemented:
 - Tap-driven local cell inspection
 - Local biomass, health, moisture, nutrient, coordinate, and limiting-factor readout
 - Selected-cell readout refreshes as the simulation advances
+- User-selectable Standard and Large text modes
+- Text preference persists between sessions through `PlayerPrefs`
+- Large mode applies a consistent 1.25× scale to runtime-generated labels and buttons
 
 Review pending:
 
 - Haptic and audio feedback
-- Larger text and user-selectable text scale
 - Assistive-technology and screen-reader integration strategy
 - Unity 6 Input System migration if production controls require it
-- Device usability review of inspection-panel size and placement
+- Device usability review of inspection-panel size, text wrapping, and narrow-phone layout in Large mode
 
 ## M5 — The Comfortable Range vertical slice
 
@@ -141,6 +143,7 @@ Review pending:
 5. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity` if it is not already open.
 6. Enter Play Mode.
 7. Open `Window > General > Test Runner` and run the Edit Mode suite.
+8. Toggle `Text: Standard` / `Text: Large` and inspect the portrait layout at narrow phone resolutions.
 
 The UI and experiment controller are generated at runtime. No manually wired scene hierarchy is required for the first pass.
 
