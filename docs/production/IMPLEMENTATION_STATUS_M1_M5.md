@@ -49,7 +49,7 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, and dish-inspection mapping
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, and accessible status presentation
 
 Review pending:
 
@@ -68,12 +68,13 @@ Implemented:
 - Smooth bilinear presentation over the low-resolution grid
 - Slower growth near tolerance limits
 - Nutrient depletion and environmental decline
+- Text severity cues paired with colour-based colony status
 
 Review pending:
 
 - More expressive colony edge animation
 - Shape and texture art pass
-- Visual feedback beyond colour
+- Additional non-colour visual patterns or symbols directly on the dish
 - Mobile profiling
 - Unity 6 renderer and texture-update optimisation review
 
@@ -87,8 +88,11 @@ Implemented:
 - Context-controlled moisture button
 - Pause and speed cycling
 - Active speed displayed directly on the speed button
+- Explicit `Pause` and `Resume` button states
+- Persistent playback readout stating paused or running speed
 - Same-seed and new-seed restarts
 - Plain-language condition labels
+- Non-colour severity prefixes: `OK`, `INFO`, `WARNING`, and `ALERT`
 - Coverage, temperature, moisture, and nutrient metrics
 - Save and load controls
 - Tap-driven local cell inspection
@@ -98,7 +102,8 @@ Implemented:
 Review pending:
 
 - Haptic and audio feedback
-- Accessibility pass
+- Larger text and user-selectable text scale
+- Assistive-technology and screen-reader integration strategy
 - Unity 6 Input System migration if production controls require it
 - Device usability review of inspection-panel size and placement
 
