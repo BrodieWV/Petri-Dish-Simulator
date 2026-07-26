@@ -17,6 +17,8 @@ namespace PetriDish.Presentation
         private Text outcome;
         private Text inspection;
         private Text speedLabel;
+        private Text pauseLabel;
+        private Text simulationState;
         private Slider temperature;
         private Button moisture;
         private Font font;
@@ -44,6 +46,7 @@ namespace PetriDish.Presentation
             controller.SnapshotUpdated += OnSnapshot;
             controller.StageChanged += OnStage;
             renderer.DishTapped += OnDishTapped;
+            RefreshPlaybackState();
         }
 
         private void OnDestroy()
@@ -81,9 +84,9 @@ namespace PetriDish.Presentation
             instruction.text = "The Comfortable Range";
 
             condition = Text(bg.transform, "Condition", 29, TextAnchor.MiddleLeft);
-            SetRect(condition.rectTransform, new Vector2(0.05f, 0.82f), new Vector2(0.50f, 0.89f));
+            SetRect(condition.rectTransform, new Vector2(0.05f, 0.82f), new Vector2(0.55f, 0.89f));
             metrics = Text(bg.transform, "Metrics", 24, TextAnchor.MiddleRight);
-            SetRect(metrics.rectTransform, new Vector2(0.48f, 0.82f), new Vector2(0.95f, 0.89f));
+            SetRect(metrics.rectTransform, new Vector2(0.52f, 0.82f), new Vector2(0.95f, 0.89f));
 
             var dishPanel = Image(bg.transform, "DishPanel", new Color(0.11f, 0.15f, 0.13f));
             SetRect(dishPanel.rectTransform, new Vector2(0.08f, 0.35f), new Vector2(0.92f, 0.80f));
@@ -109,31 +112,35 @@ namespace PetriDish.Presentation
             SetRect(controls.rectTransform, new Vector2(0.04f, 0.04f), new Vector2(0.96f, 0.31f));
 
             var tempLabel = Text(controls.transform, "TemperatureLabel", 27, TextAnchor.MiddleLeft);
-            SetRect(tempLabel.rectTransform, new Vector2(0.04f, 0.74f), new Vector2(0.50f, 0.96f));
+            SetRect(tempLabel.rectTransform, new Vector2(0.04f, 0.76f), new Vector2(0.50f, 0.96f));
             tempLabel.text = "Temperature";
             temperatureValue = Text(controls.transform, "TemperatureValue", 27, TextAnchor.MiddleRight);
-            SetRect(temperatureValue.rectTransform, new Vector2(0.50f, 0.74f), new Vector2(0.96f, 0.96f));
+            SetRect(temperatureValue.rectTransform, new Vector2(0.50f, 0.76f), new Vector2(0.96f, 0.96f));
 
             temperature = CreateSlider(controls.transform);
-            SetRect(temperature.GetComponent<RectTransform>(), new Vector2(0.06f, 0.56f), new Vector2(0.94f, 0.73f));
+            SetRect(temperature.GetComponent<RectTransform>(), new Vector2(0.06f, 0.59f), new Vector2(0.94f, 0.75f));
             temperature.onValueChanged.AddListener(v =>
             {
                 controller.SetTemperature(v);
                 temperatureValue.text = v.ToString("0.0") + "°C target";
             });
 
+            simulationState = Text(controls.transform, "SimulationState", 20, TextAnchor.MiddleCenter);
+            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.51f), new Vector2(0.96f, 0.59f));
+
             moisture = CreateButton(controls.transform, "Add moisture", controller.AddMoisture);
-            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.30f), new Vector2(0.37f, 0.52f));
-            var pause = CreateButton(controls.transform, "Pause / Resume", controller.TogglePause);
-            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.30f), new Vector2(0.72f, 0.52f));
+            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.28f), new Vector2(0.37f, 0.50f));
+            var pause = CreateButton(controls.transform, AccessibilityPresentation.PauseButtonLabel(controller.Paused), TogglePause);
+            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.28f), new Vector2(0.72f, 0.50f));
+            pauseLabel = pause.GetComponentInChildren<Text>();
             var speed = CreateButton(controls.transform, SimulationSpeedCycle.Label(controller.SimulationSpeed), CycleSpeed);
-            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.30f), new Vector2(0.96f, 0.52f));
+            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.28f), new Vector2(0.96f, 0.50f));
             speedLabel = speed.GetComponentInChildren<Text>();
 
-            SetRect(CreateButton(controls.transform, "Save", controller.Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.04f), new Vector2(0.24f, 0.25f));
-            SetRect(CreateButton(controls.transform, "Load", () => controller.Load()).GetComponent<RectTransform>(), new Vector2(0.26f, 0.04f), new Vector2(0.46f, 0.25f));
-            SetRect(CreateButton(controls.transform, "Restart", controller.RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.04f), new Vector2(0.70f, 0.25f));
-            SetRect(CreateButton(controls.transform, "New seed", controller.RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.04f), new Vector2(0.96f, 0.25f));
+            SetRect(CreateButton(controls.transform, "Save", controller.Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.03f), new Vector2(0.24f, 0.24f));
+            SetRect(CreateButton(controls.transform, "Load", Load).GetComponent<RectTransform>(), new Vector2(0.26f, 0.03f), new Vector2(0.46f, 0.24f));
+            SetRect(CreateButton(controls.transform, "Restart", RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.03f), new Vector2(0.70f, 0.24f));
+            SetRect(CreateButton(controls.transform, "New seed", RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.03f), new Vector2(0.96f, 0.24f));
 
             temperature.value = 21f;
             moisture.interactable = false;
@@ -144,10 +151,12 @@ namespace PetriDish.Presentation
             currentSnapshot = snapshot;
             hasSnapshot = true;
             renderer.Render(snapshot);
-            condition.text = GetCondition(snapshot);
+            SimulationCondition status = AccessibilityPresentation.GetCondition(snapshot);
+            condition.text = AccessibilityPresentation.ConditionLabel(status);
             metrics.text = $"{snapshot.Temperature:0.0}°C • Coverage {snapshot.Coverage * 100f:0}%\nMoisture {snapshot.AverageMoisture * 100f:0}% • Nutrients {snapshot.AverageNutrients * 100f:0}%";
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
             RefreshInspection();
+            RefreshPlaybackState();
         }
 
         private void OnDishTapped(Vector2 normalizedPoint)
@@ -179,14 +188,10 @@ namespace PetriDish.Presentation
                 : stage == GuidedStage.Failed ? "Experiment ended — review the limiting factors and retry." : string.Empty;
         }
 
-        private static string GetCondition(SimulationSnapshot snapshot)
+        private void TogglePause()
         {
-            if (snapshot.Temperature > 34f) return "Heat stressed";
-            if (snapshot.AverageMoisture < 0.30f) return "Too dry";
-            if (snapshot.AverageNutrients < 0.18f) return "Nutrient limited";
-            if (snapshot.AverageHealth < 0.45f) return "Declining";
-            if (snapshot.Temperature >= 24f && snapshot.Temperature <= 29f) return "Growing well";
-            return "Growing slowly";
+            controller.TogglePause();
+            RefreshPlaybackState();
         }
 
         private void CycleSpeed()
@@ -194,6 +199,35 @@ namespace PetriDish.Presentation
             float next = SimulationSpeedCycle.Next(controller.SimulationSpeed);
             controller.SetSpeed(next);
             speedLabel.text = SimulationSpeedCycle.Label(next);
+            RefreshPlaybackState();
+        }
+
+        private void Load()
+        {
+            controller.Load();
+            RefreshPlaybackState();
+        }
+
+        private void RestartSameSeed()
+        {
+            controller.RestartSameSeed();
+            speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
+            RefreshPlaybackState();
+        }
+
+        private void RestartNewSeed()
+        {
+            controller.RestartNewSeed();
+            speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
+            RefreshPlaybackState();
+        }
+
+        private void RefreshPlaybackState()
+        {
+            if (pauseLabel != null)
+                pauseLabel.text = AccessibilityPresentation.PauseButtonLabel(controller.Paused);
+            if (simulationState != null)
+                simulationState.text = AccessibilityPresentation.SimulationStateLabel(controller.Paused, controller.SimulationSpeed);
         }
 
         private Image Image(Transform parent, string name, Color color)
