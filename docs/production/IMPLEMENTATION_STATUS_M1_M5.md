@@ -49,15 +49,14 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, and control bounds
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, and moisture recovery
 
 Review pending:
 
 - Run the Edit Mode suite inside Unity `6000.3.20f1`
 - Codex determinism review
 - Random-stream separation refinement if independent organism or event channels are introduced
-- Balance validation
-- Scenario-level regression tests for comfortable growth, heat decline, and moisture recovery
+- Balance validation against intended experiment pacing on a device
 
 ## M3 — First living colony
 
