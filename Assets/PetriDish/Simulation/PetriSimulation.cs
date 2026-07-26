@@ -11,17 +11,30 @@ namespace PetriDish.Simulation
         public float biomass;
         public float health;
         public float stress;
+
+        public CellState Clone()
+        {
+            return new CellState
+            {
+                moisture = moisture,
+                nutrients = nutrients,
+                biomass = biomass,
+                health = health,
+                stress = stress
+            };
+        }
     }
 
     [Serializable]
     public sealed class SimulationSaveData
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public int seed;
         public long tick;
         public float temperature;
         public float targetTemperature;
         public float elapsedSimSeconds;
+        public uint randomState;
         public CellState[] cells;
     }
 
@@ -57,15 +70,60 @@ namespace PetriDish.Simulation
         }
     }
 
+    internal struct DeterministicRandom
+    {
+        private uint state;
+
+        public uint State => state;
+
+        public DeterministicRandom(int seed)
+        {
+            state = MixSeed(seed);
+        }
+
+        public DeterministicRandom(uint state)
+        {
+            this.state = state == 0u ? 0x6D2B79F5u : state;
+        }
+
+        public float NextFloat01()
+        {
+            uint value = NextUInt();
+            return (value >> 8) * (1f / 16777216f);
+        }
+
+        private uint NextUInt()
+        {
+            uint value = state;
+            value ^= value << 13;
+            value ^= value >> 17;
+            value ^= value << 5;
+            state = value == 0u ? 0x6D2B79F5u : value;
+            return state;
+        }
+
+        private static uint MixSeed(int seed)
+        {
+            uint value = unchecked((uint)seed) + 0x9E3779B9u;
+            value ^= value >> 16;
+            value *= 0x7FEB352Du;
+            value ^= value >> 15;
+            value *= 0x846CA68Bu;
+            value ^= value >> 16;
+            return value == 0u ? 0x6D2B79F5u : value;
+        }
+    }
+
     public sealed class PetriSimulation
     {
         public const int GridWidth = 48;
         public const int GridHeight = 48;
         public const float FixedStepSeconds = 0.25f;
+        public const int CurrentSaveSchemaVersion = 2;
 
         private readonly CellState[] cells = new CellState[GridWidth * GridHeight];
         private readonly int seed;
-        private System.Random random;
+        private DeterministicRandom random;
         private long tick;
         private float elapsedSimSeconds;
         private float temperature = 21f;
@@ -84,7 +142,7 @@ namespace PetriDish.Simulation
 
         public void Reset()
         {
-            random = new System.Random(seed);
+            random = new DeterministicRandom(seed);
             tick = 0;
             elapsedSimSeconds = 0f;
             temperature = 21f;
@@ -131,7 +189,7 @@ namespace PetriDish.Simulation
         {
             for (int i = 0; i < cells.Length; i++)
             {
-                float noise = 0.85f + (float)random.NextDouble() * 0.3f;
+                float noise = 0.85f + random.NextFloat01() * 0.3f;
                 cells[i].moisture = Mathf.Clamp01(cells[i].moisture + amount * noise);
             }
         }
@@ -197,7 +255,7 @@ namespace PetriDish.Simulation
                     int nx = x + ox;
                     int ny = y + oy;
                     if (nx < 0 || nx >= GridWidth || ny < 0 || ny >= GridHeight) continue;
-                    destination[Index(nx, ny)] += amount * (0.75f + (float)random.NextDouble() * 0.5f);
+                    destination[Index(nx, ny)] += amount * (0.75f + random.NextFloat01() * 0.5f);
                 }
             }
         }
@@ -236,28 +294,53 @@ namespace PetriDish.Simulation
 
         public SimulationSaveData CaptureSave()
         {
+            var copiedCells = new CellState[cells.Length];
+            for (int i = 0; i < cells.Length; i++) copiedCells[i] = cells[i].Clone();
+
             return new SimulationSaveData
             {
+                schemaVersion = CurrentSaveSchemaVersion,
                 seed = seed,
                 tick = tick,
                 temperature = temperature,
                 targetTemperature = targetTemperature,
                 elapsedSimSeconds = elapsedSimSeconds,
-                cells = cells
+                randomState = random.State,
+                cells = copiedCells
             };
         }
 
         public void Restore(SimulationSaveData data)
         {
-            if (data == null || data.cells == null || data.cells.Length != cells.Length)
-                throw new ArgumentException("Invalid petri simulation save data.");
+            ValidateSave(data);
 
             tick = data.tick;
-            temperature = data.temperature;
-            targetTemperature = data.targetTemperature;
-            elapsedSimSeconds = data.elapsedSimSeconds;
-            random = new System.Random(seed ^ (int)tick);
-            for (int i = 0; i < cells.Length; i++) cells[i] = data.cells[i];
+            temperature = Mathf.Clamp(data.temperature, 8f, 42f);
+            targetTemperature = Mathf.Clamp(data.targetTemperature, 8f, 42f);
+            elapsedSimSeconds = Mathf.Max(0f, data.elapsedSimSeconds);
+            random = data.schemaVersion >= 2
+                ? new DeterministicRandom(data.randomState)
+                : new DeterministicRandom(seed ^ unchecked((int)tick));
+
+            for (int i = 0; i < cells.Length; i++) cells[i] = data.cells[i].Clone();
+        }
+
+        private void ValidateSave(SimulationSaveData data)
+        {
+            if (data == null)
+                throw new ArgumentException("Save data cannot be null.", nameof(data));
+            if (data.schemaVersion < 1 || data.schemaVersion > CurrentSaveSchemaVersion)
+                throw new ArgumentException($"Unsupported save schema version {data.schemaVersion}.", nameof(data));
+            if (data.seed != seed)
+                throw new ArgumentException("Save seed does not match this simulation instance.", nameof(data));
+            if (data.cells == null || data.cells.Length != cells.Length)
+                throw new ArgumentException("Save data has an invalid cell array.", nameof(data));
+
+            for (int i = 0; i < data.cells.Length; i++)
+            {
+                if (data.cells[i] == null)
+                    throw new ArgumentException($"Save data contains a null cell at index {i}.", nameof(data));
+            }
         }
 
         private static int Index(int x, int y) => y * GridWidth + x;
