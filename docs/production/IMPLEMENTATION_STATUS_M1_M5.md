@@ -49,7 +49,7 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, and moisture recovery
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, and speed-control cycling
 
 Review pending:
 
@@ -86,6 +86,7 @@ Implemented:
 - Moisture intervention
 - Context-controlled moisture button
 - Pause and speed cycling
+- Active speed displayed directly on the speed button
 - Same-seed and new-seed restarts
 - Plain-language condition labels
 - Coverage, temperature, moisture, and nutrient metrics
@@ -95,7 +96,6 @@ Review pending:
 
 - Local tap inspection panel
 - Haptic and audio feedback
-- More explicit speed label
 - Accessibility pass
 - Unity 6 Input System migration if production controls require it
 
