@@ -1,14 +1,18 @@
+using System;
 using PetriDish.Simulation;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace PetriDish.Presentation
 {
     [RequireComponent(typeof(RawImage))]
-    public sealed class DishRenderer : MonoBehaviour
+    public sealed class DishRenderer : MonoBehaviour, IPointerClickHandler
     {
         private RawImage target;
         private Texture2D texture;
+
+        public event Action<Vector2> DishTapped;
 
         private void Awake()
         {
@@ -35,6 +39,21 @@ namespace PetriDish.Presentation
             }
             texture.SetPixels32(pixels);
             texture.Apply(false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            RectTransform rect = (RectTransform)transform;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, eventData.pressEventCamera, out Vector2 local))
+                return;
+
+            Rect bounds = rect.rect;
+            if (bounds.width <= 0f || bounds.height <= 0f) return;
+
+            var normalized = new Vector2(
+                Mathf.InverseLerp(bounds.xMin, bounds.xMax, local.x),
+                Mathf.InverseLerp(bounds.yMin, bounds.yMax, local.y));
+            DishTapped?.Invoke(normalized);
         }
     }
 }
