@@ -2,7 +2,7 @@
 
 ## Scope of this implementation pass
 
-This pass creates a reviewable Unity vertical slice in code. Formal testing, art replacement, performance tuning, and Codex hardening remain later work.
+This pass creates a reviewable Unity vertical slice in code. Formal Unity import testing, art replacement, performance tuning, and Codex hardening remain later work.
 
 ## Engine baseline
 
@@ -19,7 +19,7 @@ Unity 6.3 LTS is the locked production baseline. Do not downgrade the project to
 Implemented:
 
 - Unity 6.3 LTS project marker
-- Minimal Unity 6 package manifest with uGUI and Visual Studio integration
+- Minimal Unity 6 package manifest with uGUI, Visual Studio integration, and Unity Test Framework
 - Unity `.gitignore`
 - Portrait-first runtime-generated responsive UI
 - Safe proportional anchors for phone and tablet layouts
@@ -40,19 +40,24 @@ Implemented:
 - 48 × 48 two-dimensional dish grid
 - Fixed 0.25-second simulation steps
 - Seeded colony generation and spread randomness
+- Serializable deterministic random state for exact save/load continuation
+- Deep-copy save capture and restore isolation
+- Save schema validation with legacy schema version 1 fallback
 - Temperature target and delayed temperature movement
 - Moisture, edge drying, heat drying, nutrients, biomass, health, and stress
 - Suitability curves for temperature, moisture, and nutrients
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, and control bounds
 
 Review pending:
 
+- Run the Edit Mode suite inside Unity `6000.3.20f1`
 - Codex determinism review
-- Random-stream separation refinement
+- Random-stream separation refinement if independent organism or event channels are introduced
 - Balance validation
-- Automated regression scenarios
+- Scenario-level regression tests for comfortable growth, heat decline, and moisture recovery
 
 ## M3 — First living colony
 
@@ -128,13 +133,14 @@ Review pending:
 4. Select `Petri Dish > Setup Vertical Slice Project`.
 5. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity` if it is not already open.
 6. Enter Play Mode.
+7. Open `Window > General > Test Runner` and run the Edit Mode suite.
 
 The UI and experiment controller are generated at runtime. No manually wired scene hierarchy is required for the first pass.
 
 ## Important limitations
 
-- The code has not been compiled inside Unity during this ChatGPT implementation pass.
-- Formal testing was intentionally deferred at the user's request.
+- The current changes have not been compiled inside Unity during this connected-repository pass.
+- The new regression suite must be executed after the first Unity 6.3 import.
 - Placeholder UI and procedural colours are used instead of final art.
 - Unity 6 may expose API or package issues that must be corrected during the first editor import.
 - The implementation should be treated as a substantial first draft for Codex review, correction, and refinement.
