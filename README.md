@@ -3,8 +3,8 @@
 **Working title:** Petri Dish Simulator  
 **Project type:** Casual educational ecosystem simulation game  
 **Initial platform:** Mobile, with a PC development build  
-**Engine target:** Unity  
-**Project phase:** Phase 0 — definition and pre-production
+**Engine target:** Unity 6.3 LTS (`6000.3.20f1`)  
+**Project phase:** First playable vertical-slice implementation
 
 ## Concept
 
@@ -25,6 +25,32 @@ The first release is a game, not a laboratory simulator. It should teach real bi
 5. Intervene by adjusting the environment or adding resources.
 6. Complete discoveries, challenges, and collection goals.
 7. Save successful cultures, unlock new organisms, and try more complex ecosystems.
+
+## Current implementation
+
+The repository contains a first-pass implementation of Milestones M1–M5:
+
+- Deterministic 48 × 48 dish simulation
+- Rapid Bacterium and Nutrient Agar vertical slice
+- Temperature and moisture controls
+- Colony growth, stress, resource use, decline, and recovery
+- Runtime-generated portrait mobile UI
+- Save and load
+- Seeded restart
+- Guided experiment: **The Comfortable Range**
+
+See `docs/production/IMPLEMENTATION_STATUS_M1_M5.md` for the detailed handoff and known limitations.
+
+## Opening the project
+
+1. Install Unity `6000.3.20f1` through Unity Hub.
+2. Include Android Build Support for mobile builds.
+3. Open the repository root as the Unity project.
+4. Allow Package Manager to resolve dependencies.
+5. Run `Petri Dish > Setup Vertical Slice Project`.
+6. Enter Play Mode in `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity`.
+
+Do not open or resave the project using Unity 2022 or Unity 2023.
 
 ## Initial scope
 
@@ -61,29 +87,20 @@ Initial environmental controls:
 - Failure produces information
 - Expandable from children’s game to advanced simulation
 
-## Phase 0 documents
+## Key documents
 
+- `AGENTS.md`
 - `docs/VISION.md`
 - `docs/GAME_DESIGN_DOCUMENT.md`
 - `docs/ARCHITECTURE.md`
 - `docs/ROADMAP.md`
 - `docs/MILESTONES.md`
-- `AGENTS.md`
-- `docs/PRINCIPLES.md`
 - `docs/SIMULATION_MODEL.md`
-- `docs/DATA_MODEL.md`
-- `docs/UX_AND_SCREEN_FLOW.md`
-- `docs/CONTENT_BIBLE.md`
-- `docs/ART_AND_AUDIO_DIRECTION.md`
-- `docs/PROGRESSION_AND_ECONOMY.md`
-- `docs/ANALYTICS.md`
-- `docs/TEST_STRATEGY.md`
-- `docs/RISKS.md`
-- `docs/DECISIONS.md`
-- `docs/production/UNITY_BUILD_BRIEF.md`
+- `docs/design/VERTICAL_SLICE_SPECIFICATION.md`
+- `docs/design/STARTING_BALANCE_VALUES.md`
+- `docs/production/UNITY_SCENE_AND_PREFAB_SPEC.md`
+- `docs/production/IMPLEMENTATION_STATUS_M1_M5.md`
 - `docs/production/CODEX_REVIEW_BRIEF.md`
-- `docs/production/PHASE_1_BACKLOG.md`
-- `docs/research/GITHUB_REFERENCE_NOTES.md`
 
 ## Current decision
 
