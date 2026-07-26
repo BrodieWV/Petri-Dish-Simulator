@@ -4,12 +4,22 @@
 
 This pass creates a reviewable Unity vertical slice in code. Formal testing, art replacement, performance tuning, and Codex hardening remain later work.
 
+## Engine baseline
+
+- Unity 6.3 LTS
+- Editor version `6000.3.20f1`
+- Portrait-first mobile layout
+- GameObject-based Unity UI through `com.unity.ugui`
+- Unity project stored at the repository root
+
+Unity 6.3 LTS is the locked production baseline. Do not downgrade the project to Unity 2022 or Unity 2023.
+
 ## M1 — Unity project and responsive dish scene
 
 Implemented:
 
-- Unity 2022.3 LTS project marker
-- Package manifest with uGUI and development packages
+- Unity 6.3 LTS project marker
+- Minimal Unity 6 package manifest with uGUI and Visual Studio integration
 - Unity `.gitignore`
 - Portrait-first runtime-generated responsive UI
 - Safe proportional anchors for phone and tablet layouts
@@ -18,10 +28,10 @@ Implemented:
 
 Review pending:
 
-- Confirm exact installed Unity patch version
 - Confirm Android SDK and minimum API level
 - Inspect device safe areas and cut-outs
 - Replace generated placeholder layout with production prefabs if preferred
+- Review Unity 6 Build Profiles and Android platform configuration
 
 ## M2 — Deterministic simulation core
 
@@ -61,6 +71,7 @@ Review pending:
 - Shape and texture art pass
 - Visual feedback beyond colour
 - Mobile profiling
+- Unity 6 renderer and texture-update optimisation review
 
 ## M4 — Player intervention loop
 
@@ -82,6 +93,7 @@ Review pending:
 - Haptic and audio feedback
 - More explicit speed label
 - Accessibility pass
+- Unity 6 Input System migration if production controls require it
 
 ## M5 — The Comfortable Range vertical slice
 
@@ -110,11 +122,12 @@ Review pending:
 
 ## Running the project
 
-1. Open the repository folder in Unity Hub using Unity 2022.3 LTS.
-2. Allow Unity to import packages.
-3. Select `Petri Dish > Setup Vertical Slice Project`.
-4. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity` if it is not already open.
-5. Enter Play Mode.
+1. Install Unity `6000.3.20f1` through Unity Hub with Android Build Support if mobile builds are required.
+2. Open the repository root as the Unity project.
+3. Allow Unity Package Manager to resolve the Unity 6 packages.
+4. Select `Petri Dish > Setup Vertical Slice Project`.
+5. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity` if it is not already open.
+6. Enter Play Mode.
 
 The UI and experiment controller are generated at runtime. No manually wired scene hierarchy is required for the first pass.
 
@@ -123,4 +136,5 @@ The UI and experiment controller are generated at runtime. No manually wired sce
 - The code has not been compiled inside Unity during this ChatGPT implementation pass.
 - Formal testing was intentionally deferred at the user's request.
 - Placeholder UI and procedural colours are used instead of final art.
+- Unity 6 may expose API or package issues that must be corrected during the first editor import.
 - The implementation should be treated as a substantial first draft for Codex review, correction, and refinement.
