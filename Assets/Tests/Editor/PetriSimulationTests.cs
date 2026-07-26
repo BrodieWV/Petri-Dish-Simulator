@@ -118,6 +118,101 @@ namespace PetriDish.Tests.Editor
             Assert.That(simulation.TargetTemperature, Is.EqualTo(42f));
         }
 
+        [Test]
+        public void ComfortableConditionsProduceClearColonyGrowth()
+        {
+            PetriSimulation simulation = CreateUniformSimulation(
+                seed: 2101,
+                temperature: 26f,
+                moisture: 0.72f,
+                nutrients: 1f,
+                biomass: 0.10f,
+                health: 1f,
+                stress: 0f);
+
+            float initialBiomass = TotalBiomass(simulation.CreateSnapshot());
+            for (int i = 0; i < 20; i++) simulation.Step();
+            SimulationSnapshot result = simulation.CreateSnapshot();
+
+            Assert.That(TotalBiomass(result), Is.GreaterThan(initialBiomass * 2f));
+            Assert.That(result.AverageHealth, Is.GreaterThan(0.95f));
+            Assert.That(result.AverageMoisture, Is.GreaterThan(0.60f));
+        }
+
+        [Test]
+        public void LethalHeatCausesHealthAndBiomassDecline()
+        {
+            PetriSimulation simulation = CreateUniformSimulation(
+                seed: 2102,
+                temperature: 42f,
+                moisture: 0.72f,
+                nutrients: 1f,
+                biomass: 0.10f,
+                health: 1f,
+                stress: 0f);
+
+            float initialBiomass = TotalBiomass(simulation.CreateSnapshot());
+            for (int i = 0; i < 20; i++) simulation.Step();
+            SimulationSnapshot result = simulation.CreateSnapshot();
+
+            Assert.That(TotalBiomass(result), Is.LessThan(initialBiomass * 0.70f));
+            Assert.That(result.AverageHealth, Is.LessThan(0.75f));
+            Assert.That(result.Temperature, Is.EqualTo(42f).Within(FloatTolerance));
+        }
+
+        [Test]
+        public void MoistureInterventionRecoversAStressedColony()
+        {
+            PetriSimulation simulation = CreateUniformSimulation(
+                seed: 2103,
+                temperature: 26f,
+                moisture: 0.12f,
+                nutrients: 1f,
+                biomass: 0.20f,
+                health: 0.70f,
+                stress: 1f);
+
+            for (int i = 0; i < 12; i++) simulation.Step();
+            SimulationSnapshot stressed = simulation.CreateSnapshot();
+
+            simulation.AddMoisture(0.75f);
+            for (int i = 0; i < 60; i++) simulation.Step();
+            SimulationSnapshot recovered = simulation.CreateSnapshot();
+
+            Assert.That(stressed.AverageHealth, Is.LessThan(0.50f));
+            Assert.That(recovered.AverageHealth, Is.GreaterThan(stressed.AverageHealth + 0.40f));
+            Assert.That(recovered.AverageMoisture, Is.GreaterThan(0.60f));
+            Assert.That(TotalBiomass(recovered), Is.GreaterThan(TotalBiomass(stressed)));
+        }
+
+        private static PetriSimulation CreateUniformSimulation(int seed, float temperature,
+            float moisture, float nutrients, float biomass, float health, float stress)
+        {
+            var simulation = new PetriSimulation(seed);
+            SimulationSaveData save = simulation.CaptureSave();
+            save.temperature = temperature;
+            save.targetTemperature = temperature;
+
+            for (int i = 0; i < save.cells.Length; i++)
+            {
+                save.cells[i].moisture = moisture;
+                save.cells[i].nutrients = nutrients;
+                save.cells[i].biomass = biomass;
+                save.cells[i].health = health;
+                save.cells[i].stress = stress;
+            }
+
+            simulation.Restore(save);
+            return simulation;
+        }
+
+        private static float TotalBiomass(SimulationSnapshot snapshot)
+        {
+            float total = 0f;
+            for (int i = 0; i < snapshot.Biomass.Length; i++) total += snapshot.Biomass[i];
+            return total;
+        }
+
         private static void AssertSnapshotsEqual(SimulationSnapshot expected, SimulationSnapshot actual)
         {
             Assert.That(actual.Width, Is.EqualTo(expected.Width));
