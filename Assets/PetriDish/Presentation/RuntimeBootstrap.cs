@@ -15,6 +15,7 @@ namespace PetriDish.Presentation
         private Text metrics;
         private Text temperatureValue;
         private Text outcome;
+        private Text speedLabel;
         private Slider temperature;
         private Button moisture;
         private Font font;
@@ -108,8 +109,9 @@ namespace PetriDish.Presentation
             SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.30f), new Vector2(0.37f, 0.52f));
             var pause = CreateButton(controls.transform, "Pause / Resume", controller.TogglePause);
             SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.30f), new Vector2(0.72f, 0.52f));
-            var speed = CreateButton(controls.transform, "Speed", CycleSpeed);
+            var speed = CreateButton(controls.transform, SimulationSpeedCycle.Label(controller.SimulationSpeed), CycleSpeed);
             SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.30f), new Vector2(0.96f, 0.52f));
+            speedLabel = speed.GetComponentInChildren<Text>();
 
             SetRect(CreateButton(controls.transform, "Save", controller.Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.04f), new Vector2(0.24f, 0.25f));
             SetRect(CreateButton(controls.transform, "Load", () => controller.Load()).GetComponent<RectTransform>(), new Vector2(0.26f, 0.04f), new Vector2(0.46f, 0.25f));
@@ -149,8 +151,9 @@ namespace PetriDish.Presentation
 
         private void CycleSpeed()
         {
-            float next = controller.SimulationSpeed < 1.5f ? 2f : controller.SimulationSpeed < 3f ? 4f : 1f;
+            float next = SimulationSpeedCycle.Next(controller.SimulationSpeed);
             controller.SetSpeed(next);
+            speedLabel.text = SimulationSpeedCycle.Label(next);
         }
 
         private Image Image(Transform parent, string name, Color color)
