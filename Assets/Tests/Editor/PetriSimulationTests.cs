@@ -86,11 +86,13 @@ namespace PetriDish.Tests.Editor
 
             var restored = new PetriSimulation(1337);
             restored.Restore(save);
+            float savedMoisture = save.cells[0].moisture;
+            float savedBiomass = save.cells[0].biomass;
             restored.AddMoisture(0.2f);
             restored.Step();
 
-            SimulationSaveData restoredState = restored.CaptureSave();
-            Assert.That(restoredState.cells[0], Is.Not.SameAs(save.cells[0]));
+            Assert.That(save.cells[0].moisture, Is.EqualTo(savedMoisture).Within(FloatTolerance));
+            Assert.That(save.cells[0].biomass, Is.EqualTo(savedBiomass).Within(FloatTolerance));
         }
 
         [Test]
@@ -107,6 +109,24 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void RestoreRejectsNonFiniteAndOutOfRangeValues()
+        {
+            var source = new PetriSimulation(10);
+
+            SimulationSaveData invalidTemperature = source.CaptureSave();
+            invalidTemperature.temperature = float.NaN;
+            Assert.Throws<ArgumentException>(() => source.Restore(invalidTemperature));
+
+            SimulationSaveData invalidCell = source.CaptureSave();
+            invalidCell.cells[0].moisture = 1.1f;
+            Assert.Throws<ArgumentException>(() => source.Restore(invalidCell));
+
+            SimulationSaveData invalidRandomState = source.CaptureSave();
+            invalidRandomState.randomState = 0u;
+            Assert.Throws<ArgumentException>(() => source.Restore(invalidRandomState));
+        }
+
+        [Test]
         public void TargetTemperatureIsClampedToSupportedRange()
         {
             var simulation = new PetriSimulation(1);
@@ -116,6 +136,31 @@ namespace PetriDish.Tests.Editor
 
             simulation.SetTargetTemperature(100f);
             Assert.That(simulation.TargetTemperature, Is.EqualTo(42f));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => simulation.SetTargetTemperature(float.NaN));
+            Assert.Throws<ArgumentOutOfRangeException>(() => simulation.SetTargetTemperature(float.PositiveInfinity));
+        }
+
+        [Test]
+        public void MoistureInterventionRejectsInvalidAmounts()
+        {
+            var simulation = new PetriSimulation(1);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => simulation.AddMoisture(-0.01f));
+            Assert.Throws<ArgumentOutOfRangeException>(() => simulation.AddMoisture(float.NaN));
+        }
+
+        [Test]
+        public void SimulationStepsDoNotAllocateManagedMemoryAfterWarmup()
+        {
+            var simulation = new PetriSimulation(7001);
+            for (int i = 0; i < 4; i++) simulation.Step();
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 20; i++) simulation.Step();
+            long allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.That(allocatedBytes, Is.Zero);
         }
 
         [Test]

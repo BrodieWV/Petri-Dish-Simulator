@@ -3,7 +3,7 @@
 **Working title:** Petri Dish Simulator  
 **Project type:** Casual educational ecosystem simulation game  
 **Initial platform:** Mobile, with a PC development build  
-**Engine target:** Unity 6.3 LTS (`6000.3.20f1`)  
+**Engine target:** Unity 6.5 (`6000.5.3f1`)
 **Project phase:** First playable vertical-slice implementation
 
 ## Concept
@@ -43,7 +43,7 @@ See `docs/production/IMPLEMENTATION_STATUS_M1_M5.md` for the detailed handoff an
 
 ## Opening the project
 
-1. Install Unity `6000.3.20f1` through Unity Hub.
+1. Install Unity `6000.5.3f1` through Unity Hub.
 2. Include Android Build Support for mobile builds.
 3. Open the repository root as the Unity project.
 4. Allow Package Manager to resolve dependencies.

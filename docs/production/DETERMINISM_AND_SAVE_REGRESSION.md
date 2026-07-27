@@ -19,6 +19,10 @@ Cell data is deep-copied both when a save is captured and when it is restored. T
 
 Legacy schema version 1 saves remain loadable. Their original random position was not stored, so they use a deterministic fallback derived from the seed and tick. They are stable after loading, but cannot reproduce the exact pre-save random stream.
 
+The application save wrapper now preserves the fractional fixed-step accumulator, pause state, simulation speed, guided stage, and active simulation state. Loading validates the complete candidate before replacing the running experiment, so malformed or unsupported data cannot partially mutate live state. Writes use a temporary file and retain the previous save as a recovery backup.
+
+Same-seed restart uses the active experiment seed rather than reverting to the tutorial seed. Snapshot publication occurs only when simulation state changes, while fixed-step simulation and dish-rendering work buffers are reused to reduce managed allocations.
+
 ## Automated tests
 
 Edit Mode tests are located at:
@@ -32,11 +36,25 @@ The test suite covers:
 3. save snapshot isolation;
 4. restore object isolation;
 5. save validation;
-6. temperature target clamping.
+6. temperature target clamping and non-finite input rejection;
+7. application-level fractional-clock continuation;
+8. active-seed restart;
+9. pause and speed restoration;
+10. malformed-save isolation and backup recovery;
+11. initialization event timing and snapshot publication cadence;
+12. zero managed allocations during warmed-up fixed simulation steps.
+
+Application-level persistence and lifecycle tests are located at:
+
+`Assets/Tests/Editor/ExperimentControllerTests.cs`
+
+## Latest automated verification
+
+On 27 July 2026, the complete Edit Mode suite compiled and passed all 67 test cases using the production-baseline Unity `6000.5.3f1` editor.
 
 ## Running in Unity
 
-1. Open the project using Unity `6000.3.20f1`.
+1. Open the project using Unity `6000.5.3f1`.
 2. Allow Package Manager to install `com.unity.test-framework`.
 3. Open `Window > General > Test Runner`.
 4. Select the **EditMode** tab.

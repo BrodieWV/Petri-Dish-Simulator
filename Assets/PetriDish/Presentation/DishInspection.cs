@@ -39,6 +39,8 @@ namespace PetriDish.Presentation
             x = -1;
             y = -1;
             if (width <= 0 || height <= 0) return false;
+            if (float.IsNaN(normalizedX) || float.IsInfinity(normalizedX) ||
+                float.IsNaN(normalizedY) || float.IsInfinity(normalizedY)) return false;
             if (normalizedX < 0f || normalizedX > 1f || normalizedY < 0f || normalizedY > 1f) return false;
 
             x = Math.Min(width - 1, (int)(normalizedX * width));
@@ -48,7 +50,6 @@ namespace PetriDish.Presentation
 
         public static bool TryInspect(
             SimulationSnapshot snapshot,
-            SimulationSaveData saveData,
             float normalizedX,
             float normalizedY,
             out CellInspection inspection)
@@ -57,12 +58,11 @@ namespace PetriDish.Presentation
             if (!TryMapNormalizedPoint(normalizedX, normalizedY, snapshot.Width, snapshot.Height, out int x, out int y))
                 return false;
 
-            return TryInspect(snapshot, saveData, x, y, out inspection);
+            return TryInspect(snapshot, x, y, out inspection);
         }
 
         public static bool TryInspect(
             SimulationSnapshot snapshot,
-            SimulationSaveData saveData,
             int x,
             int y,
             out CellInspection inspection)
@@ -71,19 +71,17 @@ namespace PetriDish.Presentation
             if (x < 0 || x >= snapshot.Width || y < 0 || y >= snapshot.Height) return false;
 
             int expectedLength = snapshot.Width * snapshot.Height;
-            if (snapshot.Biomass == null || snapshot.Health == null || snapshot.Moisture == null) return false;
-            if (snapshot.Biomass.Length != expectedLength || snapshot.Health.Length != expectedLength || snapshot.Moisture.Length != expectedLength)
+            if (snapshot.Biomass == null || snapshot.Health == null ||
+                snapshot.Moisture == null || snapshot.Nutrients == null) return false;
+            if (snapshot.Biomass.Length != expectedLength || snapshot.Health.Length != expectedLength ||
+                snapshot.Moisture.Length != expectedLength || snapshot.Nutrients.Length != expectedLength)
                 return false;
-            if (saveData?.cells == null || saveData.cells.Length != expectedLength) return false;
 
             int index = y * snapshot.Width + x;
-            CellState cell = saveData.cells[index];
-            if (cell == null) return false;
-
             float biomass = snapshot.Biomass[index];
             float health = snapshot.Health[index];
             float moisture = snapshot.Moisture[index];
-            float nutrients = cell.nutrients;
+            float nutrients = snapshot.Nutrients[index];
             string condition = GetCondition(snapshot.Temperature, biomass, health, moisture, nutrients);
             inspection = new CellInspection(x, y, biomass, health, moisture, nutrients, condition);
             return true;

@@ -51,10 +51,11 @@ namespace PetriDish.Simulation
         public readonly float[] Biomass;
         public readonly float[] Health;
         public readonly float[] Moisture;
+        public readonly float[] Nutrients;
 
         public SimulationSnapshot(int width, int height, long tick, float temperature,
             float coverage, float averageHealth, float averageMoisture, float averageNutrients,
-            float[] biomass, float[] health, float[] moisture)
+            float[] biomass, float[] health, float[] moisture, float[] nutrients)
         {
             Width = width;
             Height = height;
@@ -67,6 +68,26 @@ namespace PetriDish.Simulation
             Biomass = biomass;
             Health = health;
             Moisture = moisture;
+            Nutrients = nutrients;
+        }
+    }
+
+    public readonly struct SimulationMetrics
+    {
+        public readonly float Temperature;
+        public readonly float Coverage;
+        public readonly float AverageHealth;
+        public readonly float AverageMoisture;
+        public readonly float AverageNutrients;
+
+        public SimulationMetrics(float temperature, float coverage, float averageHealth,
+            float averageMoisture, float averageNutrients)
+        {
+            Temperature = temperature;
+            Coverage = coverage;
+            AverageHealth = averageHealth;
+            AverageMoisture = averageMoisture;
+            AverageNutrients = averageNutrients;
         }
     }
 
@@ -122,6 +143,7 @@ namespace PetriDish.Simulation
         public const int CurrentSaveSchemaVersion = 2;
 
         private readonly CellState[] cells = new CellState[GridWidth * GridHeight];
+        private readonly float[] nextBiomass = new float[GridWidth * GridHeight];
         private readonly int seed;
         private DeterministicRandom random;
         private long tick;
@@ -130,6 +152,7 @@ namespace PetriDish.Simulation
         private float targetTemperature = 21f;
 
         public long Tick => tick;
+        public int Seed => seed;
         public float ElapsedSimSeconds => elapsedSimSeconds;
         public float Temperature => temperature;
         public float TargetTemperature => targetTemperature;
@@ -182,11 +205,16 @@ namespace PetriDish.Simulation
 
         public void SetTargetTemperature(float value)
         {
+            if (!IsFinite(value))
+                throw new ArgumentOutOfRangeException(nameof(value), "Temperature must be finite.");
             targetTemperature = Mathf.Clamp(value, 8f, 42f);
         }
 
         public void AddMoisture(float amount)
         {
+            if (!IsFinite(amount) || amount < 0f)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Moisture amount must be finite and non-negative.");
+
             for (int i = 0; i < cells.Length; i++)
             {
                 float noise = 0.85f + random.NextFloat01() * 0.3f;
@@ -197,7 +225,7 @@ namespace PetriDish.Simulation
         public void Step()
         {
             temperature = Mathf.MoveTowards(temperature, targetTemperature, 0.18f);
-            var nextBiomass = new float[cells.Length];
+            Array.Clear(nextBiomass, 0, nextBiomass.Length);
 
             for (int y = 0; y < GridHeight; y++)
             {
@@ -271,6 +299,7 @@ namespace PetriDish.Simulation
             var biomass = new float[cells.Length];
             var health = new float[cells.Length];
             var moisture = new float[cells.Length];
+            var nutrients = new float[cells.Length];
             float coverage = 0f;
             float totalHealth = 0f;
             float totalMoisture = 0f;
@@ -281,6 +310,7 @@ namespace PetriDish.Simulation
                 biomass[i] = cells[i].biomass;
                 health[i] = cells[i].health;
                 moisture[i] = cells[i].moisture;
+                nutrients[i] = cells[i].nutrients;
                 if (cells[i].biomass > 0.06f) coverage += 1f;
                 totalHealth += cells[i].health;
                 totalMoisture += cells[i].moisture;
@@ -289,7 +319,30 @@ namespace PetriDish.Simulation
 
             return new SimulationSnapshot(GridWidth, GridHeight, tick, temperature,
                 coverage / cells.Length, totalHealth / cells.Length, totalMoisture / cells.Length,
-                totalNutrients / cells.Length, biomass, health, moisture);
+                totalNutrients / cells.Length, biomass, health, moisture, nutrients);
+        }
+
+        public SimulationMetrics CreateMetrics()
+        {
+            float coverage = 0f;
+            float totalHealth = 0f;
+            float totalMoisture = 0f;
+            float totalNutrients = 0f;
+
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (cells[i].biomass > 0.06f) coverage += 1f;
+                totalHealth += cells[i].health;
+                totalMoisture += cells[i].moisture;
+                totalNutrients += cells[i].nutrients;
+            }
+
+            return new SimulationMetrics(
+                temperature,
+                coverage / cells.Length,
+                totalHealth / cells.Length,
+                totalMoisture / cells.Length,
+                totalNutrients / cells.Length);
         }
 
         public SimulationSaveData CaptureSave()
@@ -335,13 +388,32 @@ namespace PetriDish.Simulation
                 throw new ArgumentException("Save seed does not match this simulation instance.", nameof(data));
             if (data.cells == null || data.cells.Length != cells.Length)
                 throw new ArgumentException("Save data has an invalid cell array.", nameof(data));
+            if (data.tick < 0)
+                throw new ArgumentException("Save data has a negative simulation tick.", nameof(data));
+            if (!IsFinite(data.temperature) || !IsFinite(data.targetTemperature) ||
+                !IsFinite(data.elapsedSimSeconds) || data.elapsedSimSeconds < 0f)
+                throw new ArgumentException("Save data contains an invalid simulation value.", nameof(data));
+            if (data.temperature < 8f || data.temperature > 42f ||
+                data.targetTemperature < 8f || data.targetTemperature > 42f)
+                throw new ArgumentException("Save data contains an unsupported temperature.", nameof(data));
+            if (data.schemaVersion >= 2 && data.randomState == 0u)
+                throw new ArgumentException("Save data contains an invalid random state.", nameof(data));
 
             for (int i = 0; i < data.cells.Length; i++)
             {
                 if (data.cells[i] == null)
                     throw new ArgumentException($"Save data contains a null cell at index {i}.", nameof(data));
+                CellState cell = data.cells[i];
+                if (!IsUnitValue(cell.moisture) || !IsUnitValue(cell.nutrients) ||
+                    !IsUnitValue(cell.biomass) || !IsUnitValue(cell.health) ||
+                    !IsUnitValue(cell.stress))
+                    throw new ArgumentException($"Save data contains an invalid cell at index {i}.", nameof(data));
             }
         }
+
+        private static bool IsUnitValue(float value) => IsFinite(value) && value >= 0f && value <= 1f;
+
+        private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
         private static int Index(int x, int y) => y * GridWidth + x;
     }

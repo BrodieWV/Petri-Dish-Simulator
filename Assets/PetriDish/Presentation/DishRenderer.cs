@@ -11,6 +11,7 @@ namespace PetriDish.Presentation
     {
         private RawImage target;
         private Texture2D texture;
+        private Color32[] pixels;
 
         public event Action<Vector2> DishTapped;
 
@@ -23,11 +24,28 @@ namespace PetriDish.Presentation
                 wrapMode = TextureWrapMode.Clamp
             };
             target.texture = texture;
+            pixels = new Color32[PetriSimulation.GridWidth * PetriSimulation.GridHeight];
+        }
+
+        private void OnDestroy()
+        {
+            if (texture == null) return;
+            if (UnityEngine.Application.isPlaying)
+                Destroy(texture);
+            else
+                DestroyImmediate(texture);
         }
 
         public void Render(SimulationSnapshot snapshot)
         {
-            var pixels = new Color32[snapshot.Biomass.Length];
+            if (snapshot.Biomass == null || snapshot.Health == null || snapshot.Moisture == null)
+                throw new ArgumentException("Snapshot rendering arrays cannot be null.", nameof(snapshot));
+            if (snapshot.Biomass.Length != snapshot.Health.Length ||
+                snapshot.Biomass.Length != snapshot.Moisture.Length)
+                throw new ArgumentException("Snapshot rendering arrays must have equal lengths.", nameof(snapshot));
+            if (pixels == null || pixels.Length != snapshot.Biomass.Length)
+                pixels = new Color32[snapshot.Biomass.Length];
+
             for (int i = 0; i < pixels.Length; i++)
             {
                 float biomass = Mathf.Clamp01(snapshot.Biomass[i]);

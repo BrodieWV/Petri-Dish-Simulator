@@ -36,7 +36,7 @@ namespace PetriDish.Presentation
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartRuntime()
         {
-            if (FindObjectOfType<RuntimeBootstrap>() != null) return;
+            if (FindAnyObjectByType<RuntimeBootstrap>() != null) return;
             var root = new GameObject("PetriDishRuntime");
             DontDestroyOnLoad(root);
             root.AddComponent<ExperimentController>();
@@ -45,7 +45,7 @@ namespace PetriDish.Presentation
 
         private void Awake()
         {
-            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             controller = GetComponent<ExperimentController>();
             textScaleMode = TextScalePolicy.FromStoredValue(PlayerPrefs.GetInt(TextScalePreferenceKey, 0));
             CreateEventSystem();
@@ -68,7 +68,7 @@ namespace PetriDish.Presentation
 
         private void CreateEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null) return;
+            if (FindAnyObjectByType<EventSystem>() != null) return;
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             DontDestroyOnLoad(go);
         }
@@ -148,13 +148,13 @@ namespace PetriDish.Presentation
             SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.28f), new Vector2(0.96f, 0.50f));
             speedLabel = speed.GetComponentInChildren<Text>();
 
-            SetRect(CreateButton(controls.transform, "Save", controller.Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.03f), new Vector2(0.24f, 0.24f));
+            SetRect(CreateButton(controls.transform, "Save", Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.03f), new Vector2(0.24f, 0.24f));
             SetRect(CreateButton(controls.transform, "Load", Load).GetComponent<RectTransform>(), new Vector2(0.26f, 0.03f), new Vector2(0.46f, 0.24f));
             SetRect(CreateButton(controls.transform, "Restart", RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.03f), new Vector2(0.70f, 0.24f));
             SetRect(CreateButton(controls.transform, "New seed", RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.03f), new Vector2(0.96f, 0.24f));
 
-            temperature.value = 21f;
-            moisture.interactable = false;
+            temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
+            moisture.interactable = true;
             ApplyTextScale();
         }
 
@@ -166,6 +166,7 @@ namespace PetriDish.Presentation
             SimulationCondition status = AccessibilityPresentation.GetCondition(snapshot);
             condition.text = AccessibilityPresentation.ConditionLabel(status);
             metrics.text = $"{snapshot.Temperature:0.0}°C • Coverage {snapshot.Coverage * 100f:0}%\nMoisture {snapshot.AverageMoisture * 100f:0}% • Nutrients {snapshot.AverageNutrients * 100f:0}%";
+            temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
             RefreshInspection();
             RefreshPlaybackState();
@@ -174,8 +175,7 @@ namespace PetriDish.Presentation
         private void OnDishTapped(Vector2 normalizedPoint)
         {
             if (!hasSnapshot) return;
-            SimulationSaveData save = controller.Simulation.CaptureSave();
-            if (!DishInspection.TryInspect(currentSnapshot, save, normalizedPoint.x, normalizedPoint.y, out CellInspection cell))
+            if (!DishInspection.TryInspect(currentSnapshot, normalizedPoint.x, normalizedPoint.y, out CellInspection cell))
                 return;
 
             selectedX = cell.X;
@@ -186,15 +186,13 @@ namespace PetriDish.Presentation
         private void RefreshInspection()
         {
             if (!hasSnapshot || selectedX < 0 || selectedY < 0) return;
-            SimulationSaveData save = controller.Simulation.CaptureSave();
-            if (DishInspection.TryInspect(currentSnapshot, save, selectedX, selectedY, out CellInspection cell))
+            if (DishInspection.TryInspect(currentSnapshot, selectedX, selectedY, out CellInspection cell))
                 inspection.text = cell.ToDisplayText();
         }
 
         private void OnStage(GuidedStage stage, string message)
         {
             instruction.text = message;
-            moisture.interactable = stage == GuidedStage.MoistureRescue || stage == GuidedStage.Recovery;
             outcome.text = stage == GuidedStage.Complete
                 ? "Discovery unlocked: A Comfortable Range"
                 : stage == GuidedStage.Failed ? "Experiment ended — review the limiting factors and retry." : string.Empty;
@@ -232,15 +230,29 @@ namespace PetriDish.Presentation
             }
         }
 
+        private void Save()
+        {
+            outcome.text = controller.Save()
+                ? "Experiment saved."
+                : controller.LastPersistenceError;
+        }
+
         private void Load()
         {
-            controller.Load();
+            if (controller.Load())
+            {
+                ResetInspection();
+                speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
+            }
+            else
+                outcome.text = controller.LastPersistenceError;
             RefreshPlaybackState();
         }
 
         private void RestartSameSeed()
         {
             controller.RestartSameSeed();
+            ResetInspection();
             speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
             RefreshPlaybackState();
         }
@@ -248,8 +260,16 @@ namespace PetriDish.Presentation
         private void RestartNewSeed()
         {
             controller.RestartNewSeed();
+            ResetInspection();
             speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
             RefreshPlaybackState();
+        }
+
+        private void ResetInspection()
+        {
+            selectedX = -1;
+            selectedY = -1;
+            inspection.text = "Tap the dish to inspect a local cell.";
         }
 
         private void RefreshPlaybackState()

@@ -23,6 +23,8 @@ namespace PetriDish.Tests.Editor
         [TestCase(1.01f, 0.5f)]
         [TestCase(0.5f, -0.01f)]
         [TestCase(0.5f, 1.01f)]
+        [TestCase(float.NaN, 0.5f)]
+        [TestCase(0.5f, float.NaN)]
         public void TapOutsideDishIsRejected(float nx, float ny)
         {
             Assert.That(DishInspection.TryMapNormalizedPoint(nx, ny, 2, 2, out _, out _), Is.False);
@@ -35,10 +37,10 @@ namespace PetriDish.Tests.Editor
                 temperature: 26f,
                 biomass: new[] { 0f, 0.4f, 0.2f, 0.1f },
                 health: new[] { 1f, 0.9f, 0.8f, 0.7f },
-                moisture: new[] { 0.7f, 0.75f, 0.65f, 0.6f });
-            SimulationSaveData save = SaveWithNutrients(1f, 0.8f, 0.7f, 0.6f);
+                moisture: new[] { 0.7f, 0.75f, 0.65f, 0.6f },
+                nutrients: new[] { 1f, 0.8f, 0.7f, 0.6f });
 
-            bool found = DishInspection.TryInspect(snapshot, save, 1, 0, out CellInspection inspection);
+            bool found = DishInspection.TryInspect(snapshot, 1, 0, out CellInspection inspection);
 
             Assert.That(found, Is.True);
             Assert.That(inspection.X, Is.EqualTo(1));
@@ -63,25 +65,22 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void InvalidCellDataIsRejected()
         {
-            SimulationSnapshot snapshot = Snapshot(26f, new[] { 0.2f }, new[] { 1f }, new[] { 0.7f });
-            SimulationSaveData save = SaveWithNutrients(1f);
+            SimulationSnapshot snapshot = Snapshot(
+                26f,
+                new[] { 0.2f },
+                new[] { 1f },
+                new[] { 0.7f },
+                new[] { 1f });
 
-            Assert.That(DishInspection.TryInspect(snapshot, save, 0, 0, out _), Is.False);
+            Assert.That(DishInspection.TryInspect(snapshot, 0, 0, out _), Is.False);
         }
 
-        private static SimulationSnapshot Snapshot(float temperature, float[] biomass, float[] health, float[] moisture)
+        private static SimulationSnapshot Snapshot(float temperature, float[] biomass, float[] health,
+            float[] moisture, float[] nutrients)
         {
-            return new SimulationSnapshot(2, 2, 0, temperature, 0f, 0f, 0f, 0f, biomass, health, moisture);
-        }
-
-        private static SimulationSaveData SaveWithNutrients(params float[] nutrients)
-        {
-            var cells = new CellState[nutrients.Length];
-            for (int i = 0; i < nutrients.Length; i++)
-            {
-                cells[i] = new CellState { nutrients = nutrients[i] };
-            }
-            return new SimulationSaveData { cells = cells };
+            return new SimulationSnapshot(
+                2, 2, 0, temperature, 0f, 0f, 0f, 0f,
+                biomass, health, moisture, nutrients);
         }
     }
 }
