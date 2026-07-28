@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -32,7 +33,7 @@ namespace PetriDish.Editor
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.brodiewv.petridishsimulator");
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.brodiewv.petridishsimulator");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

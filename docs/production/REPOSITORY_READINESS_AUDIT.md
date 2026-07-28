@@ -6,19 +6,19 @@ Updated 27 July 2026
 
 ## Current status
 
-The repository contains the Phase 0 foundation and a first-pass implementation of Milestones M1–M5. Product, simulation, content, UX, safety, and agent boundaries are defined. The next stage is Unity 6 import, compilation, Codex review, and correction.
+The repository contains the Phase 0 foundation and a first-pass implementation of Milestones M1–M5. Product, simulation, content, UX, safety, and agent boundaries are defined. It has been imported and compiled using the locked Unity 6.5 editor, and the complete Edit Mode suite passes.
 
 ## Locked Unity setup decisions
 
-- Editor baseline: Unity 6.3 LTS
-- Exact project marker: `6000.3.20f1`
+- Editor baseline: Unity 6.5
+- Exact project marker: `6000.5.3f1`
 - Project location: repository root
 - Layout: portrait-first mobile
 - UI: GameObject-based Unity UI (`com.unity.ugui`)
 - Rendering: built-in rendering for the first prototype unless Codex identifies a clear need for URP
 - Runtime AI: none for MVP
 
-Do not downgrade the project to Unity 2022 or Unity 2023.
+Do not downgrade the project to Unity 2022, Unity 2023, or an earlier Unity 6 editor.
 
 ## Available foundations
 
@@ -103,7 +103,7 @@ Do not downgrade the project to Unity 2022 or Unity 2023.
 
 ## Required next review
 
-1. Open with Unity `6000.3.20f1`.
+1. Open with Unity `6000.5.3f1`.
 2. Allow Unity 6 to resolve core packages.
 3. Compile all scripts.
 4. Run `Petri Dish > Setup Vertical Slice Project`.
@@ -140,4 +140,4 @@ The player-facing condition combines internal signals. Usability testing should 
 
 ## Audit conclusion
 
-The project is correctly targeted to Unity 6.3 LTS and is ready for editor import and Codex hardening. The earlier Unity 2022 marker was incorrect and has been replaced.
+The project is correctly targeted to Unity 6.5 (`6000.5.3f1`), has completed editor import and Codex hardening, and passes all 67 Edit Mode cases. Earlier Unity editor baselines have been superseded.

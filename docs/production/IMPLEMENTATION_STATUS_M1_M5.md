@@ -6,30 +6,33 @@ This pass creates a reviewable Unity vertical slice in code. Formal Unity import
 
 ## Engine baseline
 
-- Unity 6.3 LTS
-- Editor version `6000.3.20f1`
+- Unity 6.5
+- Editor version `6000.5.3f1`
 - Portrait-first mobile layout
 - GameObject-based Unity UI through `com.unity.ugui`
 - Unity project stored at the repository root
 
-Unity 6.3 LTS is the locked production baseline. Do not downgrade the project to Unity 2022 or Unity 2023.
+Unity 6.5 (`6000.5.3f1`) is the locked production baseline. Do not downgrade the project to Unity 2022, Unity 2023, or an earlier Unity 6 editor.
 
 ## M1 — Unity project and responsive dish scene
 
 Implemented:
 
-- Unity 6.3 LTS project marker
+- Unity 6.5 project marker
 - Minimal Unity 6 package manifest with uGUI, Visual Studio integration, and Unity Test Framework
+- Unity 6.5 package lock with resolved package versions
+- Tracked Unity `.meta` files and complete generated `ProjectSettings` baseline
 - Unity `.gitignore`
 - Portrait-first runtime-generated responsive UI
 - Safe proportional anchors for phone and tablet layouts
+- Runtime `Screen.safeArea` fitting for notches, punch holes, rotation, and device-profile changes
+- Phone layout verified in the Unity Device Simulator using a Samsung Galaxy S10+ profile
 - Dish, status, instructions, controls, outcomes, and save controls
 - One-click editor setup command at `Petri Dish > Setup Vertical Slice Project`
 
 Review pending:
 
 - Confirm Android SDK and minimum API level
-- Inspect device safe areas and cut-outs
 - Replace generated placeholder layout with production prefabs if preferred
 - Review Unity 6 Build Profiles and Android platform configuration
 
@@ -38,22 +41,26 @@ Review pending:
 Implemented:
 
 - 48 × 48 two-dimensional dish grid
+- Circular active-cell mask aligned with the visible agar boundary
+- Radial edge drying and round-dish coverage/aggregate metrics
 - Fixed 0.25-second simulation steps
 - Seeded colony generation and spread randomness
 - Serializable deterministic random state for exact save/load continuation
 - Deep-copy save capture and restore isolation
 - Save schema validation with legacy schema version 1 fallback
+- Reused fixed-step biomass buffer to avoid per-step managed allocations
+- Non-finite and out-of-range simulation input rejection
 - Temperature target and delayed temperature movement
 - Moisture, edge drying, heat drying, nutrients, biomass, health, and stress
 - Suitability curves for temperature, moisture, and nutrients
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, accessible status presentation, and text-scale policy behaviour
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, circular masking, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, safe-area fitting, accessible status presentation, and text-scale policy behaviour
+- Full Unity `6000.5.3f1` Edit Mode verification on 28 July 2026: 70 passed, 0 failed
 
 Review pending:
 
-- Run the Edit Mode suite inside Unity `6000.3.20f1`
 - Codex determinism review
 - Random-stream separation refinement if independent organism or event channels are introduced
 - Balance validation against intended experiment pacing on a device
@@ -63,6 +70,8 @@ Review pending:
 Implemented:
 
 - Texture-driven dish renderer
+- Procedural glass rim, agar depth, highlight, and deterministic colony mottling
+- Bright active-growth edge and non-colour heat/dry stress patterns
 - Healthy, stressed, dry, and declining colour response
 - Visible biomass expansion
 - Smooth bilinear presentation over the low-resolution grid
@@ -74,7 +83,6 @@ Review pending:
 
 - More expressive colony edge animation
 - Shape and texture art pass
-- Additional non-colour visual patterns or symbols directly on the dish
 - Mobile profiling
 - Unity 6 renderer and texture-update optimisation review
 
@@ -91,13 +99,17 @@ Implemented:
 - Explicit `Pause` and `Resume` button states
 - Persistent playback readout stating paused or running speed
 - Same-seed and new-seed restarts
+- Active-seed preservation when restarting a newly seeded experiment
 - Plain-language condition labels
 - Non-colour severity prefixes: `OK`, `INFO`, `WARNING`, and `ALERT`
 - Coverage, temperature, moisture, and nutrient metrics
 - Save and load controls
+- Atomic save replacement with previous-save recovery backup
+- Validated application save schema with fixed-step accumulator, pause, and speed restoration
 - Tap-driven local cell inspection
 - Local biomass, health, moisture, nutrient, coordinate, and limiting-factor readout
 - Selected-cell readout refreshes as the simulation advances
+- Snapshot-based cell inspection without cloning the full save state
 - User-selectable Standard and Large text modes
 - Text preference persists between sessions through `PlayerPrefs`
 - Large mode applies a consistent 1.25× scale to runtime-generated labels and buttons
@@ -136,7 +148,7 @@ Review pending:
 
 ## Running the project
 
-1. Install Unity `6000.3.20f1` through Unity Hub with Android Build Support if mobile builds are required.
+1. Install Unity `6000.5.3f1` through Unity Hub with Android Build Support if mobile builds are required.
 2. Open the repository root as the Unity project.
 3. Allow Unity Package Manager to resolve the Unity 6 packages.
 4. Select `Petri Dish > Setup Vertical Slice Project`.
@@ -149,8 +161,7 @@ The UI and experiment controller are generated at runtime. No manually wired sce
 
 ## Important limitations
 
-- The current changes have not been compiled inside Unity during this connected-repository pass.
-- The new regression suite must be executed after the first Unity 6.3 import.
+- The code compiled and all 67 Edit Mode cases passed using Unity `6000.5.3f1` on 27 July 2026.
 - Placeholder UI and procedural colours are used instead of final art.
 - Unity 6 may expose API or package issues that must be corrected during the first editor import.
 - The implementation should be treated as a substantial first draft for Codex review, correction, and refinement.

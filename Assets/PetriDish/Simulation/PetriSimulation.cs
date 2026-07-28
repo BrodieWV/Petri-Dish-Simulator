@@ -51,10 +51,11 @@ namespace PetriDish.Simulation
         public readonly float[] Biomass;
         public readonly float[] Health;
         public readonly float[] Moisture;
+        public readonly float[] Nutrients;
 
         public SimulationSnapshot(int width, int height, long tick, float temperature,
             float coverage, float averageHealth, float averageMoisture, float averageNutrients,
-            float[] biomass, float[] health, float[] moisture)
+            float[] biomass, float[] health, float[] moisture, float[] nutrients)
         {
             Width = width;
             Height = height;
@@ -67,6 +68,26 @@ namespace PetriDish.Simulation
             Biomass = biomass;
             Health = health;
             Moisture = moisture;
+            Nutrients = nutrients;
+        }
+    }
+
+    public readonly struct SimulationMetrics
+    {
+        public readonly float Temperature;
+        public readonly float Coverage;
+        public readonly float AverageHealth;
+        public readonly float AverageMoisture;
+        public readonly float AverageNutrients;
+
+        public SimulationMetrics(float temperature, float coverage, float averageHealth,
+            float averageMoisture, float averageNutrients)
+        {
+            Temperature = temperature;
+            Coverage = coverage;
+            AverageHealth = averageHealth;
+            AverageMoisture = averageMoisture;
+            AverageNutrients = averageNutrients;
         }
     }
 
@@ -121,7 +142,13 @@ namespace PetriDish.Simulation
         public const float FixedStepSeconds = 0.25f;
         public const int CurrentSaveSchemaVersion = 2;
 
+        private const float DishRadiusNormalized = 0.87f;
+        private static readonly bool[] DishMask = CreateDishMask();
+        private static readonly float[] DishEdgeDistance = CreateDishEdgeDistance();
+        private static readonly int DishCellCount = CountDishCells();
+
         private readonly CellState[] cells = new CellState[GridWidth * GridHeight];
+        private readonly float[] nextBiomass = new float[GridWidth * GridHeight];
         private readonly int seed;
         private DeterministicRandom random;
         private long tick;
@@ -130,6 +157,7 @@ namespace PetriDish.Simulation
         private float targetTemperature = 21f;
 
         public long Tick => tick;
+        public int Seed => seed;
         public float ElapsedSimSeconds => elapsedSimSeconds;
         public float Temperature => temperature;
         public float TargetTemperature => targetTemperature;
@@ -150,12 +178,13 @@ namespace PetriDish.Simulation
 
             for (int i = 0; i < cells.Length; i++)
             {
+                bool isDishCell = DishMask[i];
                 cells[i] = new CellState
                 {
-                    moisture = 0.72f,
-                    nutrients = 1f,
+                    moisture = isDishCell ? 0.72f : 0f,
+                    nutrients = isDishCell ? 1f : 0f,
                     biomass = 0f,
-                    health = 1f,
+                    health = isDishCell ? 1f : 0f,
                     stress = 0f
                 };
             }
@@ -182,13 +211,19 @@ namespace PetriDish.Simulation
 
         public void SetTargetTemperature(float value)
         {
+            if (!IsFinite(value))
+                throw new ArgumentOutOfRangeException(nameof(value), "Temperature must be finite.");
             targetTemperature = Mathf.Clamp(value, 8f, 42f);
         }
 
         public void AddMoisture(float amount)
         {
+            if (!IsFinite(amount) || amount < 0f)
+                throw new ArgumentOutOfRangeException(nameof(amount), "Moisture amount must be finite and non-negative.");
+
             for (int i = 0; i < cells.Length; i++)
             {
+                if (!DishMask[i]) continue;
                 float noise = 0.85f + random.NextFloat01() * 0.3f;
                 cells[i].moisture = Mathf.Clamp01(cells[i].moisture + amount * noise);
             }
@@ -197,15 +232,17 @@ namespace PetriDish.Simulation
         public void Step()
         {
             temperature = Mathf.MoveTowards(temperature, targetTemperature, 0.18f);
-            var nextBiomass = new float[cells.Length];
+            Array.Clear(nextBiomass, 0, nextBiomass.Length);
 
             for (int y = 0; y < GridHeight; y++)
             {
                 for (int x = 0; x < GridWidth; x++)
                 {
                     int index = Index(x, y);
+                    if (!DishMask[index]) continue;
+
                     CellState cell = cells[index];
-                    float edge = Mathf.Min(Mathf.Min(x, GridWidth - 1 - x), Mathf.Min(y, GridHeight - 1 - y));
+                    float edge = DishEdgeDistance[index];
                     float edgeDrying = Mathf.Lerp(0.0017f, 0.00045f, Mathf.Clamp01(edge / 12f));
                     float heatDrying = Mathf.Max(0f, temperature - 24f) * 0.00012f;
                     cell.moisture = Mathf.Clamp01(cell.moisture - edgeDrying - heatDrying);
@@ -255,7 +292,9 @@ namespace PetriDish.Simulation
                     int nx = x + ox;
                     int ny = y + oy;
                     if (nx < 0 || nx >= GridWidth || ny < 0 || ny >= GridHeight) continue;
-                    destination[Index(nx, ny)] += amount * (0.75f + random.NextFloat01() * 0.5f);
+                    int neighbourIndex = Index(nx, ny);
+                    if (!DishMask[neighbourIndex]) continue;
+                    destination[neighbourIndex] += amount * (0.75f + random.NextFloat01() * 0.5f);
                 }
             }
         }
@@ -271,6 +310,7 @@ namespace PetriDish.Simulation
             var biomass = new float[cells.Length];
             var health = new float[cells.Length];
             var moisture = new float[cells.Length];
+            var nutrients = new float[cells.Length];
             float coverage = 0f;
             float totalHealth = 0f;
             float totalMoisture = 0f;
@@ -278,9 +318,19 @@ namespace PetriDish.Simulation
 
             for (int i = 0; i < cells.Length; i++)
             {
+                if (!DishMask[i])
+                {
+                    biomass[i] = 0f;
+                    health[i] = 0f;
+                    moisture[i] = 0f;
+                    nutrients[i] = 0f;
+                    continue;
+                }
+
                 biomass[i] = cells[i].biomass;
                 health[i] = cells[i].health;
                 moisture[i] = cells[i].moisture;
+                nutrients[i] = cells[i].nutrients;
                 if (cells[i].biomass > 0.06f) coverage += 1f;
                 totalHealth += cells[i].health;
                 totalMoisture += cells[i].moisture;
@@ -288,8 +338,32 @@ namespace PetriDish.Simulation
             }
 
             return new SimulationSnapshot(GridWidth, GridHeight, tick, temperature,
-                coverage / cells.Length, totalHealth / cells.Length, totalMoisture / cells.Length,
-                totalNutrients / cells.Length, biomass, health, moisture);
+                coverage / DishCellCount, totalHealth / DishCellCount, totalMoisture / DishCellCount,
+                totalNutrients / DishCellCount, biomass, health, moisture, nutrients);
+        }
+
+        public SimulationMetrics CreateMetrics()
+        {
+            float coverage = 0f;
+            float totalHealth = 0f;
+            float totalMoisture = 0f;
+            float totalNutrients = 0f;
+
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (!DishMask[i]) continue;
+                if (cells[i].biomass > 0.06f) coverage += 1f;
+                totalHealth += cells[i].health;
+                totalMoisture += cells[i].moisture;
+                totalNutrients += cells[i].nutrients;
+            }
+
+            return new SimulationMetrics(
+                temperature,
+                coverage / DishCellCount,
+                totalHealth / DishCellCount,
+                totalMoisture / DishCellCount,
+                totalNutrients / DishCellCount);
         }
 
         public SimulationSaveData CaptureSave()
@@ -322,7 +396,18 @@ namespace PetriDish.Simulation
                 ? new DeterministicRandom(data.randomState)
                 : new DeterministicRandom(seed ^ unchecked((int)tick));
 
-            for (int i = 0; i < cells.Length; i++) cells[i] = data.cells[i].Clone();
+            for (int i = 0; i < cells.Length; i++)
+            {
+                cells[i] = data.cells[i].Clone();
+                if (!DishMask[i])
+                {
+                    cells[i].moisture = 0f;
+                    cells[i].nutrients = 0f;
+                    cells[i].biomass = 0f;
+                    cells[i].health = 0f;
+                    cells[i].stress = 0f;
+                }
+            }
         }
 
         private void ValidateSave(SimulationSaveData data)
@@ -335,12 +420,83 @@ namespace PetriDish.Simulation
                 throw new ArgumentException("Save seed does not match this simulation instance.", nameof(data));
             if (data.cells == null || data.cells.Length != cells.Length)
                 throw new ArgumentException("Save data has an invalid cell array.", nameof(data));
+            if (data.tick < 0)
+                throw new ArgumentException("Save data has a negative simulation tick.", nameof(data));
+            if (!IsFinite(data.temperature) || !IsFinite(data.targetTemperature) ||
+                !IsFinite(data.elapsedSimSeconds) || data.elapsedSimSeconds < 0f)
+                throw new ArgumentException("Save data contains an invalid simulation value.", nameof(data));
+            if (data.temperature < 8f || data.temperature > 42f ||
+                data.targetTemperature < 8f || data.targetTemperature > 42f)
+                throw new ArgumentException("Save data contains an unsupported temperature.", nameof(data));
+            if (data.schemaVersion >= 2 && data.randomState == 0u)
+                throw new ArgumentException("Save data contains an invalid random state.", nameof(data));
 
             for (int i = 0; i < data.cells.Length; i++)
             {
                 if (data.cells[i] == null)
                     throw new ArgumentException($"Save data contains a null cell at index {i}.", nameof(data));
+                CellState cell = data.cells[i];
+                if (!IsUnitValue(cell.moisture) || !IsUnitValue(cell.nutrients) ||
+                    !IsUnitValue(cell.biomass) || !IsUnitValue(cell.health) ||
+                    !IsUnitValue(cell.stress))
+                    throw new ArgumentException($"Save data contains an invalid cell at index {i}.", nameof(data));
             }
+        }
+
+        private static bool IsUnitValue(float value) => IsFinite(value) && value >= 0f && value <= 1f;
+
+        private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+        private static bool[] CreateDishMask()
+        {
+            var mask = new bool[GridWidth * GridHeight];
+            float centerX = (GridWidth - 1) * 0.5f;
+            float centerY = (GridHeight - 1) * 0.5f;
+            float radius = Mathf.Min(GridWidth, GridHeight) * 0.5f * DishRadiusNormalized;
+            float radiusSquared = radius * radius;
+
+            for (int y = 0; y < GridHeight; y++)
+            {
+                for (int x = 0; x < GridWidth; x++)
+                {
+                    float dx = x - centerX;
+                    float dy = y - centerY;
+                    mask[Index(x, y)] = dx * dx + dy * dy <= radiusSquared;
+                }
+            }
+
+            return mask;
+        }
+
+        private static float[] CreateDishEdgeDistance()
+        {
+            var distances = new float[GridWidth * GridHeight];
+            float centerX = (GridWidth - 1) * 0.5f;
+            float centerY = (GridHeight - 1) * 0.5f;
+            float radius = Mathf.Min(GridWidth, GridHeight) * 0.5f * DishRadiusNormalized;
+
+            for (int y = 0; y < GridHeight; y++)
+            {
+                for (int x = 0; x < GridWidth; x++)
+                {
+                    float dx = x - centerX;
+                    float dy = y - centerY;
+                    distances[Index(x, y)] = Mathf.Max(0f, radius - Mathf.Sqrt(dx * dx + dy * dy));
+                }
+            }
+
+            return distances;
+        }
+
+        private static int CountDishCells()
+        {
+            int count = 0;
+            for (int i = 0; i < DishMask.Length; i++)
+            {
+                if (DishMask[i]) count++;
+            }
+
+            return count;
         }
 
         private static int Index(int x, int y) => y * GridWidth + x;

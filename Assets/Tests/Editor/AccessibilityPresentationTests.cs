@@ -56,7 +56,8 @@ namespace PetriDish.Tests.Editor
                 nutrients,
                 new[] { 0.5f },
                 new[] { health },
-                new[] { moisture });
+                new[] { moisture },
+                new[] { nutrients });
         }
     }
 }

@@ -27,3 +27,5 @@ Thumbs.db
 sysinfo.txt
 *.apk
 *.aab
+TestResults*.xml
+UnityTest*.log

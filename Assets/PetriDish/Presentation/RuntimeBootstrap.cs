@@ -36,7 +36,7 @@ namespace PetriDish.Presentation
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartRuntime()
         {
-            if (FindObjectOfType<RuntimeBootstrap>() != null) return;
+            if (FindAnyObjectByType<RuntimeBootstrap>() != null) return;
             var root = new GameObject("PetriDishRuntime");
             DontDestroyOnLoad(root);
             root.AddComponent<ExperimentController>();
@@ -45,7 +45,7 @@ namespace PetriDish.Presentation
 
         private void Awake()
         {
-            font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             controller = GetComponent<ExperimentController>();
             textScaleMode = TextScalePolicy.FromStoredValue(PlayerPrefs.GetInt(TextScalePreferenceKey, 0));
             CreateEventSystem();
@@ -68,7 +68,7 @@ namespace PetriDish.Presentation
 
         private void CreateEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null) return;
+            if (FindAnyObjectByType<EventSystem>() != null) return;
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             DontDestroyOnLoad(go);
         }
@@ -83,24 +83,37 @@ namespace PetriDish.Presentation
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0.5f;
 
-            var bg = Image(canvasGo.transform, "Background", new Color(0.05f, 0.07f, 0.06f));
+            var bg = Image(canvasGo.transform, "Background", new Color(0.035f, 0.055f, 0.047f));
             SetRect(bg.rectTransform, Vector2.zero, Vector2.one);
 
-            instruction = Text(bg.transform, "Instruction", 34, TextAnchor.MiddleCenter);
+            var safeAreaObject = new GameObject("SafeArea", typeof(RectTransform));
+            safeAreaObject.transform.SetParent(canvasGo.transform, false);
+            SetRect(safeAreaObject.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+            safeAreaObject.AddComponent<SafeAreaFitter>();
+            Transform content = safeAreaObject.transform;
+
+            instruction = Text(content, "Instruction", 34, TextAnchor.MiddleCenter);
             SetRect(instruction.rectTransform, new Vector2(0.04f, 0.89f), new Vector2(0.76f, 0.98f));
             instruction.text = "The Comfortable Range";
+            instruction.fontStyle = FontStyle.Bold;
 
-            var textScale = CreateButton(bg.transform, TextScalePolicy.ButtonLabel(textScaleMode), CycleTextScale);
+            var textScale = CreateButton(content, TextScalePolicy.ButtonLabel(textScaleMode), CycleTextScale);
             SetRect(textScale.GetComponent<RectTransform>(), new Vector2(0.78f, 0.91f), new Vector2(0.96f, 0.97f));
             textScaleLabel = textScale.GetComponentInChildren<Text>();
 
-            condition = Text(bg.transform, "Condition", 29, TextAnchor.MiddleLeft);
-            SetRect(condition.rectTransform, new Vector2(0.05f, 0.82f), new Vector2(0.55f, 0.89f));
-            metrics = Text(bg.transform, "Metrics", 24, TextAnchor.MiddleRight);
-            SetRect(metrics.rectTransform, new Vector2(0.52f, 0.82f), new Vector2(0.95f, 0.89f));
+            var culture = Text(content, "Culture", 19, TextAnchor.MiddleCenter);
+            SetRect(culture.rectTransform, new Vector2(0.05f, 0.865f), new Vector2(0.95f, 0.90f));
+            culture.text = "RAPID BACTERIUM  /  NUTRIENT AGAR";
+            culture.color = new Color(0.58f, 0.76f, 0.66f);
 
-            var dishPanel = Image(bg.transform, "DishPanel", new Color(0.11f, 0.15f, 0.13f));
-            SetRect(dishPanel.rectTransform, new Vector2(0.08f, 0.35f), new Vector2(0.92f, 0.80f));
+            condition = Text(content, "Condition", 29, TextAnchor.MiddleLeft);
+            SetRect(condition.rectTransform, new Vector2(0.05f, 0.81f), new Vector2(0.58f, 0.865f));
+            condition.fontStyle = FontStyle.Bold;
+            metrics = Text(content, "Metrics", 24, TextAnchor.MiddleRight);
+            SetRect(metrics.rectTransform, new Vector2(0.54f, 0.80f), new Vector2(0.95f, 0.865f));
+
+            var dishPanel = Image(content, "DishPanel", new Color(0.075f, 0.115f, 0.095f));
+            SetRect(dishPanel.rectTransform, new Vector2(0.08f, 0.375f), new Vector2(0.92f, 0.80f));
             var dish = new GameObject("Dish", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter), typeof(DishRenderer));
             dish.transform.SetParent(dishPanel.transform, false);
             SetRect(dish.GetComponent<RectTransform>(), new Vector2(0.04f, 0.04f), new Vector2(0.96f, 0.96f));
@@ -108,19 +121,19 @@ namespace PetriDish.Presentation
             dish.GetComponent<AspectRatioFitter>().aspectRatio = 1f;
             renderer = dish.GetComponent<DishRenderer>();
 
-            var inspectionPanel = Image(dishPanel.transform, "InspectionPanel", new Color(0.03f, 0.05f, 0.04f, 0.88f));
+            var inspectionPanel = Image(content, "InspectionPanel", new Color(0.045f, 0.075f, 0.062f, 0.96f));
             inspectionPanel.raycastTarget = false;
-            SetRect(inspectionPanel.rectTransform, new Vector2(0.04f, 0.04f), new Vector2(0.96f, 0.24f));
+            SetRect(inspectionPanel.rectTransform, new Vector2(0.08f, 0.325f), new Vector2(0.92f, 0.37f));
             inspection = Text(inspectionPanel.transform, "Inspection", 22, TextAnchor.MiddleLeft);
             inspection.raycastTarget = false;
-            SetRect(inspection.rectTransform, new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.94f));
+            SetRect(inspection.rectTransform, new Vector2(0.035f, 0.06f), new Vector2(0.965f, 0.94f));
             inspection.text = "Tap the dish to inspect a local cell.";
 
-            outcome = Text(bg.transform, "Outcome", 28, TextAnchor.MiddleCenter);
-            SetRect(outcome.rectTransform, new Vector2(0.06f, 0.315f), new Vector2(0.94f, 0.35f));
+            outcome = Text(content, "Outcome", 28, TextAnchor.MiddleCenter);
+            SetRect(outcome.rectTransform, new Vector2(0.06f, 0.295f), new Vector2(0.94f, 0.325f));
 
-            var controls = Image(bg.transform, "Controls", new Color(0.08f, 0.11f, 0.10f));
-            SetRect(controls.rectTransform, new Vector2(0.04f, 0.04f), new Vector2(0.96f, 0.31f));
+            var controls = Image(content, "Controls", new Color(0.065f, 0.095f, 0.082f));
+            SetRect(controls.rectTransform, new Vector2(0.04f, 0.025f), new Vector2(0.96f, 0.29f));
 
             var tempLabel = Text(controls.transform, "TemperatureLabel", 27, TextAnchor.MiddleLeft);
             SetRect(tempLabel.rectTransform, new Vector2(0.04f, 0.76f), new Vector2(0.50f, 0.96f));
@@ -136,25 +149,25 @@ namespace PetriDish.Presentation
                 temperatureValue.text = v.ToString("0.0") + "°C target";
             });
 
-            simulationState = Text(controls.transform, "SimulationState", 20, TextAnchor.MiddleCenter);
-            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.51f), new Vector2(0.96f, 0.59f));
+            simulationState = Text(controls.transform, "SimulationState", 18, TextAnchor.MiddleCenter);
+            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.45f), new Vector2(0.96f, 0.53f));
 
-            moisture = CreateButton(controls.transform, "Add moisture", controller.AddMoisture);
-            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.28f), new Vector2(0.37f, 0.50f));
+            moisture = CreateButton(controls.transform, "Add moisture", AddMoisture);
+            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.37f, 0.43f));
             var pause = CreateButton(controls.transform, AccessibilityPresentation.PauseButtonLabel(controller.Paused), TogglePause);
-            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.28f), new Vector2(0.72f, 0.50f));
+            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.22f), new Vector2(0.72f, 0.43f));
             pauseLabel = pause.GetComponentInChildren<Text>();
             var speed = CreateButton(controls.transform, SimulationSpeedCycle.Label(controller.SimulationSpeed), CycleSpeed);
-            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.28f), new Vector2(0.96f, 0.50f));
+            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.22f), new Vector2(0.96f, 0.43f));
             speedLabel = speed.GetComponentInChildren<Text>();
 
-            SetRect(CreateButton(controls.transform, "Save", controller.Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.03f), new Vector2(0.24f, 0.24f));
-            SetRect(CreateButton(controls.transform, "Load", Load).GetComponent<RectTransform>(), new Vector2(0.26f, 0.03f), new Vector2(0.46f, 0.24f));
-            SetRect(CreateButton(controls.transform, "Restart", RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.03f), new Vector2(0.70f, 0.24f));
-            SetRect(CreateButton(controls.transform, "New seed", RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.03f), new Vector2(0.96f, 0.24f));
+            SetRect(CreateButton(controls.transform, "Save", Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.01f), new Vector2(0.24f, 0.19f));
+            SetRect(CreateButton(controls.transform, "Load", Load).GetComponent<RectTransform>(), new Vector2(0.26f, 0.01f), new Vector2(0.46f, 0.19f));
+            SetRect(CreateButton(controls.transform, "Restart", RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.01f), new Vector2(0.70f, 0.19f));
+            SetRect(CreateButton(controls.transform, "New seed", RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.01f), new Vector2(0.96f, 0.19f));
 
-            temperature.value = 21f;
-            moisture.interactable = false;
+            temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
+            moisture.interactable = true;
             ApplyTextScale();
         }
 
@@ -165,7 +178,9 @@ namespace PetriDish.Presentation
             renderer.Render(snapshot);
             SimulationCondition status = AccessibilityPresentation.GetCondition(snapshot);
             condition.text = AccessibilityPresentation.ConditionLabel(status);
+            condition.color = ConditionColor(status);
             metrics.text = $"{snapshot.Temperature:0.0}°C • Coverage {snapshot.Coverage * 100f:0}%\nMoisture {snapshot.AverageMoisture * 100f:0}% • Nutrients {snapshot.AverageNutrients * 100f:0}%";
+            temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
             RefreshInspection();
             RefreshPlaybackState();
@@ -174,8 +189,7 @@ namespace PetriDish.Presentation
         private void OnDishTapped(Vector2 normalizedPoint)
         {
             if (!hasSnapshot) return;
-            SimulationSaveData save = controller.Simulation.CaptureSave();
-            if (!DishInspection.TryInspect(currentSnapshot, save, normalizedPoint.x, normalizedPoint.y, out CellInspection cell))
+            if (!DishInspection.TryInspect(currentSnapshot, normalizedPoint.x, normalizedPoint.y, out CellInspection cell))
                 return;
 
             selectedX = cell.X;
@@ -186,15 +200,13 @@ namespace PetriDish.Presentation
         private void RefreshInspection()
         {
             if (!hasSnapshot || selectedX < 0 || selectedY < 0) return;
-            SimulationSaveData save = controller.Simulation.CaptureSave();
-            if (DishInspection.TryInspect(currentSnapshot, save, selectedX, selectedY, out CellInspection cell))
+            if (DishInspection.TryInspect(currentSnapshot, selectedX, selectedY, out CellInspection cell))
                 inspection.text = cell.ToDisplayText();
         }
 
         private void OnStage(GuidedStage stage, string message)
         {
             instruction.text = message;
-            moisture.interactable = stage == GuidedStage.MoistureRescue || stage == GuidedStage.Recovery;
             outcome.text = stage == GuidedStage.Complete
                 ? "Discovery unlocked: A Comfortable Range"
                 : stage == GuidedStage.Failed ? "Experiment ended — review the limiting factors and retry." : string.Empty;
@@ -232,15 +244,35 @@ namespace PetriDish.Presentation
             }
         }
 
+        private void Save()
+        {
+            outcome.text = controller.Save()
+                ? "Experiment saved."
+                : controller.LastPersistenceError;
+        }
+
+        private void AddMoisture()
+        {
+            controller.AddMoisture();
+            outcome.text = "Moisture added. The agar is rehydrating.";
+        }
+
         private void Load()
         {
-            controller.Load();
+            if (controller.Load())
+            {
+                ResetInspection();
+                speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
+            }
+            else
+                outcome.text = controller.LastPersistenceError;
             RefreshPlaybackState();
         }
 
         private void RestartSameSeed()
         {
             controller.RestartSameSeed();
+            ResetInspection();
             speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
             RefreshPlaybackState();
         }
@@ -248,8 +280,16 @@ namespace PetriDish.Presentation
         private void RestartNewSeed()
         {
             controller.RestartNewSeed();
+            ResetInspection();
             speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
             RefreshPlaybackState();
+        }
+
+        private void ResetInspection()
+        {
+            selectedX = -1;
+            selectedY = -1;
+            inspection.text = "Tap the dish to inspect a local cell.";
         }
 
         private void RefreshPlaybackState()
@@ -287,10 +327,40 @@ namespace PetriDish.Presentation
             var image = Image(parent, label + "Button", new Color(0.18f, 0.32f, 0.26f));
             var button = image.gameObject.AddComponent<Button>();
             button.onClick.AddListener(action);
+            var colors = button.colors;
+            colors.normalColor = new Color(0.18f, 0.32f, 0.26f);
+            colors.highlightedColor = new Color(0.28f, 0.48f, 0.37f);
+            colors.pressedColor = new Color(0.11f, 0.23f, 0.18f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = new Color(0.12f, 0.15f, 0.14f, 0.62f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
             var text = Text(image.transform, "Label", 22, TextAnchor.MiddleCenter);
             text.text = label;
+            text.fontStyle = FontStyle.Bold;
             SetRect(text.rectTransform, Vector2.zero, Vector2.one);
             return button;
+        }
+
+        private static Color ConditionColor(SimulationCondition status)
+        {
+            switch (status)
+            {
+                case SimulationCondition.Stable:
+                    return new Color(0.63f, 0.96f, 0.62f);
+                case SimulationCondition.SlowGrowth:
+                    return new Color(0.73f, 0.84f, 0.70f);
+                case SimulationCondition.HeatStress:
+                    return new Color(1f, 0.58f, 0.35f);
+                case SimulationCondition.Dry:
+                case SimulationCondition.NutrientLimited:
+                    return new Color(1f, 0.76f, 0.38f);
+                case SimulationCondition.Declining:
+                    return new Color(1f, 0.42f, 0.40f);
+                default:
+                    return Color.white;
+            }
         }
 
         private Slider CreateSlider(Transform parent)
@@ -308,7 +378,7 @@ namespace PetriDish.Presentation
             handleArea.transform.SetParent(root.transform, false);
             SetRect(handleArea.GetComponent<RectTransform>(), new Vector2(0.02f, 0f), new Vector2(0.98f, 1f));
             var handle = Image(handleArea.transform, "Handle", Color.white);
-            handle.rectTransform.sizeDelta = new Vector2(40f, 40f);
+            handle.rectTransform.sizeDelta = new Vector2(28f, 28f);
             var slider = root.GetComponent<Slider>();
             slider.minValue = 8f;
             slider.maxValue = 42f;
