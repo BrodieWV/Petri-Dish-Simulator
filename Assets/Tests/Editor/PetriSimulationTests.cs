@@ -151,6 +151,36 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void RoundDishExcludesInvisibleCornerCellsFromStateAndMetrics()
+        {
+            var simulation = new PetriSimulation(5001);
+            SimulationSaveData save = simulation.CaptureSave();
+
+            for (int i = 0; i < save.cells.Length; i++)
+            {
+                save.cells[i].moisture = 0.50f;
+                save.cells[i].nutrients = 1f;
+                save.cells[i].biomass = 0f;
+                save.cells[i].health = 1f;
+                save.cells[i].stress = 0f;
+            }
+
+            save.cells[0].moisture = 0f;
+            save.cells[0].nutrients = 0f;
+            save.cells[0].biomass = 1f;
+            save.cells[0].health = 0f;
+            simulation.Restore(save);
+
+            SimulationSnapshot snapshot = simulation.CreateSnapshot();
+
+            Assert.That(snapshot.Biomass[0], Is.Zero);
+            Assert.That(snapshot.Moisture[0], Is.Zero);
+            Assert.That(snapshot.Coverage, Is.Zero);
+            Assert.That(snapshot.AverageHealth, Is.EqualTo(1f).Within(FloatTolerance));
+            Assert.That(snapshot.AverageMoisture, Is.EqualTo(0.50f).Within(FloatTolerance));
+        }
+
+        [Test]
         public void SimulationStepsDoNotAllocateManagedMemoryAfterWarmup()
         {
             var simulation = new PetriSimulation(7001);

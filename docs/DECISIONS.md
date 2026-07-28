@@ -32,3 +32,6 @@ Accepted for rapid UI and simulation adjustment during development.
 
 ## D-011 — Unity 6.5 is the production baseline
 Accepted on 27 July 2026 and amended on the same date by product-owner direction. The repository targets Unity `6000.5.3f1`. This supersedes the earlier `6000.3.20f1` baseline. Unity 2022, Unity 2023, and earlier Unity 6 editor versions are not supported project baselines.
+
+## D-012 — The standard dish uses a circular active simulation mask
+Accepted on 28 July 2026 after phone-simulator review exposed a mismatch between the round presentation and the square grid boundary. The deterministic 48 × 48 storage grid remains, but cells outside the visible agar circle are inactive and excluded from growth, interventions, snapshots, inspection, coverage, and aggregate metrics. Edge drying is measured radially from the agar boundary so authoritative simulation state matches the player-visible round dish.

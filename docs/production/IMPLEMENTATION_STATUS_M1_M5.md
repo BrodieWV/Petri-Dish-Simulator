@@ -25,13 +25,14 @@ Implemented:
 - Unity `.gitignore`
 - Portrait-first runtime-generated responsive UI
 - Safe proportional anchors for phone and tablet layouts
+- Runtime `Screen.safeArea` fitting for notches, punch holes, rotation, and device-profile changes
+- Phone layout verified in the Unity Device Simulator using a Samsung Galaxy S10+ profile
 - Dish, status, instructions, controls, outcomes, and save controls
 - One-click editor setup command at `Petri Dish > Setup Vertical Slice Project`
 
 Review pending:
 
 - Confirm Android SDK and minimum API level
-- Inspect device safe areas and cut-outs
 - Replace generated placeholder layout with production prefabs if preferred
 - Review Unity 6 Build Profiles and Android platform configuration
 
@@ -40,6 +41,8 @@ Review pending:
 Implemented:
 
 - 48 × 48 two-dimensional dish grid
+- Circular active-cell mask aligned with the visible agar boundary
+- Radial edge drying and round-dish coverage/aggregate metrics
 - Fixed 0.25-second simulation steps
 - Seeded colony generation and spread randomness
 - Serializable deterministic random state for exact save/load continuation
@@ -53,11 +56,11 @@ Implemented:
 - Growth, decline, death, resource consumption, and local spread
 - Read-only simulation snapshots
 - Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, accessible status presentation, and text-scale policy behaviour
+- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, circular masking, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, safe-area fitting, accessible status presentation, and text-scale policy behaviour
+- Full Unity `6000.5.3f1` Edit Mode verification on 28 July 2026: 70 passed, 0 failed
 
 Review pending:
 
-- Run the Edit Mode suite inside Unity `6000.5.3f1`
 - Codex determinism review
 - Random-stream separation refinement if independent organism or event channels are introduced
 - Balance validation against intended experiment pacing on a device
@@ -67,6 +70,8 @@ Review pending:
 Implemented:
 
 - Texture-driven dish renderer
+- Procedural glass rim, agar depth, highlight, and deterministic colony mottling
+- Bright active-growth edge and non-colour heat/dry stress patterns
 - Healthy, stressed, dry, and declining colour response
 - Visible biomass expansion
 - Smooth bilinear presentation over the low-resolution grid
@@ -78,7 +83,6 @@ Review pending:
 
 - More expressive colony edge animation
 - Shape and texture art pass
-- Additional non-colour visual patterns or symbols directly on the dish
 - Mobile profiling
 - Unity 6 renderer and texture-update optimisation review
 
