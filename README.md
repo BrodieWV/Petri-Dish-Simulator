@@ -93,9 +93,11 @@ Initial environmental controls:
 - `docs/VISION.md`
 - `docs/GAME_DESIGN_DOCUMENT.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DATA_MODEL.md`
 - `docs/ROADMAP.md`
 - `docs/MILESTONES.md`
 - `docs/SIMULATION_MODEL.md`
+- `docs/TEST_STRATEGY.md`
 - `docs/design/VERTICAL_SLICE_SPECIFICATION.md`
 - `docs/design/STARTING_BALANCE_VALUES.md`
 - `docs/production/UNITY_SCENE_AND_PREFAB_SPEC.md`

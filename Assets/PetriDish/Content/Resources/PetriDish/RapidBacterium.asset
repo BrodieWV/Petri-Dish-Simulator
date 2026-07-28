@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91be6f69e8a24eb3ac1c87d024d53af0, type: 3}
+  m_Name: RapidBacterium
+  m_EditorClassIdentifier:
+  id: rapid-bacterium
+  definitionVersion: 1
+  displayName: Rapid Bacterium
+  scientificLabel: Educationalised fast-growing bacterial archetype; not a cultivation model.
+  initialHealth: 1
+  seedRadiusCells: 2.3
+  seedCenterBiomass: 0.28
+  seedEdgeBiomass: 0.08
+  preferredTemperature: 26
+  temperatureHalfRange: 7.5
+  lethalTemperatureMinimum: 11
+  lethalTemperatureMaximum: 38
+  preferredMoisture: 0.7
+  moistureHalfRange: 0.35
+  lethalMoistureMinimum: 0.16
+  nutrientsForFullSuitability: 0.25
+  healthySuitabilityThreshold: 0.55
+  healthRecoveryRate: 0.015
+  healthDeclineRate: 0.018
+  healthDeclineStressFloor: 0.35
+  normalStressResponseRate: 0.025
+  lethalStressResponseRate: 0.06
+  growthRate: 0.07
+  lethalDeathRate: 0.035
+  stressDeathRate: 0.004
+  nutrientConsumptionPerGrowth: 0.42
+  moistureConsumptionPerGrowth: 0.025
+  spreadMinimumBiomass: 0.035
+  spreadMinimumSuitability: 0.28
+  spreadRate: 0.006
+  spreadRandomMinimum: 0.75
+  spreadRandomMaximum: 1.25

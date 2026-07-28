@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security;
 using System.Text;
+using PetriDish.Content;
 using PetriDish.Simulation;
 using UnityEngine;
 
@@ -22,7 +23,7 @@ namespace PetriDish.Application
     public sealed class ExperimentController : MonoBehaviour
     {
         public const int TutorialSeed = 260726;
-        private const int CurrentExperimentSaveSchemaVersion = 2;
+        private const int CurrentExperimentSaveSchemaVersion = 3;
         private const long MaxSaveFileBytes = 4L * 1024L * 1024L;
         private const float MaxPendingSimulationSeconds = 3600f;
 
@@ -31,6 +32,9 @@ namespace PetriDish.Application
 
         [SerializeField] private float simulationSpeed = 1f;
         [SerializeField, Min(1)] private int maxSimulationStepsPerFrame = 64;
+        [SerializeField] private SimulationDefinitionCatalog definitionCatalog;
+        [SerializeField] private string selectedOrganismId;
+        [SerializeField] private string selectedMediumId;
         private PetriSimulation simulation;
         private float accumulator;
         private bool paused;
@@ -48,6 +52,7 @@ namespace PetriDish.Application
         private void Awake()
         {
             savePath = Path.Combine(UnityEngine.Application.persistentDataPath, "petri_vertical_slice.json");
+            EnsureDefinitionSelection();
             ResetExperiment(TutorialSeed, false);
         }
 
@@ -95,9 +100,32 @@ namespace PetriDish.Application
             ResetExperiment(seed, true);
         }
 
+        public void StartNew(int seed, string organismId, string mediumId)
+        {
+            EnsureDefinitionCatalog();
+            definitionCatalog.ResolveOrganism(organismId);
+            definitionCatalog.ResolveMedium(mediumId);
+            selectedOrganismId = organismId;
+            selectedMediumId = mediumId;
+            ResetExperiment(seed, true);
+        }
+
+        public void ConfigureDefinitionCatalog(SimulationDefinitionCatalog catalog)
+        {
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+            catalog.ValidateOrThrow();
+            definitionCatalog = catalog;
+            selectedOrganismId = catalog.DefaultOrganism.Id;
+            selectedMediumId = catalog.DefaultMedium.Id;
+        }
+
         private void ResetExperiment(int seed, bool notify)
         {
-            simulation = new PetriSimulation(seed);
+            EnsureDefinitionSelection();
+            simulation = new PetriSimulation(
+                seed,
+                definitionCatalog.ResolveOrganism(selectedOrganismId),
+                definitionCatalog.ResolveMedium(selectedMediumId));
             accumulator = 0f;
             paused = false;
             simulationSpeed = 1f;
@@ -199,7 +227,7 @@ namespace PetriDish.Application
             }
 
             LastPersistenceError = File.Exists(fullPath)
-                ? "The saved experiment is invalid or unreadable."
+                ? $"The saved experiment could not be loaded: {primaryError}"
                 : "No saved experiment was found.";
             if (!string.IsNullOrEmpty(primaryError))
                 Debug.LogWarning($"Petri Dish load failed: {primaryError}");
@@ -284,11 +312,20 @@ namespace PetriDish.Application
                     File.ReadAllText(path, Encoding.UTF8));
                 ValidateExperimentSave(wrapper);
 
-                var restoredSimulation = new PetriSimulation(wrapper.simulation.seed);
+                ResolveSavedDefinitions(
+                    wrapper,
+                    out OrganismDefinition organismDefinition,
+                    out MediumDefinition mediumDefinition);
+                var restoredSimulation = new PetriSimulation(
+                    wrapper.simulation.seed,
+                    organismDefinition,
+                    mediumDefinition);
                 restoredSimulation.Restore(wrapper.simulation);
 
                 bool legacy = wrapper.schemaVersion == 0;
                 simulation = restoredSimulation;
+                selectedOrganismId = organismDefinition.Id;
+                selectedMediumId = mediumDefinition.Id;
                 stage = wrapper.stage;
                 stageStartSeconds = wrapper.stageStartSeconds;
                 moistureAddedDuringRescue = wrapper.moistureAddedDuringRescue;
@@ -311,8 +348,13 @@ namespace PetriDish.Application
             if (wrapper == null || wrapper.simulation == null)
                 throw new InvalidDataException("Save data is incomplete.");
             if (wrapper.schemaVersion != 0 &&
+                wrapper.schemaVersion != 2 &&
                 wrapper.schemaVersion != CurrentExperimentSaveSchemaVersion)
                 throw new InvalidDataException($"Unsupported experiment save schema {wrapper.schemaVersion}.");
+            if (wrapper.schemaVersion >= 3 &&
+                wrapper.simulation.schemaVersion != PetriSimulation.CurrentSaveSchemaVersion)
+                throw new InvalidDataException(
+                    "Experiment and simulation save schemas do not describe the same content selection.");
             if (!Enum.IsDefined(typeof(GuidedStage), wrapper.stage))
                 throw new InvalidDataException("Save data contains an invalid guided stage.");
             if (!IsFinite(wrapper.stageStartSeconds) || wrapper.stageStartSeconds < 0f ||
@@ -326,6 +368,45 @@ namespace PetriDish.Application
             if (!IsFinite(wrapper.simulationSpeed) ||
                 wrapper.simulationSpeed < 0.5f || wrapper.simulationSpeed > 8f)
                 throw new InvalidDataException("Save data contains an invalid simulation speed.");
+        }
+
+        private void ResolveSavedDefinitions(
+            ExperimentSave wrapper,
+            out OrganismDefinition organismDefinition,
+            out MediumDefinition mediumDefinition)
+        {
+            EnsureDefinitionCatalog();
+            bool legacyContentSelection =
+                wrapper.schemaVersion <= 2 || wrapper.simulation.schemaVersion <= 2;
+            if (legacyContentSelection)
+            {
+                organismDefinition = definitionCatalog.ResolveOrganism(
+                    SimulationDefinitionCatalog.RapidBacteriumId);
+                mediumDefinition = definitionCatalog.ResolveMedium(
+                    SimulationDefinitionCatalog.NutrientAgarId);
+                return;
+            }
+
+            organismDefinition = definitionCatalog.ResolveOrganism(wrapper.simulation.organismId);
+            mediumDefinition = definitionCatalog.ResolveMedium(wrapper.simulation.mediumId);
+        }
+
+        private void EnsureDefinitionSelection()
+        {
+            EnsureDefinitionCatalog();
+            if (string.IsNullOrWhiteSpace(selectedOrganismId))
+                selectedOrganismId = definitionCatalog.DefaultOrganism.Id;
+            if (string.IsNullOrWhiteSpace(selectedMediumId))
+                selectedMediumId = definitionCatalog.DefaultMedium.Id;
+            definitionCatalog.ResolveOrganism(selectedOrganismId);
+            definitionCatalog.ResolveMedium(selectedMediumId);
+        }
+
+        private void EnsureDefinitionCatalog()
+        {
+            if (definitionCatalog == null)
+                definitionCatalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            definitionCatalog.ValidateOrThrow();
         }
 
         private static string ValidatePersistencePath(string path)

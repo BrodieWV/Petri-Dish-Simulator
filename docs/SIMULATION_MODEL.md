@@ -13,6 +13,23 @@
 
 Preferred and survivable temperature/moisture ranges, light sensitivity, oxygen preference, nutrient needs, growth and consumption rates, waste, spread style, dormancy, recovery, competition, inhibition, and visual profile.
 
+The first Phase 2 framework implements only the traits already used by the vertical
+slice: starting health and colony shape, preferred and lethal temperature/moisture,
+nutrient suitability, health/stress response, growth/death, resource consumption, and
+local spread. These values come from the selected `OrganismDefinition`; the central
+simulation contains only general algorithms and normalised grid rules.
+
+The default `rapid-bacterium` definition reproduces the previous vertical-slice balance.
+It is an educationalised archetype rather than species-level cultivation guidance.
+
+## Medium traits
+
+The selected `MediumDefinition` currently supplies starting moisture and nutrients,
+radial edge/interior evaporation, evaporation falloff depth, and heat-driven evaporation.
+The default `nutrient-agar` definition reproduces the previous vertical-slice values.
+Diffusion, structure, compatibility, and multiple nutrient pools remain later Phase 2
+work and are not implied by this first framework.
+
 ## Suitability
 
 Each environmental factor uses a tunable response curve. Ideal conditions approach 1.0; limiting conditions reduce growth; lethal ranges cause damage or death. The model exposes the strongest limiting factor.
@@ -35,6 +52,10 @@ Condensation, dry edge, nutrient pocket, bloom, dormancy, waste buildup, contami
 ## Scientific labels
 
 Observed relationship, educational simplification, gameplay abstraction, or fictional.
+
+Definition assets include a scientific/simplification note as content metadata. They do
+not include presentation colours, textures, animation, or audio; those remain in the
+presentation/content-view layer.
 
 ## Safety
 

@@ -11,8 +11,8 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void SameSeedAndInputsProduceIdenticalSnapshots()
         {
-            var first = new PetriSimulation(12345);
-            var second = new PetriSimulation(12345);
+            var first = CreateDefaultSimulation(12345);
+            var second = CreateDefaultSimulation(12345);
 
             first.SetTargetTemperature(27f);
             second.SetTargetTemperature(27f);
@@ -35,14 +35,14 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void SaveRestoreContinuesTheExactRandomSequence()
         {
-            var uninterrupted = new PetriSimulation(9876);
+            var uninterrupted = CreateDefaultSimulation(9876);
             uninterrupted.SetTargetTemperature(30f);
 
             for (int i = 0; i < 40; i++) uninterrupted.Step();
             uninterrupted.AddMoisture(0.12f);
 
             SimulationSaveData save = uninterrupted.CaptureSave();
-            var resumed = new PetriSimulation(9876);
+            var resumed = CreateDefaultSimulation(9876);
             resumed.Restore(save);
 
             for (int i = 0; i < 60; i++)
@@ -63,7 +63,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void CapturedSaveIsAnIndependentSnapshot()
         {
-            var simulation = new PetriSimulation(42);
+            var simulation = CreateDefaultSimulation(42);
             for (int i = 0; i < 12; i++) simulation.Step();
 
             SimulationSaveData save = simulation.CaptureSave();
@@ -80,11 +80,11 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void RestoreCopiesCellsInsteadOfSharingSaveObjects()
         {
-            var simulation = new PetriSimulation(1337);
+            var simulation = CreateDefaultSimulation(1337);
             for (int i = 0; i < 20; i++) simulation.Step();
             SimulationSaveData save = simulation.CaptureSave();
 
-            var restored = new PetriSimulation(1337);
+            var restored = CreateDefaultSimulation(1337);
             restored.Restore(save);
             float savedMoisture = save.cells[0].moisture;
             float savedBiomass = save.cells[0].biomass;
@@ -98,10 +98,10 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void RestoreRejectsMismatchedSeedAndUnsupportedSchema()
         {
-            var source = new PetriSimulation(10);
+            var source = CreateDefaultSimulation(10);
             SimulationSaveData save = source.CaptureSave();
 
-            var wrongSeed = new PetriSimulation(11);
+            var wrongSeed = CreateDefaultSimulation(11);
             Assert.Throws<ArgumentException>(() => wrongSeed.Restore(save));
 
             save.schemaVersion = PetriSimulation.CurrentSaveSchemaVersion + 1;
@@ -111,7 +111,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void RestoreRejectsNonFiniteAndOutOfRangeValues()
         {
-            var source = new PetriSimulation(10);
+            var source = CreateDefaultSimulation(10);
 
             SimulationSaveData invalidTemperature = source.CaptureSave();
             invalidTemperature.temperature = float.NaN;
@@ -129,7 +129,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void TargetTemperatureIsClampedToSupportedRange()
         {
-            var simulation = new PetriSimulation(1);
+            var simulation = CreateDefaultSimulation(1);
 
             simulation.SetTargetTemperature(-100f);
             Assert.That(simulation.TargetTemperature, Is.EqualTo(8f));
@@ -144,7 +144,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void MoistureInterventionRejectsInvalidAmounts()
         {
-            var simulation = new PetriSimulation(1);
+            var simulation = CreateDefaultSimulation(1);
 
             Assert.Throws<ArgumentOutOfRangeException>(() => simulation.AddMoisture(-0.01f));
             Assert.Throws<ArgumentOutOfRangeException>(() => simulation.AddMoisture(float.NaN));
@@ -153,7 +153,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void RoundDishExcludesInvisibleCornerCellsFromStateAndMetrics()
         {
-            var simulation = new PetriSimulation(5001);
+            var simulation = CreateDefaultSimulation(5001);
             SimulationSaveData save = simulation.CaptureSave();
 
             for (int i = 0; i < save.cells.Length; i++)
@@ -183,7 +183,7 @@ namespace PetriDish.Tests.Editor
         [Test]
         public void SimulationStepsDoNotAllocateManagedMemoryAfterWarmup()
         {
-            var simulation = new PetriSimulation(7001);
+            var simulation = CreateDefaultSimulation(7001);
             for (int i = 0; i < 4; i++) simulation.Step();
 
             long before = GC.GetAllocatedBytesForCurrentThread();
@@ -263,7 +263,7 @@ namespace PetriDish.Tests.Editor
         private static PetriSimulation CreateUniformSimulation(int seed, float temperature,
             float moisture, float nutrients, float biomass, float health, float stress)
         {
-            var simulation = new PetriSimulation(seed);
+            var simulation = CreateDefaultSimulation(seed);
             SimulationSaveData save = simulation.CaptureSave();
             save.temperature = temperature;
             save.targetTemperature = temperature;
@@ -286,6 +286,12 @@ namespace PetriDish.Tests.Editor
             float total = 0f;
             for (int i = 0; i < snapshot.Biomass.Length; i++) total += snapshot.Biomass[i];
             return total;
+        }
+
+        private static PetriSimulation CreateDefaultSimulation(int seed)
+        {
+            var catalog = PetriDish.Content.SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            return new PetriSimulation(seed, catalog.DefaultOrganism, catalog.DefaultMedium);
         }
 
         private static void AssertSnapshotsEqual(SimulationSnapshot expected, SimulationSnapshot actual)

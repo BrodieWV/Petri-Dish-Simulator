@@ -18,6 +18,29 @@ The immediate engineering focus is the data-driven organism and medium framework
 
 Do not downgrade the production editor baseline.
 
+## Phase 2 — Data-driven organism and medium foundation
+
+Implemented:
+
+- Unity-authored `OrganismDefinition` and `MediumDefinition` ScriptableObjects
+- Validated `SimulationDefinitionCatalog` with stable unique ID resolution
+- Default Rapid Bacterium and Nutrient Agar assets containing the previous vertical-slice values
+- Immutable runtime copies of definition values for deterministic simulations
+- Selected organism and medium passed into new, restarted, and restored simulations
+- Simulation and experiment save schema version 3 with definition IDs and versions
+- Controlled migration of schema-version-2 saves to the original default pair
+- Controlled rejection of missing, malformed, duplicate, unsupported, and version-mismatched definitions
+- Edit Mode coverage for baseline parity, distinct organism growth, distinct medium drying, deterministic replay, selected-definition save/load, schema-2 migration, and invalid content
+- Complete Unity `6000.5.3f1` Edit Mode verification on 28 July 2026: 79 passed, 0 failed
+
+Deliberately deferred:
+
+- Runtime organism or medium selection UI
+- Additional production organisms or media
+- Visual/audio profiles and presentation asset selection
+- Compatibility rules, diffusion, multiple nutrient pools, waste, and competition
+- Content-version migration beyond the safe schema-2 default mapping
+
 ## M1 — Unity project and responsive dish scene — Complete
 
 Implemented:
