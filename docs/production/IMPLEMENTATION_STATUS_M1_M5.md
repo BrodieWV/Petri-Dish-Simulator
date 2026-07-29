@@ -1,8 +1,12 @@
-# Implementation Status — Milestones M1 to M5
+# Implementation Status — Phase 1 Complete / Phase 2 Active
 
-## Scope of this implementation pass
+Updated: 30 July 2026.
 
-This pass creates a reviewable Unity vertical slice in code. Formal Unity import testing, art replacement, performance tuning, and Codex hardening remain later work.
+## Current project state
+
+The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
+
+The immediate engineering focus is the data-driven organism and medium framework. The product owner is separately improving the 3D petri-dish presentation locally in Unity.
 
 ## Engine baseline
 
@@ -12,156 +16,147 @@ This pass creates a reviewable Unity vertical slice in code. Formal Unity import
 - GameObject-based Unity UI through `com.unity.ugui`
 - Unity project stored at the repository root
 
-Unity 6.5 (`6000.5.3f1`) is the locked production baseline. Do not downgrade the project to Unity 2022, Unity 2023, or an earlier Unity 6 editor.
+Do not downgrade the production editor baseline.
 
-## M1 — Unity project and responsive dish scene
-
-Implemented:
-
-- Unity 6.5 project marker
-- Minimal Unity 6 package manifest with uGUI, Visual Studio integration, and Unity Test Framework
-- Unity 6.5 package lock with resolved package versions
-- Tracked Unity `.meta` files and complete generated `ProjectSettings` baseline
-- Unity `.gitignore`
-- Portrait-first runtime-generated responsive UI
-- Safe proportional anchors for phone and tablet layouts
-- Runtime `Screen.safeArea` fitting for notches, punch holes, rotation, and device-profile changes
-- Phone layout verified in the Unity Device Simulator using a Samsung Galaxy S10+ profile
-- Dish, status, instructions, controls, outcomes, and save controls
-- One-click editor setup command at `Petri Dish > Setup Vertical Slice Project`
-
-Review pending:
-
-- Confirm Android SDK and minimum API level
-- Replace generated placeholder layout with production prefabs if preferred
-- Review Unity 6 Build Profiles and Android platform configuration
-
-## M2 — Deterministic simulation core
+## M1 — Unity project and responsive dish scene — Complete
 
 Implemented:
 
-- 48 × 48 two-dimensional dish grid
-- Circular active-cell mask aligned with the visible agar boundary
-- Radial edge drying and round-dish coverage/aggregate metrics
-- Fixed 0.25-second simulation steps
-- Seeded colony generation and spread randomness
-- Serializable deterministic random state for exact save/load continuation
-- Deep-copy save capture and restore isolation
-- Save schema validation with legacy schema version 1 fallback
-- Reused fixed-step biomass buffer to avoid per-step managed allocations
-- Non-finite and out-of-range simulation input rejection
-- Temperature target and delayed temperature movement
-- Moisture, edge drying, heat drying, nutrients, biomass, health, and stress
-- Suitability curves for temperature, moisture, and nutrients
-- Growth, decline, death, resource consumption, and local spread
-- Read-only simulation snapshots
-- Serializable save state
-- Edit Mode regression tests for deterministic replay, save continuation, save isolation, restore isolation, validation, circular masking, control bounds, comfortable growth, lethal heat decline, moisture recovery, speed-control cycling, dish-inspection mapping, safe-area fitting, accessible status presentation, and text-scale policy behaviour
-- Full Unity `6000.5.3f1` Edit Mode verification on 28 July 2026: 70 passed, 0 failed
+- Complete Unity project and package baseline
+- Tracked `.meta` files and project settings
+- Portrait-first responsive runtime UI
+- Safe-area handling and phone simulator verification
+- One-click project setup command
+- Dish, status, instructions, controls, outcomes, inspection, and save controls
 
-Review pending:
+Remaining production review:
+
+- Android SDK and build-profile configuration
+- Final production assets and prefab decisions
+
+## M2 — Deterministic simulation core — Complete
+
+Implemented:
+
+- Deterministic 48 × 48 circularly masked dish simulation
+- Fixed 0.25-second steps
+- Serializable random state and exact save continuation
+- Deep-copy save isolation and schema validation
+- Temperature, moisture, nutrients, biomass, health, stress, growth, decline, death, and spread
+- Circular edge drying and player-visible aggregate metrics
+- Input validation and allocation-conscious stepping
+- Unity Edit Mode verification with 70 passing tests and no failures on 28 July 2026
+
+Remaining review:
 
 - Codex determinism review
-- Random-stream separation refinement if independent organism or event channels are introduced
-- Balance validation against intended experiment pacing on a device
+- Random-stream separation when independent organism or event channels are introduced
+- Device-based balance validation
 
-## M3 — First living colony
-
-Implemented:
-
-- Texture-driven dish renderer
-- Procedural glass rim, agar depth, highlight, and deterministic colony mottling
-- Bright active-growth edge and non-colour heat/dry stress patterns
-- Healthy, stressed, dry, and declining colour response
-- Visible biomass expansion
-- Smooth bilinear presentation over the low-resolution grid
-- Slower growth near tolerance limits
-- Nutrient depletion and environmental decline
-- Text severity cues paired with colour-based colony status
-
-Review pending:
-
-- More expressive colony edge animation
-- Shape and texture art pass
-- Mobile profiling
-- Unity 6 renderer and texture-update optimisation review
-
-## M4 — Player intervention loop
+## M3 — First living colony — Complete
 
 Implemented:
 
-- Bounded temperature slider
-- Delayed temperature response
-- Moisture intervention
-- Context-controlled moisture button
-- Pause and speed cycling
-- Active speed displayed directly on the speed button
-- Explicit `Pause` and `Resume` button states
-- Persistent playback readout stating paused or running speed
-- Same-seed and new-seed restarts
-- Active-seed preservation when restarting a newly seeded experiment
-- Plain-language condition labels
-- Non-colour severity prefixes: `OK`, `INFO`, `WARNING`, and `ALERT`
-- Coverage, temperature, moisture, and nutrient metrics
-- Save and load controls
-- Atomic save replacement with previous-save recovery backup
-- Validated application save schema with fixed-step accumulator, pause, and speed restoration
-- Tap-driven local cell inspection
-- Local biomass, health, moisture, nutrient, coordinate, and limiting-factor readout
-- Selected-cell readout refreshes as the simulation advances
-- Snapshot-based cell inspection without cloning the full save state
-- User-selectable Standard and Large text modes
-- Text preference persists between sessions through `PlayerPrefs`
-- Large mode applies a consistent 1.25× scale to runtime-generated labels and buttons
+- Procedural colony texture renderer
+- Glass rim, agar depth, highlights, colony mottling, smooth presentation, and visible growth
+- Healthy, stressed, dry, and declining feedback
+- Non-colour stress patterns
 
-Review pending:
+Remaining presentation work:
 
-- Haptic and audio feedback
-- Assistive-technology and screen-reader integration strategy
-- Unity 6 Input System migration if production controls require it
-- Device usability review of inspection-panel size, text wrapping, and narrow-phone layout in Large mode
+- More expressive colony boundaries
+- Final texture and art pass
+- Mobile profiling and renderer optimisation
 
-## M5 — The Comfortable Range vertical slice
+## M4 — Player intervention loop — Complete
 
 Implemented:
 
-- Cool-start observation stage
-- Player warming stage
-- Ideal-range hold stage
-- Deterministic heater fault
-- Temperature correction
-- Moisture rescue
-- Delayed recovery
-- Completion and failure states
+- Temperature and moisture interventions
+- Pause and speed controls
+- Save, load, restart, and new-seed flows
+- Plain-language limiting-factor feedback
+- Tap-driven cell inspection
+- Standard and Large text modes
+- Accessible pause and playback states
+
+Remaining review:
+
+- Audio and haptic feedback
+- Assistive-technology strategy
+- Narrow-phone Large-mode usability review
+
+## M5 — Comfortable Range vertical slice — Functionally complete
+
+Implemented:
+
+- Guided observation, warming, ideal hold, heater fault, correction, moisture rescue, recovery, completion, and failure
 - Discovery outcome text
-- Seeded restart
-- Save and resume of experiment and tutorial stage
+- Seeded restart and save/resume of tutorial stage
 
-Review pending:
+Remaining presentation work:
 
-- Menu and experiment-selection scenes
-- Full outcome timeline and journal screens
-- Audio and final art assets
-- Checkpoint-specific recovery rather than full restart
+- Final audio and art
+- Menu and experiment selection
+- Full journal/timeline presentation
 - Tutorial usability testing
-- Copy verification against the full content deck
 
-## Running the project
+## Active Phase 2 engineering work
 
-1. Install Unity `6000.5.3f1` through Unity Hub with Android Build Support if mobile builds are required.
+### Data-driven organism and medium framework
+
+Approved next task:
+
+- Move organism and medium parameters out of central simulation logic
+- Add validated serialisable definitions
+- Persist selected definition IDs in saves
+- Preserve deterministic replay and current vertical-slice behaviour
+- Add regression tests for distinct organisms and media
+- Begin with the current Rapid Bacterium and Nutrient Agar only, then replace the generic identity with reviewed real-organism content
+
+Recommended branch: `feature/data-driven-organisms-media`.
+
+### Real-organism direction
+
+The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
+
+### 3D dish presentation — Locally owned work in progress
+
+The product owner has created and imported a reusable 3D petri dish with separate:
+
+- glass base;
+- glass wall and rim;
+- agar;
+- colony surface;
+- removable lid.
+
+The preferred portrait camera angle has been selected. The 2D UI will remain for now. After the organism/media framework is merged and local Unity changes are committed, the existing generated colony texture should be connected to `PetriDish_ColonySurface`.
+
+Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
+
+## Planned later systems
+
+After stable organism/media definitions:
+
+1. Add one reviewed real organism and one additional medium.
+2. Add nutrient intervention.
+3. Expand to four organisms and four media.
+4. Add experiment selection and discoveries.
+5. Add multiple dishes and colony transfer.
+6. Add evolution, antibacterial/antifungal treatment, and resistance only after lineage tracking is stable.
+
+## Running and verification
+
+1. Install Unity `6000.5.3f1` through Unity Hub.
 2. Open the repository root as the Unity project.
-3. Allow Unity Package Manager to resolve the Unity 6 packages.
-4. Select `Petri Dish > Setup Vertical Slice Project`.
-5. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity` if it is not already open.
+3. Allow Package Manager to resolve dependencies.
+4. Select `Petri Dish > Setup Vertical Slice Project` when required.
+5. Open `Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity`.
 6. Enter Play Mode.
-7. Open `Window > General > Test Runner` and run the Edit Mode suite.
-8. Toggle `Text: Standard` / `Text: Large` and inspect the portrait layout at narrow phone resolutions.
+7. Run the complete Edit Mode suite through Test Runner.
+8. Verify Standard and Large text modes in narrow portrait profiles.
+9. Preserve and manually verify the locally configured 3D dish scene before merging code branches.
 
-The UI and experiment controller are generated at runtime. No manually wired scene hierarchy is required for the first pass.
+## Active source of next work
 
-## Important limitations
-
-- The code compiled and all 67 Edit Mode cases passed using Unity `6000.5.3f1` on 27 July 2026.
-- Placeholder UI and procedural colours are used instead of final art.
-- Unity 6 may expose API or package issues that must be corrected during the first editor import.
-- The implementation should be treated as a substantial first draft for Codex review, correction, and refinement.
+Use `docs/production/PHASE_2_BACKLOG.md`. The old Phase 1 backlog is archived under `docs/archive/PHASE_1_BACKLOG.md`.
