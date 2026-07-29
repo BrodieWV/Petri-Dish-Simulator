@@ -61,7 +61,8 @@ The test suite covers:
 15. deterministic replay with custom definitions;
 16. selected-definition ID preservation and exact continuation;
 17. schema-version-2 content migration;
-18. malformed, duplicate, missing, and unsupported definition rejection.
+18. malformed, duplicate, missing, and unsupported definition rejection;
+19. same-seed and new-seed restarts preserve the selected definitions.
 
 Application-level persistence and lifecycle tests are located at:
 
@@ -69,7 +70,7 @@ Application-level persistence and lifecycle tests are located at:
 
 ## Latest automated verification
 
-On 28 July 2026, the complete Edit Mode suite compiled and passed all 79 test cases using
+On 30 July 2026, the complete Edit Mode suite compiled and passed all 80 test cases using
 the production-baseline Unity `6000.5.3f1` editor.
 
 ## Running in Unity

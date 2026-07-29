@@ -15,14 +15,21 @@ MonoBehaviour:
   id: nutrient-agar
   definitionVersion: 1
   displayName: Nutrient Agar
+  educationalDescription: A simplified nutrient-rich gel that begins moist and gradually dries from its exposed edge.
   scientificLabel: Educationalised nutrient-rich agar; values are gameplay abstractions.
-  initialMoisture: 0.72
-  initialNutrients: 1
+  visualProfileId: nutrient-agar-default
+  startingNutrientLevel: 1
+  maximumNutrientCapacity: 1
+  startingMoisture: 0.72
+  maximumMoistureCapacity: 1
   moistureAbsorptionMultiplier: 1
   moistureApplicationVariance: 0.15
+  moistureDiffusion: 0
+  nutrientDiffusion: 0
+  spreadResistance: 0
   temperatureResponseRate: 0.18
-  edgeEvaporation: 0.0017
-  interiorEvaporation: 0.00045
+  evaporationRate: 0.00045
+  edgeDryingMultiplier: 3.7777778
   edgeFalloffDepthCells: 12
   heatEvaporationStartTemperature: 24
   heatEvaporationPerDegree: 0.00012

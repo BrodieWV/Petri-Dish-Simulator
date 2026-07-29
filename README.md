@@ -90,6 +90,7 @@ Initial environmental controls:
 ## Key documents
 
 - `AGENTS.md`
+- `docs/DOCUMENT_INDEX.md`
 - `docs/VISION.md`
 - `docs/GAME_DESIGN_DOCUMENT.md`
 - `docs/ARCHITECTURE.md`

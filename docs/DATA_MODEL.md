@@ -11,17 +11,21 @@ Data-driven content, versioned saves, deterministic experiments, validation, and
 Stable ID, display name, scientific label, tolerances, growth, metabolism, nutrients, spread, competition, dormancy, visuals, audio, discoveries, and unlocks.
 
 The implemented Phase 2 subset is a Unity ScriptableObject containing a stable lowercase
-slug ID, definition version, identity metadata, starting-colony values, temperature and
-moisture suitability, health/stress/growth/death rates, resource consumption, and spread.
-Visual and audio fields are deliberately excluded from the simulation definition.
+slug ID, definition version, display/scientific names, educational and simplification
+copy, starting-colony values, nested preferred/growth/survival temperature and moisture
+ranges, health/stress/growth/death rates, resource demand, carrying capacity, spread, and
+a presentation-only visual-profile ID. Visual assets and audio references are deliberately
+excluded from authoritative simulation values.
 
 ### MediumDefinition
 
 Stable ID, category, water retention, nutrient capacity, diffusion, evaporation, structure, visuals, compatibility, and educational note.
 
 The implemented Phase 2 subset is a Unity ScriptableObject containing a stable lowercase
-slug ID, definition version, identity metadata, starting moisture/nutrients, and
-edge/interior/heat evaporation values. Visual fields are deliberately excluded.
+slug ID, definition version, educational metadata, starting and maximum
+moisture/nutrients, optional diffusion, absorption, evaporation, edge drying, thermal
+response, spread resistance, and a presentation-only visual-profile ID. Visual assets are
+deliberately excluded from authoritative simulation values.
 
 ### SimulationDefinitionCatalog
 

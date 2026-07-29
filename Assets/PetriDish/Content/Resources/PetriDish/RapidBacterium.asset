@@ -15,30 +15,42 @@ MonoBehaviour:
   id: rapid-bacterium
   definitionVersion: 1
   displayName: Rapid Bacterium
+  scientificName: Gameplay bacterial archetype (not a species)
+  educationalDescription: A simplified fast-growing culture used to show how temperature, moisture, and nutrients affect colony growth.
   scientificLabel: Educationalised fast-growing bacterial archetype; not a cultivation model.
+  visualProfileId: rapid-bacterium-default
   initialHealth: 1
   seedRadiusCells: 2.3
   seedCenterBiomass: 0.28
   seedEdgeBiomass: 0.08
-  preferredTemperature: 26
-  temperatureHalfRange: 7.5
-  lethalTemperatureMinimum: 11
-  lethalTemperatureMaximum: 38
-  preferredMoisture: 0.7
-  moistureHalfRange: 0.35
-  lethalMoistureMinimum: 0.16
+  preferredTemperatureMinimum: 24
+  preferredTemperatureMaximum: 29
+  growthTemperatureMinimum: 18.5
+  growthTemperatureMaximum: 33.5
+  survivalTemperatureMinimum: 11
+  survivalTemperatureMaximum: 38
+  temperatureOptimum: 26
+  temperatureResponseHalfRange: 7.5
+  preferredMoistureMinimum: 0.6
+  preferredMoistureMaximum: 0.8
+  growthMoistureThreshold: 0.35
+  survivalMoistureThreshold: 0.16
+  moistureOptimum: 0.7
+  moistureResponseHalfRange: 0.35
   nutrientsForFullSuitability: 0.25
   healthySuitabilityThreshold: 0.55
   healthRecoveryRate: 0.015
-  healthDeclineRate: 0.018
+  damageSensitivity: 0.018
   healthDeclineStressFloor: 0.35
-  normalStressResponseRate: 0.025
-  lethalStressResponseRate: 0.06
-  growthRate: 0.07
+  stressRecovery: 0.025
+  stressSensitivity: 0.025
+  lethalStressSensitivity: 0.06
+  baseGrowthRate: 0.07
   lethalDeathRate: 0.035
   stressDeathRate: 0.004
-  nutrientConsumptionPerGrowth: 0.42
-  moistureConsumptionPerGrowth: 0.025
+  nutrientDemand: 0.42
+  moistureDemand: 0.025
+  carryingCapacity: 1
   spreadMinimumBiomass: 0.035
   spreadMinimumSuitability: 0.28
   spreadRate: 0.006

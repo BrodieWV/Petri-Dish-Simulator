@@ -19,7 +19,9 @@ Definition assets are validated before a simulation starts or a save is restored
 simulation copies their biological values into immutable runtime value objects at
 construction, so changing a ScriptableObject during play cannot alter an existing
 deterministic experiment. Presentation data such as colours, textures, animation, and
-audio is not stored in these simulation definitions.
+audio is not stored in these simulation definitions. Definitions expose only a stable
+visual-profile ID; a later presentation registry will resolve that ID without introducing
+art references into authoritative simulation state.
 
 ### Simulation core
 
@@ -46,6 +48,11 @@ Use a low-resolution two-dimensional grid. Cells can contain medium, moisture, t
 ## Fixed-step pipeline
 
 Apply interventions; update environment; calculate suitability; consume resources; apply growth/stress/death; spread populations; resolve competition; evaluate discoveries and outcomes; publish a snapshot.
+
+The Phase 2 medium step optionally diffuses moisture and nutrients through deterministic
+cardinal-neighbour averaging. Both default diffusion rates are zero, preserving the
+vertical-slice baseline. Organism carrying capacity and medium spread resistance are
+applied by the simulation core without any presentation dependency.
 
 ## Determinism
 

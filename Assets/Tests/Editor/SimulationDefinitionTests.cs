@@ -51,6 +51,19 @@ namespace PetriDish.Tests.Editor
 
             Assert.That(organism.Id, Is.EqualTo("rapid-bacterium"));
             Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(catalog.DefaultOrganism.ScientificName, Is.Not.Empty);
+            Assert.That(catalog.DefaultOrganism.EducationalDescription, Is.Not.Empty);
+            Assert.That(catalog.DefaultOrganism.VisualProfileId, Is.EqualTo("rapid-bacterium-default"));
+            Assert.That(catalog.DefaultOrganism.PreferredTemperatureMinimum, Is.EqualTo(24f));
+            Assert.That(catalog.DefaultOrganism.PreferredTemperatureMaximum, Is.EqualTo(29f));
+            Assert.That(catalog.DefaultOrganism.GrowthTemperatureMinimum, Is.EqualTo(18.5f));
+            Assert.That(catalog.DefaultOrganism.GrowthTemperatureMaximum, Is.EqualTo(33.5f));
+            Assert.That(catalog.DefaultOrganism.SurvivalTemperatureMinimum, Is.EqualTo(11f));
+            Assert.That(catalog.DefaultOrganism.SurvivalTemperatureMaximum, Is.EqualTo(38f));
+            Assert.That(catalog.DefaultOrganism.PreferredMoistureMinimum, Is.EqualTo(0.60f));
+            Assert.That(catalog.DefaultOrganism.PreferredMoistureMaximum, Is.EqualTo(0.80f));
+            Assert.That(catalog.DefaultOrganism.GrowthMoistureThreshold, Is.EqualTo(0.35f));
+            Assert.That(catalog.DefaultOrganism.SurvivalMoistureThreshold, Is.EqualTo(0.16f));
             Assert.That(organism.InitialHealth, Is.EqualTo(1f));
             Assert.That(organism.SeedRadiusCells, Is.EqualTo(2.3f));
             Assert.That(organism.SeedCenterBiomass, Is.EqualTo(0.28f));
@@ -68,12 +81,14 @@ namespace PetriDish.Tests.Editor
             Assert.That(organism.HealthDeclineRate, Is.EqualTo(0.018f));
             Assert.That(organism.GrowthRate, Is.EqualTo(0.07f));
             Assert.That(organism.HealthDeclineStressFloor, Is.EqualTo(0.35f));
-            Assert.That(organism.NormalStressResponseRate, Is.EqualTo(0.025f));
+            Assert.That(organism.StressRecoveryRate, Is.EqualTo(0.025f));
+            Assert.That(organism.StressSensitivity, Is.EqualTo(0.025f));
             Assert.That(organism.LethalStressResponseRate, Is.EqualTo(0.06f));
             Assert.That(organism.LethalDeathRate, Is.EqualTo(0.035f));
             Assert.That(organism.StressDeathRate, Is.EqualTo(0.004f));
             Assert.That(organism.NutrientConsumptionPerGrowth, Is.EqualTo(0.42f));
             Assert.That(organism.MoistureConsumptionPerGrowth, Is.EqualTo(0.025f));
+            Assert.That(organism.CarryingCapacity, Is.EqualTo(1f));
             Assert.That(organism.SpreadMinimumBiomass, Is.EqualTo(0.035f));
             Assert.That(organism.SpreadMinimumSuitability, Is.EqualTo(0.28f));
             Assert.That(organism.SpreadRate, Is.EqualTo(0.006f));
@@ -82,12 +97,19 @@ namespace PetriDish.Tests.Editor
 
             Assert.That(medium.Id, Is.EqualTo("nutrient-agar"));
             Assert.That(medium.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(catalog.DefaultMedium.EducationalDescription, Is.Not.Empty);
+            Assert.That(catalog.DefaultMedium.VisualProfileId, Is.EqualTo("nutrient-agar-default"));
             Assert.That(medium.InitialMoisture, Is.EqualTo(0.72f));
+            Assert.That(medium.MaximumMoisture, Is.EqualTo(1f));
             Assert.That(medium.InitialNutrients, Is.EqualTo(1f));
+            Assert.That(medium.MaximumNutrients, Is.EqualTo(1f));
             Assert.That(medium.MoistureAbsorptionMultiplier, Is.EqualTo(1f));
             Assert.That(medium.MoistureApplicationVariance, Is.EqualTo(0.15f));
             Assert.That(medium.TemperatureResponseRate, Is.EqualTo(0.18f));
-            Assert.That(medium.EdgeEvaporation, Is.EqualTo(0.0017f));
+            Assert.That(medium.MoistureDiffusion, Is.Zero);
+            Assert.That(medium.NutrientDiffusion, Is.Zero);
+            Assert.That(medium.SpreadResistance, Is.Zero);
+            Assert.That(medium.EdgeEvaporation, Is.EqualTo(0.0017f).Within(FloatTolerance));
             Assert.That(medium.InteriorEvaporation, Is.EqualTo(0.00045f));
             Assert.That(medium.EdgeFalloffDepthCells, Is.EqualTo(12f));
             Assert.That(medium.HeatEvaporationStartTemperature, Is.EqualTo(24f));
@@ -224,6 +246,39 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void SameAndNewSeedRestartsPreserveSelectedDefinitions()
+        {
+            SimulationDefinitionCatalog defaults = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition organism = CloneOrganism(
+                defaults.DefaultOrganism,
+                "restart-test-organism",
+                growthRate: 0.031f);
+            MediumDefinition medium = CloneMedium(
+                defaults.DefaultMedium,
+                "restart-test-medium",
+                edgeEvaporation: 0.0025f,
+                interiorEvaporation: 0.0008f);
+            SimulationDefinitionCatalog catalog = CreateCatalog(
+                defaults.DefaultOrganism,
+                defaults.DefaultMedium,
+                new[] { defaults.DefaultOrganism, organism },
+                new[] { defaults.DefaultMedium, medium });
+
+            ExperimentController controller = CreateController(ref firstControllerObject);
+            controller.ConfigureDefinitionCatalog(catalog);
+            controller.StartNew(45678, organism.Id, medium.Id);
+
+            controller.RestartSameSeed();
+            Assert.That(controller.Simulation.Seed, Is.EqualTo(45678));
+            Assert.That(controller.Simulation.OrganismId, Is.EqualTo(organism.Id));
+            Assert.That(controller.Simulation.MediumId, Is.EqualTo(medium.Id));
+
+            controller.RestartNewSeed();
+            Assert.That(controller.Simulation.OrganismId, Is.EqualTo(organism.Id));
+            Assert.That(controller.Simulation.MediumId, Is.EqualTo(medium.Id));
+        }
+
+        [Test]
         public void SchemaVersionTwoExperimentMigratesToDefaultDefinitions()
         {
             ExperimentController writer = CreateController(ref firstControllerObject);
@@ -293,7 +348,29 @@ namespace PetriDish.Tests.Editor
             Assert.That(
                 Assert.Throws<DefinitionValidationException>(
                     () => unsupported.ValidateOrThrow()).Message,
-                Does.Contain("growthRate"));
+                Does.Contain("baseGrowthRate"));
+
+            OrganismDefinition malformedRange = CloneOrganism(
+                defaults.DefaultOrganism,
+                "malformed-range-organism",
+                growthRate: 0.02f);
+            var malformedSerialized = new SerializedObject(malformedRange);
+            malformedSerialized.FindProperty("growthTemperatureMinimum").floatValue = 34f;
+            malformedSerialized.FindProperty("growthTemperatureMaximum").floatValue = 20f;
+            malformedSerialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => malformedRange.ValidateOrThrow()).Message,
+                Does.Contain("malformed"));
+
+            OrganismDefinition nonFinite = CloneOrganism(
+                defaults.DefaultOrganism,
+                "non-finite-organism",
+                growthRate: float.NaN);
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => nonFinite.ValidateOrThrow()).Message,
+                Does.Contain("finite"));
 
             OrganismDefinition duplicate = CloneOrganism(
                 defaults.DefaultOrganism,
@@ -337,7 +414,7 @@ namespace PetriDish.Tests.Editor
             temporaryObjects.Add(clone);
             var serialized = new SerializedObject(clone);
             serialized.FindProperty("id").stringValue = id;
-            serialized.FindProperty("growthRate").floatValue = growthRate;
+            serialized.FindProperty("baseGrowthRate").floatValue = growthRate;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return clone;
         }
@@ -352,8 +429,9 @@ namespace PetriDish.Tests.Editor
             temporaryObjects.Add(clone);
             var serialized = new SerializedObject(clone);
             serialized.FindProperty("id").stringValue = id;
-            serialized.FindProperty("edgeEvaporation").floatValue = edgeEvaporation;
-            serialized.FindProperty("interiorEvaporation").floatValue = interiorEvaporation;
+            serialized.FindProperty("evaporationRate").floatValue = interiorEvaporation;
+            serialized.FindProperty("edgeDryingMultiplier").floatValue =
+                edgeEvaporation / interiorEvaporation;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return clone;
         }

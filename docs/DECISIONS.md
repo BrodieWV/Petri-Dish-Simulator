@@ -54,3 +54,8 @@ definition versions are saved with the experiment. Schema-version-2 saves migrat
 to the original Rapid Bacterium and Nutrient Agar defaults; incompatible or missing
 definitions fail without replacing the active experiment. Presentation assets remain
 separate from biological simulation values.
+
+Amended on 30 July 2026 to include explicit preferred/growth/survival ranges,
+educational metadata, carrying and medium capacities, optional deterministic diffusion,
+spread resistance, and presentation-only visual-profile IDs. Visual profile IDs are not
+authoritative biological state and do not connect the simulation to the 3D dish.
