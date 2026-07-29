@@ -1,33 +1,47 @@
 # Milestones
 
-## M0 — Phase 0 documentation complete
+## M0 — Phase 0 documentation — Complete
 
 Core loop, MVP scope, simulation boundaries, acceptance checks, scientific simplifications, determinism, saving, and agent rules are explicit.
 
-## M1 — Static dish scene
+## M1 — Static dish scene — Complete
 
-Responsive dish view, safe mobile layout, readable UI, and temporary live-tuning sliders.
+Responsive dish view, safe mobile layout, readable UI, temporary live-tuning controls, and verified phone layout.
 
-## M2 — Deterministic simulation core
+## M2 — Deterministic simulation core — Complete
 
-Fixed-step clock, seeded setup, temperature, moisture, nutrients, population state, inspection, and simulation tests.
+Fixed-step clock, seeded setup, temperature, moisture, nutrients, population state, inspection, saves, and simulation regression tests.
 
-## M3 — First living colony
+## M3 — First living colony — Complete
 
-One organism grows in favourable conditions, slows near tolerance limits, declines outside survival ranges, consumes nutrients, and produces visibly different outcomes from presets.
+One organism grows in favourable conditions, slows near tolerance limits, declines outside survival ranges, consumes nutrients, and produces visibly different outcomes.
 
-## M4 — Player intervention loop
+## M4 — Player intervention loop — Complete
 
-Temperature and moisture controls, delayed effects, limiting-factor feedback, pause/speed controls, and same-seed/new-seed reset.
+Temperature and moisture controls, delayed effects, limiting-factor feedback, pause/speed controls, inspection, accessibility feedback, and same-seed/new-seed reset.
 
-## M5 — Vertical slice
+## M5 — Vertical slice — Functionally complete; presentation polish pending
 
-Complete setup-to-outcome flow, one guided experiment, saving, audio/visual feedback, onboarding, and informative failure.
+Complete setup-to-outcome flow, one guided experiment, saving, onboarding, informative failure, phone-safe layout, and automated verification.
 
-## M6 — Content-complete MVP
+Remaining presentation work includes the 3D dish integration, final materials, audio, haptics, and final art.
 
-Four organisms, four media, twelve guided experiments, ten challenges, journal, progression, content validation, and responsive screens.
+## M6 — Data-driven experimental framework — Active
 
-## M7 — Mobile release candidate
+- Validated organism and medium definitions
+- Named real organisms with simplified educational behaviour
+- Save-compatible organism and medium selection
+- Two organisms and two media proving distinct behaviour
+- Live colony texture connected to the approved 3D dish
+- Nutrient intervention
+- Content validation and regression tests
+
+Exit: the current vertical slice runs through external definitions, two organisms and two media produce meaningfully different outcomes, and all tests pass.
+
+## M7 — Content-complete MVP — Not started
+
+Four organisms, four media, twelve guided experiments, ten challenges, journal, progression, discovery flow, cloning into multiple dishes, content validation, and responsive screens.
+
+## M8 — Mobile release candidate — Not started
 
 Performance, save integrity, accessibility, tutorial, analytics, monetisation boundaries, privacy, and store requirements pass.
