@@ -13,6 +13,9 @@ namespace PetriDish.Content
         [SerializeField] private string displayName;
         [SerializeField, TextArea] private string educationalDescription;
         [SerializeField, TextArea] private string scientificLabel;
+        [SerializeField, TextArea] private string sourceNotes;
+        [SerializeField] private ScientificConfidence scientificConfidence;
+        [SerializeField, TextArea] private string simplificationNotes;
         [SerializeField] private string visualProfileId;
 
         [Header("Capacity and starting state")]
@@ -41,6 +44,9 @@ namespace PetriDish.Content
         public string DisplayName => displayName;
         public string EducationalDescription => educationalDescription;
         public string ScientificLabel => scientificLabel;
+        public string SourceNotes => sourceNotes;
+        public ScientificConfidence Confidence => scientificConfidence;
+        public string SimplificationNotes => simplificationNotes;
         public string VisualProfileId => visualProfileId;
         public float StartingNutrientLevel => startingNutrientLevel;
         public float MaximumNutrientCapacity => maximumNutrientCapacity;
@@ -72,6 +78,13 @@ namespace PetriDish.Content
             RequireText(displayName, nameof(displayName));
             RequireText(educationalDescription, nameof(educationalDescription));
             RequireText(scientificLabel, nameof(scientificLabel));
+            RequireText(sourceNotes, nameof(sourceNotes));
+            DefinitionValidation.Require(
+                System.Enum.IsDefined(typeof(ScientificConfidence), scientificConfidence) &&
+                scientificConfidence != ScientificConfidence.Unspecified,
+                id,
+                "Scientific confidence must be a supported explicit selection.");
+            RequireText(simplificationNotes, nameof(simplificationNotes));
             DefinitionValidation.ValidateId(visualProfileId, "Medium visual profile");
             DefinitionValidation.Unit(startingNutrientLevel, id, nameof(startingNutrientLevel));
             DefinitionValidation.UnitPositive(

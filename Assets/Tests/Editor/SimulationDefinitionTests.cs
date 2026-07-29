@@ -53,6 +53,11 @@ namespace PetriDish.Tests.Editor
             Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
             Assert.That(catalog.DefaultOrganism.ScientificName, Is.Not.Empty);
             Assert.That(catalog.DefaultOrganism.EducationalDescription, Is.Not.Empty);
+            Assert.That(catalog.DefaultOrganism.SourceNotes, Is.Not.Empty);
+            Assert.That(
+                catalog.DefaultOrganism.Confidence,
+                Is.EqualTo(ScientificConfidence.EducationalPlaceholder));
+            Assert.That(catalog.DefaultOrganism.SimplificationNotes, Is.Not.Empty);
             Assert.That(catalog.DefaultOrganism.VisualProfileId, Is.EqualTo("rapid-bacterium-default"));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMinimum, Is.EqualTo(24f));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMaximum, Is.EqualTo(29f));
@@ -98,6 +103,11 @@ namespace PetriDish.Tests.Editor
             Assert.That(medium.Id, Is.EqualTo("nutrient-agar"));
             Assert.That(medium.DefinitionVersion, Is.EqualTo(1));
             Assert.That(catalog.DefaultMedium.EducationalDescription, Is.Not.Empty);
+            Assert.That(catalog.DefaultMedium.SourceNotes, Is.Not.Empty);
+            Assert.That(
+                catalog.DefaultMedium.Confidence,
+                Is.EqualTo(ScientificConfidence.EducationalPlaceholder));
+            Assert.That(catalog.DefaultMedium.SimplificationNotes, Is.Not.Empty);
             Assert.That(catalog.DefaultMedium.VisualProfileId, Is.EqualTo("nutrient-agar-default"));
             Assert.That(medium.InitialMoisture, Is.EqualTo(0.72f));
             Assert.That(medium.MaximumMoisture, Is.EqualTo(1f));
@@ -384,6 +394,61 @@ namespace PetriDish.Tests.Editor
             Assert.That(
                 Assert.Throws<DefinitionValidationException>(() => catalog.ValidateOrThrow()).Message,
                 Does.Contain("Duplicate organism ID"));
+        }
+
+        [Test]
+        public void MissingScientificMetadataIsRejected()
+        {
+            SimulationDefinitionCatalog defaults = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition missingSource = CloneOrganism(
+                defaults.DefaultOrganism,
+                "missing-source-organism",
+                growthRate: 0.02f);
+            var missingSourceSerialized = new SerializedObject(missingSource);
+            missingSourceSerialized.FindProperty("sourceNotes").stringValue = string.Empty;
+            missingSourceSerialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => missingSource.ValidateOrThrow()).Message,
+                Does.Contain("sourceNotes"));
+
+            OrganismDefinition unspecifiedConfidence = CloneOrganism(
+                defaults.DefaultOrganism,
+                "unspecified-confidence-organism",
+                growthRate: 0.02f);
+            var confidenceSerialized = new SerializedObject(unspecifiedConfidence);
+            confidenceSerialized.FindProperty("scientificConfidence").enumValueIndex =
+                (int)ScientificConfidence.Unspecified;
+            confidenceSerialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => unspecifiedConfidence.ValidateOrThrow()).Message,
+                Does.Contain("confidence"));
+
+            OrganismDefinition unsupportedConfidence = CloneOrganism(
+                defaults.DefaultOrganism,
+                "unsupported-confidence-organism",
+                growthRate: 0.02f);
+            var unsupportedConfidenceSerialized = new SerializedObject(unsupportedConfidence);
+            unsupportedConfidenceSerialized.FindProperty("scientificConfidence").intValue = 99;
+            unsupportedConfidenceSerialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => unsupportedConfidence.ValidateOrThrow()).Message,
+                Does.Contain("confidence"));
+
+            MediumDefinition missingSimplification = CloneMedium(
+                defaults.DefaultMedium,
+                "missing-simplification-medium",
+                edgeEvaporation: 0.002f,
+                interiorEvaporation: 0.001f);
+            var simplificationSerialized = new SerializedObject(missingSimplification);
+            simplificationSerialized.FindProperty("simplificationNotes").stringValue = string.Empty;
+            simplificationSerialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(
+                Assert.Throws<DefinitionValidationException>(
+                    () => missingSimplification.ValidateOrThrow()).Message,
+                Does.Contain("simplificationNotes"));
         }
 
         [Test]

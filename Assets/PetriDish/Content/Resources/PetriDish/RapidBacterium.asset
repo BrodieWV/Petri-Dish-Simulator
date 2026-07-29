@@ -18,6 +18,9 @@ MonoBehaviour:
   scientificName: Gameplay bacterial archetype (not a species)
   educationalDescription: A simplified fast-growing culture used to show how temperature, moisture, and nutrients affect colony growth.
   scientificLabel: Educationalised fast-growing bacterial archetype; not a cultivation model.
+  sourceNotes: No species-specific source. Provisional Phase 1 balance is preserved for compatibility.
+  scientificConfidence: 1
+  simplificationNotes: Generic gameplay archetype with deliberately abstract tolerances and rates. It must not be interpreted as laboratory guidance.
   visualProfileId: rapid-bacterium-default
   initialHealth: 1
   seedRadiusCells: 2.3

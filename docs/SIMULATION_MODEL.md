@@ -57,8 +57,9 @@ Condensation, dry edge, nutrient pocket, bloom, dormancy, waste buildup, contami
 
 Observed relationship, educational simplification, gameplay abstraction, or fictional.
 
-Definition assets include a scientific/simplification note as content metadata. They do
-not include presentation colours, textures, animation, or audio. A stable visual-profile
+Definition assets include source notes, explicit scientific confidence, and simplification
+notes as content metadata. They do not include presentation colours, textures, animation,
+or audio. A stable visual-profile
 ID is presentation metadata only and is not copied into authoritative simulation values.
 
 ## Safety

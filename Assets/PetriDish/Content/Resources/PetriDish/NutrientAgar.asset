@@ -17,6 +17,9 @@ MonoBehaviour:
   displayName: Nutrient Agar
   educationalDescription: A simplified nutrient-rich gel that begins moist and gradually dries from its exposed edge.
   scientificLabel: Educationalised nutrient-rich agar; values are gameplay abstractions.
+  sourceNotes: No laboratory formulation source. Provisional Phase 1 balance is preserved for compatibility.
+  scientificConfidence: 1
+  simplificationNotes: Moisture, nutrient, diffusion, and evaporation values are normalized gameplay abstractions rather than a laboratory medium specification.
   visualProfileId: nutrient-agar-default
   startingNutrientLevel: 1
   maximumNutrientCapacity: 1

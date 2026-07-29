@@ -11,8 +11,9 @@ Data-driven content, versioned saves, deterministic experiments, validation, and
 Stable ID, display name, scientific label, tolerances, growth, metabolism, nutrients, spread, competition, dormancy, visuals, audio, discoveries, and unlocks.
 
 The implemented Phase 2 subset is a Unity ScriptableObject containing a stable lowercase
-slug ID, definition version, display/scientific names, educational and simplification
-copy, starting-colony values, nested preferred/growth/survival temperature and moisture
+slug ID, definition version, display/scientific names, educational copy, source notes,
+explicit scientific confidence, simplification notes, starting-colony values, nested
+preferred/growth/survival temperature and moisture
 ranges, health/stress/growth/death rates, resource demand, carrying capacity, spread, and
 a presentation-only visual-profile ID. Visual assets and audio references are deliberately
 excluded from authoritative simulation values.
@@ -22,7 +23,8 @@ excluded from authoritative simulation values.
 Stable ID, category, water retention, nutrient capacity, diffusion, evaporation, structure, visuals, compatibility, and educational note.
 
 The implemented Phase 2 subset is a Unity ScriptableObject containing a stable lowercase
-slug ID, definition version, educational metadata, starting and maximum
+slug ID, definition version, educational copy, source notes, explicit scientific
+confidence, simplification notes, starting and maximum
 moisture/nutrients, optional diffusion, absorption, evaporation, edge drying, thermal
 response, spread resistance, and a presentation-only visual-profile ID. Visual assets are
 deliberately excluded from authoritative simulation values.
@@ -66,3 +68,6 @@ IDs never depend on display names, are never reused, and must validate. Save sch
 Definition versions begin at 1 and must increase whenever a change would alter
 deterministic continuation. Runtime simulation instances copy validated values and never
 retain mutable authoritative state inside a ScriptableObject.
+
+Source, confidence, simplification, and visual-profile metadata are not copied into the
+authoritative runtime simulation and do not change deterministic state or save compatibility.

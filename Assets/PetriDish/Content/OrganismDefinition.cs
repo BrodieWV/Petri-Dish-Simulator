@@ -2,6 +2,15 @@ using UnityEngine;
 
 namespace PetriDish.Content
 {
+    public enum ScientificConfidence
+    {
+        Unspecified = 0,
+        EducationalPlaceholder = 1,
+        Low = 2,
+        Moderate = 3,
+        High = 4
+    }
+
     [CreateAssetMenu(
         fileName = "OrganismDefinition",
         menuName = "Petri Dish/Definitions/Organism")]
@@ -14,6 +23,9 @@ namespace PetriDish.Content
         [SerializeField] private string scientificName;
         [SerializeField, TextArea] private string educationalDescription;
         [SerializeField, TextArea] private string scientificLabel;
+        [SerializeField, TextArea] private string sourceNotes;
+        [SerializeField] private ScientificConfidence scientificConfidence;
+        [SerializeField, TextArea] private string simplificationNotes;
         [SerializeField] private string visualProfileId;
 
         [Header("Starting colony")]
@@ -69,6 +81,9 @@ namespace PetriDish.Content
         public string ScientificName => scientificName;
         public string EducationalDescription => educationalDescription;
         public string ScientificLabel => scientificLabel;
+        public string SourceNotes => sourceNotes;
+        public ScientificConfidence Confidence => scientificConfidence;
+        public string SimplificationNotes => simplificationNotes;
         public string VisualProfileId => visualProfileId;
         public float PreferredTemperatureMinimum => preferredTemperatureMinimum;
         public float PreferredTemperatureMaximum => preferredTemperatureMaximum;
@@ -123,6 +138,13 @@ namespace PetriDish.Content
             RequireText(scientificName, nameof(scientificName));
             RequireText(educationalDescription, nameof(educationalDescription));
             RequireText(scientificLabel, nameof(scientificLabel));
+            RequireText(sourceNotes, nameof(sourceNotes));
+            DefinitionValidation.Require(
+                System.Enum.IsDefined(typeof(ScientificConfidence), scientificConfidence) &&
+                scientificConfidence != ScientificConfidence.Unspecified,
+                id,
+                "Scientific confidence must be a supported explicit selection.");
+            RequireText(simplificationNotes, nameof(simplificationNotes));
             DefinitionValidation.ValidateId(visualProfileId, "Organism visual profile");
 
             DefinitionValidation.Unit(initialHealth, id, nameof(initialHealth));

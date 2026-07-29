@@ -56,6 +56,7 @@ definitions fail without replacing the active experiment. Presentation assets re
 separate from biological simulation values.
 
 Amended on 30 July 2026 to include explicit preferred/growth/survival ranges,
-educational metadata, carrying and medium capacities, optional deterministic diffusion,
-spread resistance, and presentation-only visual-profile IDs. Visual profile IDs are not
-authoritative biological state and do not connect the simulation to the 3D dish.
+source notes, scientific confidence, simplification notes, carrying and medium capacities,
+optional deterministic diffusion, spread resistance, and presentation-only visual-profile
+IDs. Scientific and presentation metadata are not authoritative biological state and do
+not connect the simulation to the 3D dish.

@@ -23,8 +23,8 @@ Do not downgrade the production editor baseline.
 Implemented:
 
 - Unity-authored `OrganismDefinition` and `MediumDefinition` ScriptableObjects
-- Explicit organism preferred/growth/survival ranges, educational metadata, carrying capacity, resource demand, and visual-profile ID
-- Explicit medium capacities, optional deterministic diffusion, edge-drying multiplier, spread resistance, and visual-profile ID
+- Explicit organism preferred/growth/survival ranges, source/confidence/simplification metadata, carrying capacity, resource demand, and visual-profile ID
+- Explicit medium source/confidence/simplification metadata, capacities, optional deterministic diffusion, edge-drying multiplier, spread resistance, and visual-profile ID
 - Validated `SimulationDefinitionCatalog` with stable unique ID resolution
 - Default Rapid Bacterium and Nutrient Agar assets containing the previous vertical-slice values
 - Immutable runtime copies of definition values for deterministic simulations
@@ -33,7 +33,7 @@ Implemented:
 - Controlled migration of schema-version-2 saves to the original default pair
 - Controlled rejection of missing, malformed, duplicate, unsupported, and version-mismatched definitions
 - Edit Mode coverage for baseline parity, distinct organism growth, distinct medium drying, deterministic replay, selected-definition save/load and restarts, schema-2 migration, and invalid content
-- Complete Unity `6000.5.3f1` Edit Mode verification on 30 July 2026: 80 passed, 0 failed
+- Complete Unity `6000.5.3f1` Edit Mode verification on 30 July 2026: 81 passed, 0 failed
 
 Deliberately deferred:
 
