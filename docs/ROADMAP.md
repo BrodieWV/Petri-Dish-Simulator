@@ -1,31 +1,52 @@
 # Roadmap
 
-## Phase 0 — Foundation
+## Current status
+
+Phase 1 is complete. Phase 2 is active.
+
+## Phase 0 — Foundation — Complete
 
 Define vision, scope, game design, architecture, simulation model, data model, UX, content, progression, analytics, tests, risks, decisions, agent instructions, and backlog.
 
-## Phase 1 — Living Dish Prototype
+## Phase 1 — Living Dish Prototype — Complete
 
-One dish, one medium, one organism, temperature, moisture, deterministic simulation, colony growth and decline, speed controls, feedback, and seeded reset.
+One dish, one medium, one organism, temperature, moisture, deterministic simulation, colony growth and decline, speed controls, feedback, seeded reset, saving, inspection, accessibility, and one guided experiment.
 
-Exit: players can produce at least three visibly different outcomes by changing conditions.
+Exit achieved: players can produce visibly different outcomes by changing conditions, and the Unity Edit Mode suite passes on the locked production editor.
 
-## Phase 2 — Experimental Vertical Slice
+## Phase 2 — Multi-Organism Experimental Slice — Active
 
-Four organism archetypes, four media, five controls, setup flow, experiment screen, inspection, discoveries, three guided experiments, saving, audio, and visual polish.
+- Data-driven organism definitions using named real organisms with simplified educational behaviour
+- Data-driven medium definitions
+- Four organisms and four media
+- Organism and medium selection
+- 3D petri-dish presentation with the live 2D colony texture on the colony surface
+- Nutrient intervention
+- Three guided experiments
+- Discovery and journal results
+- Save compatibility across selected organisms and media
+- Initial audio, haptic, accessibility, and visual polish
 
-## Phase 3 — Progression and Content
+Exit: players can select organisms and media, run meaningfully different experiments, intervene with temperature, moisture, and nutrients, and understand why outcomes differ.
 
-Full guided set, challenges, unlock tree, journal, collection, contamination, cosmetics, achievements, and statistics.
+## Phase 3 — Comparative Experiments and Progression
 
-## Phase 4 — Mobile Production
+Multiple dishes, colony transfer and cloning, source lineage, comparison tools, full guided set, challenges, unlock tree, journal, collection, contamination, cosmetics, achievements, and statistics.
+
+## Phase 4 — Advanced Biology Systems
+
+Evolution and mutation, antibacterial and antifungal treatments, resistance, contamination, multi-species competition, expanded environmental variables, and advanced educational content.
+
+These systems require stable organism definitions, lineage tracking, and multi-dish saves before implementation.
+
+## Phase 5 — Mobile Production
 
 Optimisation, touch UX, accessibility, suspend/resume, offline-safe saves, tutorials, localisation framework, analytics, crash reporting, store compliance, and optional rewarded ads.
 
-## Phase 5 — Launch and Learning
+## Phase 6 — Launch and Learning
 
-Closed testing, retention analysis, tuning, tutorial improvements, performance fixes, and monetisation validation.
+Closed testing, retention analysis, tuning, tutorial improvements, performance fixes, content correction, and monetisation validation.
 
 ## Later expansions
 
-Petri Terrarium, multi-species food webs, advanced microscopy, genetics, education edition, and PC laboratory mode.
+Fungi Growing Simulator, Petri Terrarium, multi-species food webs, advanced microscopy, genetics education edition, PC laboratory mode, and reusable biological simulation assets.
