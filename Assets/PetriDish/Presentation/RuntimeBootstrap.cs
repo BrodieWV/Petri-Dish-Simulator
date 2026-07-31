@@ -11,6 +11,8 @@ namespace PetriDish.Presentation
     public sealed class RuntimeBootstrap : MonoBehaviour
     {
         private const string TextScalePreferenceKey = "PetriDish.TextScaleMode";
+        private static readonly Color BackgroundColor = new Color(0.035f, 0.055f, 0.047f);
+        private static readonly Color DishPanelColor = new Color(0.075f, 0.115f, 0.095f);
 
         private readonly Dictionary<Text, int> baseFontSizes = new Dictionary<Text, int>();
         private ExperimentController controller;
@@ -108,8 +110,13 @@ namespace PetriDish.Presentation
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0.5f;
 
-            var bg = Image(canvasGo.transform, "Background", new Color(0.035f, 0.055f, 0.047f));
-            SetRect(bg.rectTransform, Vector2.zero, Vector2.one);
+            var backgroundObject = new GameObject(
+                "Background",
+                typeof(RectTransform),
+                typeof(DishViewportPresenter));
+            backgroundObject.transform.SetParent(canvasGo.transform, false);
+            SetRect(backgroundObject.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+            var viewportPresenter = backgroundObject.GetComponent<DishViewportPresenter>();
 
             var safeAreaObject = new GameObject("SafeArea", typeof(RectTransform));
             safeAreaObject.transform.SetParent(canvasGo.transform, false);
@@ -137,7 +144,8 @@ namespace PetriDish.Presentation
             metrics = Text(content, "Metrics", 24, TextAnchor.MiddleRight);
             SetRect(metrics.rectTransform, new Vector2(0.54f, 0.80f), new Vector2(0.95f, 0.865f));
 
-            var dishPanel = Image(content, "DishPanel", new Color(0.075f, 0.115f, 0.095f));
+            var dishPanel = Image(content, "DishPanel", DishPanelColor);
+            dishPanel.raycastTarget = false;
             SetRect(dishPanel.rectTransform, new Vector2(0.08f, 0.375f), new Vector2(0.92f, 0.80f));
             var dish = new GameObject("Dish", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter), typeof(DishRenderer));
             dish.transform.SetParent(dishPanel.transform, false);
@@ -145,6 +153,7 @@ namespace PetriDish.Presentation
             dish.GetComponent<AspectRatioFitter>().aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             dish.GetComponent<AspectRatioFitter>().aspectRatio = 1f;
             renderer = dish.GetComponent<DishRenderer>();
+            viewportPresenter.Configure(dishPanel.rectTransform, dishPanel, renderer, BackgroundColor);
 
             var inspectionPanel = Image(content, "InspectionPanel", new Color(0.045f, 0.075f, 0.062f, 0.96f));
             inspectionPanel.raycastTarget = false;

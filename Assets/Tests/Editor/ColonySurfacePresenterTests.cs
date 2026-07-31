@@ -4,6 +4,7 @@ using PetriDish.Content;
 using PetriDish.Presentation;
 using PetriDish.Simulation;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -73,13 +74,15 @@ namespace PetriDish.Tests.Editor
         {
             DishRenderer source = CreateSource();
             ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
-            presenter.Configure(target, "_NotARealTextureProperty");
+            presenter.Configure(target, "_NotARealTextureProperty", hideFlatDishImage: true);
+            source.SetFlatPresentationVisible(false);
             LogAssert.Expect(
                 LogType.Error,
                 "ColonySurfacePresenter: Material 'ColonySurfaceTestMaterial' using shader 'Standard' does not expose texture property '_NotARealTextureProperty'.");
 
             Assert.That(presenter.Bind(source), Is.False);
             Assert.That(presenter.LastValidationError, Does.Contain("_NotARealTextureProperty"));
+            Assert.That(source.FlatPresentationVisible, Is.True);
         }
 
         [Test]
@@ -94,6 +97,14 @@ namespace PetriDish.Tests.Editor
             Assert.That(source.FlatPresentationVisible, Is.False);
             Assert.That(sourceImage.color.a, Is.Zero);
             Assert.That(sourceImage.raycastTarget, Is.True);
+
+            Vector2? tappedPoint = null;
+            source.DishTapped += point => tappedPoint = point;
+            source.GetComponent<RectTransform>().sizeDelta = new Vector2(100f, 100f);
+            source.OnPointerClick(new PointerEventData(null) { position = Vector2.zero });
+            Assert.That(tappedPoint.HasValue, Is.True);
+            Assert.That(tappedPoint.Value.x, Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(tappedPoint.Value.y, Is.EqualTo(0.5f).Within(0.001f));
 
             MethodInfo onDisable = typeof(ColonySurfacePresenter).GetMethod(
                 "OnDisable",

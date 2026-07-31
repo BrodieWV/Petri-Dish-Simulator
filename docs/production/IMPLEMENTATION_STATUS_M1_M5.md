@@ -6,8 +6,8 @@ Updated: 31 July 2026.
 
 The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
 
-The data-driven organism and medium framework is merged. The immediate engineering focus
-is connecting its existing generated colony texture to the product owner's local 3D dish
+The data-driven organism and medium framework and the live colony-texture bridge are merged.
+The runtime UI now exposes a transparent central viewport for the product owner's 3D dish
 without changing authoritative simulation state or locally owned scene composition.
 
 ## Engine baseline
@@ -147,7 +147,7 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
-### 3D dish presentation — Code bridge implemented; manual hookup pending
+### 3D dish presentation — Code and runtime viewport implemented; manual verification pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:
 
@@ -166,9 +166,16 @@ The bridge reuses the same live texture for restarts and save/load. If the textu
 is recreated, the presenter receives the replacement without creating another simulation
 or copying texture pixels. Shared imported materials are never modified.
 
-Complete Unity `6000.5.3f1` Edit Mode verification on 31 July 2026: 87 passed,
-0 failed, 0 skipped. This includes six colony-surface presentation tests plus all existing
-determinism, save/load, migration, inspection, restart, accessibility, and simulation tests.
+The runtime `ScreenSpaceOverlay` UI previously placed an opaque full-screen `Background`
+behind an opaque `DishPanel`, so hiding only the old `RawImage` could not reveal the world
+camera. `DishViewportPresenter` now builds four non-raycastable background regions around
+the dish rectangle, leaving its centre transparent. The fallback `DishPanel` remains opaque
+while the 2D dish is visible and becomes transparent only when a successful 3D binding hides
+the flat image. The transparent `RawImage` stays active as the existing tap-inspection surface.
+
+Complete Unity `6000.5.3f1` Edit Mode verification on 31 July 2026: 90 passed,
+0 failed, 0 skipped. This includes colony-surface and viewport presentation tests plus all
+existing determinism, save/load, migration, inspection, restart, accessibility, and simulation tests.
 
 Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
 
@@ -179,7 +186,7 @@ Manual verification still required:
 - verify the material's texture property (`_MainTex` for the built-in Standard shader);
 - confirm live growth, restart, new-seed restart, save/load, and scene reload;
 - enable flat-image hiding only after the 3D output is confirmed;
-- review whether the existing opaque UI/background composition exposes the 3D dish as intended;
+- confirm the runtime viewport exposes the 3D dish across representative portrait safe areas;
 - retain the current 2D tap surface until a later 3D raycast mapping is designed and tested.
 
 ## Planned later systems
