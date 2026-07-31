@@ -13,11 +13,23 @@ The first automated regression pass protects the simulation properties that late
 
 ## Implementation
 
-`PetriSimulation` now uses a small serializable xorshift random generator instead of `System.Random`. The generator state is stored in save schema version 2, allowing a loaded culture to continue from the exact same random position.
+`PetriSimulation` uses a small serializable xorshift random generator instead of
+`System.Random`. The generator state introduced in save schema version 2 remains in
+schema version 3, allowing a loaded culture to continue from the exact same random
+position.
 
 Cell data is deep-copied both when a save is captured and when it is restored. This prevents the live simulation and stored save from silently modifying each other through shared object references.
 
-Legacy schema version 1 saves remain loadable. Their original random position was not stored, so they use a deterministic fallback derived from the seed and tick. They are stable after loading, but cannot reproduce the exact pre-save random stream.
+Legacy simulation schema version 1 saves remain loadable when restored directly to the
+default content pair. Their original random position was not stored, so they use a
+deterministic fallback derived from the seed and tick. They are stable after loading, but
+cannot reproduce the exact pre-save random stream.
+
+Simulation and experiment save schema version 3 store the selected organism and medium
+IDs and definition versions. Existing schema-version-2 experiment saves migrate to Rapid
+Bacterium on Nutrient Agar, the only pair available when they were written. Schema 3
+resolves and validates exact definitions before replacing a running experiment; missing
+or incompatible content produces a controlled load error.
 
 The application save wrapper now preserves the fractional fixed-step accumulator, pause state, simulation speed, guided stage, and active simulation state. Loading validates the complete candidate before replacing the running experiment, so malformed or unsupported data cannot partially mutate live state. Writes use a temporary file and retain the previous save as a recovery backup.
 
@@ -27,7 +39,8 @@ Same-seed restart uses the active experiment seed rather than reverting to the t
 
 Edit Mode tests are located at:
 
-`Assets/Tests/Editor/PetriSimulationTests.cs`
+`Assets/Tests/Editor/PetriSimulationTests.cs` and
+`Assets/Tests/Editor/SimulationDefinitionTests.cs`
 
 The test suite covers:
 
@@ -42,7 +55,14 @@ The test suite covers:
 9. pause and speed restoration;
 10. malformed-save isolation and backup recovery;
 11. initialization event timing and snapshot publication cadence;
-12. zero managed allocations during warmed-up fixed simulation steps.
+12. zero managed allocations during warmed-up fixed simulation steps;
+13. default-definition parity with the original vertical-slice values;
+14. distinct organism and medium outcomes;
+15. deterministic replay with custom definitions;
+16. selected-definition ID preservation and exact continuation;
+17. schema-version-2 content migration;
+18. malformed, duplicate, missing, and unsupported definition rejection;
+19. same-seed and new-seed restarts preserve the selected definitions.
 
 Application-level persistence and lifecycle tests are located at:
 
@@ -50,7 +70,8 @@ Application-level persistence and lifecycle tests are located at:
 
 ## Latest automated verification
 
-On 27 July 2026, the complete Edit Mode suite compiled and passed all 67 test cases using the production-baseline Unity `6000.5.3f1` editor.
+On 30 July 2026, the complete Edit Mode suite compiled and passed all 80 test cases using
+the production-baseline Unity `6000.5.3f1` editor.
 
 ## Running in Unity
 

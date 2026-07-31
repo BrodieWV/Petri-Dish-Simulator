@@ -1,4 +1,5 @@
 using System;
+using PetriDish.Content;
 using UnityEngine;
 
 namespace PetriDish.Simulation
@@ -28,8 +29,12 @@ namespace PetriDish.Simulation
     [Serializable]
     public sealed class SimulationSaveData
     {
-        public int schemaVersion = 2;
+        public int schemaVersion = 3;
         public int seed;
+        public string organismId;
+        public int organismDefinitionVersion;
+        public string mediumId;
+        public int mediumDefinitionVersion;
         public long tick;
         public float temperature;
         public float targetTemperature;
@@ -140,7 +145,7 @@ namespace PetriDish.Simulation
         public const int GridWidth = 48;
         public const int GridHeight = 48;
         public const float FixedStepSeconds = 0.25f;
-        public const int CurrentSaveSchemaVersion = 2;
+        public const int CurrentSaveSchemaVersion = 3;
 
         private const float DishRadiusNormalized = 0.87f;
         private static readonly bool[] DishMask = CreateDishMask();
@@ -149,7 +154,11 @@ namespace PetriDish.Simulation
 
         private readonly CellState[] cells = new CellState[GridWidth * GridHeight];
         private readonly float[] nextBiomass = new float[GridWidth * GridHeight];
+        private readonly float[] nextMoisture = new float[GridWidth * GridHeight];
+        private readonly float[] nextNutrients = new float[GridWidth * GridHeight];
         private readonly int seed;
+        private readonly OrganismSimulationValues organism;
+        private readonly MediumSimulationValues medium;
         private DeterministicRandom random;
         private long tick;
         private float elapsedSimSeconds;
@@ -158,13 +167,27 @@ namespace PetriDish.Simulation
 
         public long Tick => tick;
         public int Seed => seed;
+        public string OrganismId => organism.Id;
+        public int OrganismDefinitionVersion => organism.DefinitionVersion;
+        public string MediumId => medium.Id;
+        public int MediumDefinitionVersion => medium.DefinitionVersion;
         public float ElapsedSimSeconds => elapsedSimSeconds;
         public float Temperature => temperature;
         public float TargetTemperature => targetTemperature;
 
-        public PetriSimulation(int seed)
+        public PetriSimulation(
+            int seed,
+            OrganismDefinition organismDefinition,
+            MediumDefinition mediumDefinition)
         {
+            if (organismDefinition == null)
+                throw new ArgumentNullException(nameof(organismDefinition));
+            if (mediumDefinition == null)
+                throw new ArgumentNullException(nameof(mediumDefinition));
+
             this.seed = seed;
+            organism = organismDefinition.ToSimulationValues();
+            medium = mediumDefinition.ToSimulationValues();
             Reset();
         }
 
@@ -181,10 +204,10 @@ namespace PetriDish.Simulation
                 bool isDishCell = DishMask[i];
                 cells[i] = new CellState
                 {
-                    moisture = isDishCell ? 0.72f : 0f,
-                    nutrients = isDishCell ? 1f : 0f,
+                    moisture = isDishCell ? medium.InitialMoisture : 0f,
+                    nutrients = isDishCell ? medium.InitialNutrients : 0f,
                     biomass = 0f,
-                    health = isDishCell ? 1f : 0f,
+                    health = isDishCell ? organism.InitialHealth : 0f,
                     stress = 0f
                 };
             }
@@ -196,14 +219,22 @@ namespace PetriDish.Simulation
         {
             int cx = GridWidth / 2;
             int cy = GridHeight / 2;
-            for (int y = cy - 2; y <= cy + 2; y++)
+            int seedExtent = Mathf.CeilToInt(organism.SeedRadiusCells);
+            for (int y = Mathf.Max(0, cy - seedExtent);
+                 y <= Mathf.Min(GridHeight - 1, cy + seedExtent);
+                 y++)
             {
-                for (int x = cx - 2; x <= cx + 2; x++)
+                for (int x = Mathf.Max(0, cx - seedExtent);
+                     x <= Mathf.Min(GridWidth - 1, cx + seedExtent);
+                     x++)
                 {
                     float distance = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
-                    if (distance <= 2.3f)
+                    if (distance <= organism.SeedRadiusCells)
                     {
-                        cells[Index(x, y)].biomass = Mathf.Lerp(0.28f, 0.08f, distance / 2.3f);
+                        cells[Index(x, y)].biomass = Mathf.Lerp(
+                            organism.SeedCenterBiomass,
+                            organism.SeedEdgeBiomass,
+                            distance / organism.SeedRadiusCells);
                     }
                 }
             }
@@ -224,14 +255,21 @@ namespace PetriDish.Simulation
             for (int i = 0; i < cells.Length; i++)
             {
                 if (!DishMask[i]) continue;
-                float noise = 0.85f + random.NextFloat01() * 0.3f;
-                cells[i].moisture = Mathf.Clamp01(cells[i].moisture + amount * noise);
+                float variance = medium.MoistureApplicationVariance;
+                float noise = (1f - variance) + random.NextFloat01() * (variance * 2f);
+                cells[i].moisture = Mathf.Clamp(
+                    cells[i].moisture + amount * medium.MoistureAbsorptionMultiplier * noise,
+                    0f,
+                    medium.MaximumMoisture);
             }
         }
 
         public void Step()
         {
-            temperature = Mathf.MoveTowards(temperature, targetTemperature, 0.18f);
+            temperature = Mathf.MoveTowards(
+                temperature,
+                targetTemperature,
+                medium.TemperatureResponseRate);
             Array.Clear(nextBiomass, 0, nextBiomass.Length);
 
             for (int y = 0; y < GridHeight; y++)
@@ -243,39 +281,97 @@ namespace PetriDish.Simulation
 
                     CellState cell = cells[index];
                     float edge = DishEdgeDistance[index];
-                    float edgeDrying = Mathf.Lerp(0.0017f, 0.00045f, Mathf.Clamp01(edge / 12f));
-                    float heatDrying = Mathf.Max(0f, temperature - 24f) * 0.00012f;
-                    cell.moisture = Mathf.Clamp01(cell.moisture - edgeDrying - heatDrying);
+                    float edgeDrying = Mathf.Lerp(
+                        medium.EdgeEvaporation,
+                        medium.InteriorEvaporation,
+                        Mathf.Clamp01(edge / medium.EdgeFalloffDepthCells));
+                    float heatDrying = Mathf.Max(
+                        0f,
+                        temperature - medium.HeatEvaporationStartTemperature) *
+                        medium.HeatEvaporationPerDegree;
+                    cell.moisture = Mathf.Clamp(
+                        cell.moisture - edgeDrying - heatDrying,
+                        0f,
+                        medium.MaximumMoisture);
 
-                    float temperatureSuitability = BellSuitability(temperature, 26f, 7.5f);
-                    float moistureSuitability = BellSuitability(cell.moisture, 0.70f, 0.35f);
-                    float nutrientSuitability = Mathf.Clamp01(cell.nutrients / 0.25f);
+                    float temperatureSuitability = BellSuitability(
+                        temperature,
+                        organism.PreferredTemperature,
+                        organism.TemperatureHalfRange);
+                    if (temperature < organism.GrowthTemperatureMinimum ||
+                        temperature > organism.GrowthTemperatureMaximum)
+                        temperatureSuitability = 0f;
+                    float moistureSuitability = BellSuitability(
+                        cell.moisture,
+                        organism.PreferredMoisture,
+                        organism.MoistureHalfRange);
+                    if (cell.moisture < organism.GrowthMoistureThreshold)
+                        moistureSuitability = 0f;
+                    float nutrientSuitability = Mathf.Clamp01(
+                        cell.nutrients / organism.NutrientsForFullSuitability);
                     float suitability = Mathf.Min(temperatureSuitability, moistureSuitability, nutrientSuitability);
 
-                    bool lethalTemperature = temperature < 11f || temperature > 38f;
-                    bool lethalMoisture = cell.moisture < 0.16f;
+                    bool lethalTemperature =
+                        temperature < organism.LethalTemperatureMinimum ||
+                        temperature > organism.LethalTemperatureMaximum;
+                    bool lethalMoisture = cell.moisture < organism.LethalMoistureMinimum;
                     float desiredStress = 1f - suitability;
                     if (lethalTemperature || lethalMoisture) desiredStress = 1f;
-                    cell.stress = Mathf.MoveTowards(cell.stress, desiredStress, lethalTemperature || lethalMoisture ? 0.06f : 0.025f);
-                    cell.health = Mathf.Clamp01(cell.health + (suitability > 0.55f ? 0.015f : -0.018f * (0.35f + cell.stress)));
+                    float stressResponseRate = desiredStress < cell.stress
+                        ? organism.StressRecoveryRate
+                        : organism.StressSensitivity;
+                    cell.stress = Mathf.MoveTowards(
+                        cell.stress,
+                        desiredStress,
+                        lethalTemperature || lethalMoisture
+                            ? organism.LethalStressResponseRate
+                            : stressResponseRate);
+                    cell.health = Mathf.Clamp01(
+                        cell.health +
+                        (suitability > organism.HealthySuitabilityThreshold
+                            ? organism.HealthRecoveryRate
+                            : -organism.HealthDeclineRate *
+                              (organism.HealthDeclineStressFloor + cell.stress)));
 
-                    float carryingRoom = Mathf.Clamp01(1f - cell.biomass);
-                    float growth = cell.biomass * 0.07f * suitability * cell.health * carryingRoom;
-                    float death = cell.biomass * (lethalTemperature || lethalMoisture ? 0.035f : 0.004f * cell.stress);
-                    cell.nutrients = Mathf.Clamp01(cell.nutrients - growth * 0.42f);
-                    cell.moisture = Mathf.Clamp01(cell.moisture - growth * 0.025f);
+                    float carryingRoom = Mathf.Clamp01(
+                        1f - cell.biomass / organism.CarryingCapacity);
+                    float growth =
+                        cell.biomass * organism.GrowthRate * suitability * cell.health * carryingRoom;
+                    float death = cell.biomass *
+                        (lethalTemperature || lethalMoisture
+                            ? organism.LethalDeathRate
+                            : organism.StressDeathRate * cell.stress);
+                    cell.nutrients = Mathf.Clamp(
+                        cell.nutrients - growth * organism.NutrientConsumptionPerGrowth,
+                        0f,
+                        medium.MaximumNutrients);
+                    cell.moisture = Mathf.Clamp(
+                        cell.moisture - growth * organism.MoistureConsumptionPerGrowth,
+                        0f,
+                        medium.MaximumMoisture);
                     nextBiomass[index] += Mathf.Max(0f, cell.biomass + growth - death);
 
-                    if (cell.biomass > 0.035f && suitability > 0.28f)
+                    if (cell.biomass > organism.SpreadMinimumBiomass &&
+                        suitability > organism.SpreadMinimumSuitability)
                     {
-                        SpreadToNeighbours(x, y, cell.biomass * 0.006f * suitability, nextBiomass);
+                        SpreadToNeighbours(
+                            x,
+                            y,
+                            cell.biomass * organism.SpreadRate * suitability *
+                            (1f - medium.SpreadResistance),
+                            nextBiomass);
                     }
                 }
             }
 
+            ApplyMediumDiffusion();
+
             for (int i = 0; i < cells.Length; i++)
             {
-                cells[i].biomass = Mathf.Clamp01(nextBiomass[i]);
+                cells[i].biomass = Mathf.Clamp(
+                    nextBiomass[i],
+                    0f,
+                    organism.CarryingCapacity);
             }
 
             tick++;
@@ -294,7 +390,10 @@ namespace PetriDish.Simulation
                     if (nx < 0 || nx >= GridWidth || ny < 0 || ny >= GridHeight) continue;
                     int neighbourIndex = Index(nx, ny);
                     if (!DishMask[neighbourIndex]) continue;
-                    destination[neighbourIndex] += amount * (0.75f + random.NextFloat01() * 0.5f);
+                    destination[neighbourIndex] += amount * Mathf.Lerp(
+                        organism.SpreadRandomMinimum,
+                        organism.SpreadRandomMaximum,
+                        random.NextFloat01());
                 }
             }
         }
@@ -342,6 +441,59 @@ namespace PetriDish.Simulation
                 totalNutrients / DishCellCount, biomass, health, moisture, nutrients);
         }
 
+        private void ApplyMediumDiffusion()
+        {
+            if (medium.MoistureDiffusion <= 0f && medium.NutrientDiffusion <= 0f) return;
+
+            for (int y = 0; y < GridHeight; y++)
+            {
+                for (int x = 0; x < GridWidth; x++)
+                {
+                    int index = Index(x, y);
+                    if (!DishMask[index]) continue;
+
+                    float moistureTotal = cells[index].moisture;
+                    float nutrientTotal = cells[index].nutrients;
+                    int sampleCount = 1;
+                    AddDiffusionSample(x - 1, y, ref moistureTotal, ref nutrientTotal, ref sampleCount);
+                    AddDiffusionSample(x + 1, y, ref moistureTotal, ref nutrientTotal, ref sampleCount);
+                    AddDiffusionSample(x, y - 1, ref moistureTotal, ref nutrientTotal, ref sampleCount);
+                    AddDiffusionSample(x, y + 1, ref moistureTotal, ref nutrientTotal, ref sampleCount);
+
+                    nextMoisture[index] = Mathf.Lerp(
+                        cells[index].moisture,
+                        moistureTotal / sampleCount,
+                        medium.MoistureDiffusion);
+                    nextNutrients[index] = Mathf.Lerp(
+                        cells[index].nutrients,
+                        nutrientTotal / sampleCount,
+                        medium.NutrientDiffusion);
+                }
+            }
+
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (!DishMask[i]) continue;
+                cells[i].moisture = Mathf.Clamp(nextMoisture[i], 0f, medium.MaximumMoisture);
+                cells[i].nutrients = Mathf.Clamp(nextNutrients[i], 0f, medium.MaximumNutrients);
+            }
+        }
+
+        private void AddDiffusionSample(
+            int x,
+            int y,
+            ref float moistureTotal,
+            ref float nutrientTotal,
+            ref int sampleCount)
+        {
+            if (x < 0 || x >= GridWidth || y < 0 || y >= GridHeight) return;
+            int index = Index(x, y);
+            if (!DishMask[index]) return;
+            moistureTotal += cells[index].moisture;
+            nutrientTotal += cells[index].nutrients;
+            sampleCount++;
+        }
+
         public SimulationMetrics CreateMetrics()
         {
             float coverage = 0f;
@@ -375,6 +527,10 @@ namespace PetriDish.Simulation
             {
                 schemaVersion = CurrentSaveSchemaVersion,
                 seed = seed,
+                organismId = organism.Id,
+                organismDefinitionVersion = organism.DefinitionVersion,
+                mediumId = medium.Id,
+                mediumDefinitionVersion = medium.DefinitionVersion,
                 tick = tick,
                 temperature = temperature,
                 targetTemperature = targetTemperature,
@@ -418,6 +574,7 @@ namespace PetriDish.Simulation
                 throw new ArgumentException($"Unsupported save schema version {data.schemaVersion}.", nameof(data));
             if (data.seed != seed)
                 throw new ArgumentException("Save seed does not match this simulation instance.", nameof(data));
+            ValidateDefinitionSelection(data);
             if (data.cells == null || data.cells.Length != cells.Length)
                 throw new ArgumentException("Save data has an invalid cell array.", nameof(data));
             if (data.tick < 0)
@@ -440,7 +597,46 @@ namespace PetriDish.Simulation
                     !IsUnitValue(cell.biomass) || !IsUnitValue(cell.health) ||
                     !IsUnitValue(cell.stress))
                     throw new ArgumentException($"Save data contains an invalid cell at index {i}.", nameof(data));
+                if (cell.moisture > medium.MaximumMoisture ||
+                    cell.nutrients > medium.MaximumNutrients ||
+                    cell.biomass > organism.CarryingCapacity)
+                    throw new ArgumentException(
+                        $"Save data exceeds the selected definition capacity at cell {i}.",
+                        nameof(data));
             }
+        }
+
+        private void ValidateDefinitionSelection(SimulationSaveData data)
+        {
+            if (data.schemaVersion <= 2)
+            {
+                if (organism.Id != SimulationDefinitionCatalog.RapidBacteriumId ||
+                    medium.Id != SimulationDefinitionCatalog.NutrientAgarId ||
+                    organism.DefinitionVersion != 1 ||
+                    medium.DefinitionVersion != 1)
+                    throw new ArgumentException(
+                        "Schema-version-2 simulations can only migrate to definition-version-1 " +
+                        "Rapid Bacterium on definition-version-1 Nutrient Agar.",
+                        nameof(data));
+                return;
+            }
+
+            if (!string.Equals(data.organismId, organism.Id, StringComparison.Ordinal))
+                throw new ArgumentException(
+                    $"Save organism '{data.organismId}' does not match '{organism.Id}'.",
+                    nameof(data));
+            if (data.organismDefinitionVersion != organism.DefinitionVersion)
+                throw new ArgumentException(
+                    $"Save organism definition version {data.organismDefinitionVersion} is not supported.",
+                    nameof(data));
+            if (!string.Equals(data.mediumId, medium.Id, StringComparison.Ordinal))
+                throw new ArgumentException(
+                    $"Save medium '{data.mediumId}' does not match '{medium.Id}'.",
+                    nameof(data));
+            if (data.mediumDefinitionVersion != medium.DefinitionVersion)
+                throw new ArgumentException(
+                    $"Save medium definition version {data.mediumDefinitionVersion} is not supported.",
+                    nameof(data));
         }
 
         private static bool IsUnitValue(float value) => IsFinite(value) && value >= 0f && value <= 1f;

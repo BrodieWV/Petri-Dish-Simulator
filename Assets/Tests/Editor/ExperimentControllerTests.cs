@@ -39,7 +39,7 @@ namespace PetriDish.Tests.Editor
             ExperimentController controller = CreateController(ref firstObject);
             controller.StartNew(918273);
             for (int i = 0; i < 8; i++) controller.Simulation.Step();
-            SimulationSnapshot expected = new PetriSimulation(918273).CreateSnapshot();
+            SimulationSnapshot expected = CreateDefaultSimulation(918273).CreateSnapshot();
 
             controller.RestartSameSeed();
             SimulationSnapshot actual = controller.Simulation.CreateSnapshot();
@@ -160,6 +160,12 @@ namespace PetriDish.Tests.Editor
         {
             owner = new GameObject("ExperimentControllerTest");
             return owner.AddComponent<ExperimentController>();
+        }
+
+        private static PetriSimulation CreateDefaultSimulation(int seed)
+        {
+            var catalog = PetriDish.Content.SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            return new PetriSimulation(seed, catalog.DefaultOrganism, catalog.DefaultMedium);
         }
 
         private static void AssertSnapshotsEqual(SimulationSnapshot expected, SimulationSnapshot actual)

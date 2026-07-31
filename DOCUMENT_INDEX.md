@@ -39,6 +39,14 @@ This index identifies the authoritative document for common project questions.
 - `docs/TEST_STRATEGY.md`
 - `docs/ANALYTICS.md`
 
+## Phase 2 definition framework
+
+- `Assets/PetriDish/Content/OrganismDefinition.cs` — organism identity, scientific metadata, and simulation values
+- `Assets/PetriDish/Content/MediumDefinition.cs` — medium identity, scientific metadata, and environmental values
+- `Assets/PetriDish/Content/SimulationDefinitionCatalog.cs` — validated definition lookup and defaults
+- `Assets/PetriDish/Content/Resources/PetriDish/` — current Rapid Bacterium and Nutrient Agar defaults
+- `Assets/Tests/Editor/SimulationDefinitionTests.cs` — definition, determinism, and save migration coverage
+
 ## Content and design
 
 - `data/CONTENT_CATALOG.md`

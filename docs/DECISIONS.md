@@ -44,3 +44,19 @@ Accepted on 30 July 2026. The deterministic 2D grid and generated colony texture
 
 ## D-015 — Multiple dishes and colony transfer follow stable definitions
 Accepted on 30 July 2026. Nutrient intervention, cloning colonies into additional dishes, and comparative environments are planned after organism and medium definitions are stable. Evolution, treatment resistance, antibacterial and antifungal systems require lineage tracking and are deferred until the multi-dish save model is proven.
+
+## D-016 — Organism and medium balance is definition-driven
+
+Accepted on 28 July 2026 for the first Phase 2 content framework. Biological organism
+values and medium environmental values are authored in validated ScriptableObject
+definitions and copied into immutable runtime simulation values. Stable IDs and
+definition versions are saved with the experiment. Schema-version-2 saves migrate only
+to the original Rapid Bacterium and Nutrient Agar defaults; incompatible or missing
+definitions fail without replacing the active experiment. Presentation assets remain
+separate from biological simulation values.
+
+Amended on 30 July 2026 to include explicit preferred/growth/survival ranges,
+source notes, scientific confidence, simplification notes, carrying and medium capacities,
+optional deterministic diffusion, spread resistance, and presentation-only visual-profile
+IDs. Scientific and presentation metadata are not authoritative biological state and do
+not connect the simulation to the 3D dish.
