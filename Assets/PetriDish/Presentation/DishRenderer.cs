@@ -15,28 +15,51 @@ namespace PetriDish.Presentation
         private RawImage target;
         private Texture2D texture;
         private Color32[] pixels;
+        private float visibleAlpha = 1f;
 
         public event Action<Vector2> DishTapped;
+        public event Action<Texture2D> ColonyTextureChanged;
+
+        public Texture2D ColonyTexture => texture;
+        public bool FlatPresentationVisible { get; private set; } = true;
 
         private void Awake()
         {
             target = GetComponent<RawImage>();
-            texture = new Texture2D(PetriSimulation.GridWidth, PetriSimulation.GridHeight, TextureFormat.RGBA32, false)
+            visibleAlpha = target.color.a;
+            pixels = new Color32[PetriSimulation.GridWidth * PetriSimulation.GridHeight];
+            CreateTexture();
+        }
+
+        private void CreateTexture()
+        {
+            DestroyTexture();
+            texture = new Texture2D(
+                PetriSimulation.GridWidth,
+                PetriSimulation.GridHeight,
+                TextureFormat.RGBA32,
+                false)
             {
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp
             };
             target.texture = texture;
-            pixels = new Color32[PetriSimulation.GridWidth * PetriSimulation.GridHeight];
+            ColonyTextureChanged?.Invoke(texture);
         }
 
         private void OnDestroy()
+        {
+            DestroyTexture();
+        }
+
+        private void DestroyTexture()
         {
             if (texture == null) return;
             if (UnityEngine.Application.isPlaying)
                 Destroy(texture);
             else
                 DestroyImmediate(texture);
+            texture = null;
         }
 
         public void Render(SimulationSnapshot snapshot)
@@ -46,6 +69,10 @@ namespace PetriDish.Presentation
             if (snapshot.Biomass.Length != snapshot.Health.Length ||
                 snapshot.Biomass.Length != snapshot.Moisture.Length)
                 throw new ArgumentException("Snapshot rendering arrays must have equal lengths.", nameof(snapshot));
+            if (texture == null ||
+                texture.width != PetriSimulation.GridWidth ||
+                texture.height != PetriSimulation.GridHeight)
+                CreateTexture();
             if (pixels == null || pixels.Length != snapshot.Biomass.Length)
                 pixels = new Color32[snapshot.Biomass.Length];
 
@@ -90,7 +117,7 @@ namespace PetriDish.Presentation
                     new Color(0.35f, 0.18f, 0.10f),
                     new Color(0.67f, 0.94f, 0.50f),
                     health);
-                float colonyTexture = ColonyTexture(x, y);
+                float colonyTexture = ColonyPattern(x, y);
                 colony = Color.Lerp(colony * 0.82f, colony * 1.08f, colonyTexture);
                 float colonyWeight = Mathf.SmoothStep(0.03f, 0.82f, biomass);
                 Color result = Color.Lerp(medium, colony, colonyWeight);
@@ -120,6 +147,22 @@ namespace PetriDish.Presentation
             texture.Apply(false);
         }
 
+        public void SetFlatPresentationVisible(bool visible)
+        {
+            if (target == null) target = GetComponent<RawImage>();
+            Color color = target.color;
+            if (visible)
+                color.a = visibleAlpha;
+            else
+            {
+                if (color.a > 0f) visibleAlpha = color.a;
+                color.a = 0f;
+            }
+
+            target.color = color;
+            FlatPresentationVisible = visible;
+        }
+
         private static bool IsGrowthEdge(float[] biomass, int x, int y, float value)
         {
             return IsLower(biomass, x - 1, y, value) ||
@@ -144,7 +187,7 @@ namespace PetriDish.Presentation
             return Mathf.Max(heatBands, drySpeckle);
         }
 
-        private static float ColonyTexture(int x, int y)
+        private static float ColonyPattern(int x, int y)
         {
             int hash = unchecked(x * 374761393 + y * 668265263);
             hash = unchecked((hash ^ (hash >> 13)) * 1274126177);
