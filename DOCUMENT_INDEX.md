@@ -46,6 +46,8 @@ This index identifies the authoritative document for common project questions.
 - `Assets/PetriDish/Content/SimulationDefinitionCatalog.cs` — validated definition lookup and defaults
 - `Assets/PetriDish/Content/Resources/PetriDish/` — current Rapid Bacterium and Nutrient Agar defaults
 - `Assets/Tests/Editor/SimulationDefinitionTests.cs` — definition, determinism, and save migration coverage
+- `Assets/PetriDish/Presentation/ColonySurfacePresenter.cs` — live texture bridge for the approved 3D colony surface
+- `Assets/Tests/Editor/ColonySurfacePresenterTests.cs` — texture binding and material-safety coverage
 
 ## Content and design
 
@@ -80,4 +82,6 @@ This index identifies the authoritative document for common project questions.
 
 ## Current status
 
-Phase 1 is complete. Phase 2 is active. The immediate code task is the data-driven organism and medium framework. The product owner is concurrently working locally on the reusable 3D petri-dish presentation.
+Phase 1 is complete. Phase 2 is active. The data-driven organism and medium framework is
+merged, and the 3D colony-surface bridge is implemented in code pending manual hookup to
+the product owner's locally configured dish scene.

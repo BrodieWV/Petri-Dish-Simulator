@@ -12,6 +12,8 @@ Complete epics in dependency order. Do not begin later biological systems merely
 
 ## Epic A — Data-driven organism and medium framework
 
+Status: complete and merged through PR #7.
+
 - Define validated organism and medium schemas.
 - Move organism-specific and medium-specific values out of central simulation logic.
 - Preserve current Rapid Bacterium and Nutrient Agar behaviour as migration defaults.
@@ -46,6 +48,9 @@ Candidate groups include bacteria, yeast, and filamentous mould. Final species s
 
 ## Epic D — 3D petri-dish integration
 
+Status: colony-texture bridge implemented in code; manual scene hookup, visual review,
+portrait framing, materials, and mobile performance verification remain.
+
 - Preserve the deterministic 2D simulation and generated colony texture.
 - Display the live colony texture on `PetriDish_ColonySurface` in the 3D dish asset.
 - Retain the existing 2D UI until a later dedicated UI pass.
@@ -54,6 +59,11 @@ Candidate groups include bacteria, yeast, and filamentous mould. Final species s
 - Verify portrait framing and mobile performance.
 
 The product owner is currently editing dish placement, camera framing, materials, and scene composition locally. Automated agents must not modify those Unity assets or scene choices unless explicitly assigned.
+
+The code integration uses `ColonySurfacePresenter` and `MaterialPropertyBlock`. The
+runtime bootstrap supplies the existing `DishRenderer` texture source after scene load.
+The product owner's scene, imported model, material settings, camera, transforms, and lid
+rotation remain outside the automated change.
 
 ## Epic E — Nutrient intervention
 
@@ -97,7 +107,7 @@ These systems must be designed after multi-dish experiments and lineage tracking
 
 1. Complete and verify the organism/media framework.
 2. Update documentation and save compatibility notes.
-3. Connect the live colony texture to the approved 3D dish only after the framework branch is merged and local Unity work is committed.
+3. Manually attach and verify the implemented colony-surface presenter on the approved 3D dish; preserve local Unity work in a separate reviewed commit.
 4. Add one reviewed real organism.
 5. Add one additional medium.
 6. Add nutrient intervention.

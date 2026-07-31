@@ -3,6 +3,7 @@ using PetriDish.Application;
 using PetriDish.Simulation;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace PetriDish.Presentation
@@ -53,6 +54,8 @@ namespace PetriDish.Presentation
             controller.SnapshotUpdated += OnSnapshot;
             controller.StageChanged += OnStage;
             renderer.DishTapped += OnDishTapped;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            BindColonySurfacePresenters();
             RefreshPlaybackState();
         }
 
@@ -64,6 +67,28 @@ namespace PetriDish.Presentation
                 controller.StageChanged -= OnStage;
             }
             if (renderer != null) renderer.DishTapped -= OnDishTapped;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        public DishRenderer ColonyTextureSource => renderer;
+
+        public bool BindColonySurfacePresenter(ColonySurfacePresenter presenter)
+        {
+            return presenter != null && presenter.Bind(renderer);
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            BindColonySurfacePresenters();
+        }
+
+        private void BindColonySurfacePresenters()
+        {
+            ColonySurfacePresenter[] presenters = FindObjectsByType<ColonySurfacePresenter>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < presenters.Length; i++)
+                presenters[i].Bind(renderer);
         }
 
         private void CreateEventSystem()

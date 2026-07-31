@@ -37,6 +37,23 @@ Coordinates experiment lifecycle, interventions, speed, save/load, progression, 
 
 Renders the dish, colonies, overlays, particles, camera, UI, audio, and accessibility. It observes read-only simulation snapshots and never owns authoritative state.
 
+`DishRenderer` remains the sole owner of the generated colony `Texture2D`. It updates that
+same texture from read-only simulation snapshots and publishes an event only when the
+texture object itself is recreated. `ColonySurfacePresenter` observes that presentation
+texture and assigns it to a configured `MeshRenderer` shader property through one cached
+`MaterialPropertyBlock`. It does not copy pixels, instantiate materials per frame, mutate
+shared imported materials, retain snapshots, or access `PetriSimulation`.
+
+`RuntimeBootstrap` binds scene `ColonySurfacePresenter` components to its runtime-created
+`DishRenderer` after initial UI construction and after later scene loads. The existing 2D
+`RawImage` remains available as a visual fallback and as the current normalized tap input
+surface. Hiding its image changes only its alpha, preserving inspection raycasts until a
+separate reviewed 3D raycast-mapping task is approved.
+
+The current project uses Unity's built-in render pipeline. The presenter defaults to the
+Standard shader texture property `_MainTex`, but the property name is serialized and
+validated so another compatible shader can be configured explicitly.
+
 ### Platform adapters
 
 Replaceable integrations for mobile lifecycle, notifications, achievements, cloud saves, ads, purchases, crash reporting, and analytics.

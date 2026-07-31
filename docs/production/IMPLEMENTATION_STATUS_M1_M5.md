@@ -1,12 +1,14 @@
 # Implementation Status — Phase 1 Complete / Phase 2 Active
 
-Updated: 30 July 2026.
+Updated: 31 July 2026.
 
 ## Current project state
 
 The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
 
-The immediate engineering focus is the data-driven organism and medium framework. The product owner is separately improving the 3D petri-dish presentation locally in Unity.
+The data-driven organism and medium framework is merged. The immediate engineering focus
+is connecting its existing generated colony texture to the product owner's local 3D dish
+without changing authoritative simulation state or locally owned scene composition.
 
 ## Engine baseline
 
@@ -39,7 +41,7 @@ Deliberately deferred:
 
 - Runtime organism or medium selection UI
 - Additional production organisms or media
-- Visual-profile registry, visual/audio asset selection, and the future `PetriDish_ColonySurface` connection
+- Visual-profile registry and visual/audio asset selection
 - Compatibility rules, multiple nutrient pools, waste, and competition
 - Content-version migration beyond the safe schema-2 default mapping
 
@@ -128,9 +130,9 @@ Remaining presentation work:
 
 ## Active Phase 2 engineering work
 
-### Data-driven organism and medium framework
+### Data-driven organism and medium framework — Complete
 
-Approved next task:
+Implemented and merged through PR #7:
 
 - Move organism and medium parameters out of central simulation logic
 - Add validated serialisable definitions
@@ -145,7 +147,7 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
-### 3D dish presentation — Locally owned work in progress
+### 3D dish presentation — Code bridge implemented; manual hookup pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:
 
@@ -155,9 +157,30 @@ The product owner has created and imported a reusable 3D petri dish with separat
 - colony surface;
 - removable lid.
 
-The preferred portrait camera angle has been selected. The 2D UI will remain for now. After the organism/media framework is merged and local Unity changes are committed, the existing generated colony texture should be connected to `PetriDish_ColonySurface`.
+The preferred portrait camera angle has been selected. The 2D UI remains in place.
+`DishRenderer` now exposes its existing generated texture, `ColonySurfacePresenter`
+applies it to a validated `MeshRenderer` property using a cached
+`MaterialPropertyBlock`, and `RuntimeBootstrap` binds presenters after scene loads.
+
+The bridge reuses the same live texture for restarts and save/load. If the texture object
+is recreated, the presenter receives the replacement without creating another simulation
+or copying texture pixels. Shared imported materials are never modified.
+
+Complete Unity `6000.5.3f1` Edit Mode verification on 31 July 2026: 87 passed,
+0 failed, 0 skipped. This includes six colony-surface presentation tests plus all existing
+determinism, save/load, migration, inspection, restart, accessibility, and simulation tests.
 
 Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
+
+Manual verification still required:
+
+- add `ColonySurfacePresenter` to `PetriDish_ColonySurface`;
+- assign that object's `MeshRenderer`;
+- verify the material's texture property (`_MainTex` for the built-in Standard shader);
+- confirm live growth, restart, new-seed restart, save/load, and scene reload;
+- enable flat-image hiding only after the 3D output is confirmed;
+- review whether the existing opaque UI/background composition exposes the 3D dish as intended;
+- retain the current 2D tap surface until a later 3D raycast mapping is designed and tested.
 
 ## Planned later systems
 
