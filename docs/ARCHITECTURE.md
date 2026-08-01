@@ -44,6 +44,13 @@ texture and assigns it to a configured `MeshRenderer` shader property through on
 `MaterialPropertyBlock`. It does not copy pixels, instantiate materials per frame, mutate
 shared imported materials, retain snapshots, or access `PetriSimulation`.
 
+`ColonySurfacePresenter` also owns presentation-only scale, offset, and horizontal/vertical
+flip controls for correcting model-UV alignment. It writes the live texture to the configured
+shader texture property and the alignment to that property's conventional `_ST` vector in
+the same cached `MaterialPropertyBlock`. The built-in Standard shader therefore uses
+`_MainTex` and `_MainTex_ST`. These controls do not change the generated texture, model UVs,
+shared material, simulation state, flat fallback, or inspection surface.
+
 `RuntimeBootstrap` binds scene `ColonySurfacePresenter` components to its runtime-created
 `DishRenderer` after initial UI construction and after later scene loads. The existing 2D
 `RawImage` remains available as a visual fallback and as the current normalized tap input

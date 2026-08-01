@@ -1,6 +1,6 @@
 # Implementation Status — Phase 1 Complete / Phase 2 Active
 
-Updated: 31 July 2026.
+Updated: 1 August 2026.
 
 ## Current project state
 
@@ -173,9 +173,16 @@ the dish rectangle, leaving its centre transparent. The fallback `DishPanel` rem
 while the 2D dish is visible and becomes transparent only when a successful 3D binding hides
 the flat image. The transparent `RawImage` stays active as the existing tap-inspection surface.
 
-Complete Unity `6000.5.3f1` Edit Mode verification on 31 July 2026: 90 passed,
-0 failed, 0 skipped. This includes colony-surface and viewport presentation tests plus all
-existing determinism, save/load, migration, inspection, restart, accessibility, and simulation tests.
+The presenter now exposes texture scale X/Y, offset X/Y, Flip X, and Flip Y controls for
+aligning the generated colony texture to the approved colony-surface UVs. Defaults preserve
+the previous 1,1 tiling and 0,0 offset. Inspector and runtime changes update `_MainTex_ST`
+through the presenter's cached `MaterialPropertyBlock` while the live texture remains bound
+through `_MainTex`. Quarter-turn rotation is not included because the built-in Standard
+shader's scale/offset transform cannot swap UV axes without changing the shader/material or
+copying the live texture.
+
+The combined viewport and alignment branch requires refreshed complete Edit Mode verification
+after reconciliation.
 
 Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
 
@@ -184,6 +191,10 @@ Manual verification still required:
 - add `ColonySurfacePresenter` to `PetriDish_ColonySurface`;
 - assign that object's `MeshRenderer`;
 - verify the material's texture property (`_MainTex` for the built-in Standard shader);
+- enter Play Mode and adjust Texture Scale, Texture Offset, Flip X, and Flip Y on the
+  presenter until the circular simulation mask is centred on the agar;
+- start with scale 1,1 and offset 0,0, adjust scale first, then offset in small increments,
+  and use flips only when the model UV direction is reversed;
 - confirm live growth, restart, new-seed restart, save/load, and scene reload;
 - enable flat-image hiding only after the 3D output is confirmed;
 - confirm the runtime viewport exposes the 3D dish across representative portrait safe areas;

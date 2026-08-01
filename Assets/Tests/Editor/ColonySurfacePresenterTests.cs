@@ -3,6 +3,7 @@ using NUnit.Framework;
 using PetriDish.Content;
 using PetriDish.Presentation;
 using PetriDish.Simulation;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.TestTools;
@@ -37,6 +38,109 @@ namespace PetriDish.Tests.Editor
             Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
             Assert.That(target.sharedMaterial, Is.SameAs(material));
             Assert.That(material.GetTexture("_MainTex"), Is.Null);
+        }
+
+        [Test]
+        public void DefaultAlignmentPreservesCurrentTextureTransform()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(1f, 1f, 0f, 0f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+        }
+
+        [Test]
+        public void ScaleOffsetAndFlipsAreAppliedThroughTextureTransformProperty()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Assert.That(
+                presenter.SetTextureAlignment(
+                    new Vector2(0.8f, 0.6f),
+                    new Vector2(0.1f, 0.2f),
+                    horizontalFlip: true,
+                    verticalFlip: true),
+                Is.True,
+                presenter.LastValidationError);
+
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(-0.8f, -0.6f, 0.9f, 0.8f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+            Assert.That(material.GetTextureScale("_MainTex"), Is.EqualTo(Vector2.one));
+            Assert.That(material.GetTextureOffset("_MainTex"), Is.EqualTo(Vector2.zero));
+        }
+
+        [Test]
+        public void RuntimeAlignmentChangesReuseCachedPropertyBlocksAndLiveTexture()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+            FieldInfo propertyBlockField = typeof(ColonySurfacePresenter).GetField(
+                "propertyBlock",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo originalPropertyBlockField = typeof(ColonySurfacePresenter).GetField(
+                "originalPropertyBlock",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(propertyBlockField, Is.Not.Null);
+            Assert.That(originalPropertyBlockField, Is.Not.Null);
+            object appliedBlock = propertyBlockField.GetValue(presenter);
+            object originalBlock = originalPropertyBlockField.GetValue(presenter);
+
+            Assert.That(
+                presenter.SetTextureAlignment(
+                    new Vector2(1.25f, 0.75f),
+                    new Vector2(-0.1f, 0.15f),
+                    verticalFlip: true),
+                Is.True,
+                presenter.LastValidationError);
+
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(1.25f, -0.75f, -0.1f, 0.9f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+            Assert.That(propertyBlockField.GetValue(presenter), Is.SameAs(appliedBlock));
+            Assert.That(originalPropertyBlockField.GetValue(presenter), Is.SameAs(originalBlock));
+            Assert.That(target.sharedMaterial, Is.SameAs(material));
+        }
+
+        [Test]
+        public void InspectorAlignmentChangesRefreshAnExistingBinding()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+            var serializedPresenter = new SerializedObject(presenter);
+            serializedPresenter.FindProperty("textureScale").vector2Value = new Vector2(0.9f, 0.7f);
+            serializedPresenter.FindProperty("textureOffset").vector2Value = new Vector2(0.05f, 0.15f);
+            serializedPresenter.FindProperty("flipX").boolValue = true;
+            serializedPresenter.ApplyModifiedPropertiesWithoutUndo();
+
+            MethodInfo onValidate = typeof(ColonySurfacePresenter).GetMethod(
+                "OnValidate",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(onValidate, Is.Not.Null);
+            onValidate.Invoke(presenter, null);
+
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(-0.9f, 0.7f, 0.95f, 0.15f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
         }
 
         [Test]
@@ -175,6 +279,11 @@ namespace PetriDish.Tests.Editor
                 2468,
                 catalog.DefaultOrganism,
                 catalog.DefaultMedium).CreateSnapshot();
+        }
+
+        private static void AssertVectorApproximately(Vector4 expected, Vector4 actual)
+        {
+            Assert.That(Vector4.Distance(actual, expected), Is.LessThan(0.000001f));
         }
     }
 }
