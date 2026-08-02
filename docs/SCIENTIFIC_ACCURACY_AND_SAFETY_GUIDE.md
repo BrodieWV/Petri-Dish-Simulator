@@ -38,14 +38,9 @@ Use for invented organisms, fantasy traits, or deliberately unrealistic content.
 
 ## Organism naming
 
-MVP organisms should use broad archetype names:
+Phase 2 uses named real organisms only after a dedicated content and safety review. Each definition must include a scientific name, player-facing name, source-backed traits, confidence, and explicit simplification notes.
 
-- Rapid Bacterium
-- Yeast-like Culture
-- Filamentous Fungus
-- Slime Mould
-
-Avoid naming a real pathogen or implying the game simulates a specific strain unless later content has expert review and a clear educational reason.
+Do not imply that the game simulates a particular strain unless that strain is deliberately selected, reviewed, and represented by the model. Avoid real pathogens unless expert review establishes a clear educational reason and child-safe presentation. Broad archetypes may remain temporarily as migration placeholders, but they are not release-ready organism content.
 
 ## Restricted content
 

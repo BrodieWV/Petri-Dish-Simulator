@@ -147,6 +147,8 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
+A dedicated content and safety review now recommends *Bacillus subtilis* as the first named bacterial candidate. Product-owner approval and qualified microbiology review remain release gates, so the `RapidBacterium` definition and save identity have not yet been changed. See `docs/research/BACILLUS_SUBTILIS_CONTENT_SAFETY_REVIEW.md`.
+
 ### 3D dish presentation — Code bridge implemented; manual hookup pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:

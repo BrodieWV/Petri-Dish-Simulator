@@ -31,6 +31,8 @@ Exit criteria:
 
 ## Epic B — Real-organism content foundation
 
+Status: first-candidate content and safety review prepared for *Bacillus subtilis*; product-owner approval and qualified subject-matter review remain before implementation.
+
 - Replace the generic Rapid Bacterium content identity with the first approved real organism after scientific review.
 - Use named real organisms with deliberately simplified educational behaviour.
 - Store scientific name, player-facing name, short description, source notes, confidence, and simplification notes.
@@ -38,6 +40,8 @@ Exit criteria:
 - Select the first four organisms before creating a large content catalogue.
 
 Candidate groups include bacteria, yeast, and filamentous mould. Final species selection requires a dedicated content and safety review.
+
+The first-candidate review is recorded in `docs/research/BACILLUS_SUBTILIS_CONTENT_SAFETY_REVIEW.md`. It recommends *Bacillus subtilis*, defines safe player-facing claims and simplification boundaries, and records the save-compatibility and review gates that must be satisfied before replacing the migration-default content identity.
 
 ## Epic C — Media system
 
