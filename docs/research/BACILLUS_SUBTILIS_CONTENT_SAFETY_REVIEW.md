@@ -1,6 +1,6 @@
 # Bacillus subtilis Content and Safety Review
 
-Status: candidate recommended; product-owner approval and qualified subject-matter review required before release.
+Status: product-owner implementation approval recorded on 3 August 2026; qualified subject-matter review required before release.
 
 Review date: 3 August 2026.
 
@@ -81,7 +81,7 @@ Do not describe *B. subtilis* as universally harmless or safe to culture. EFSA's
 
 ## Release gates
 
-1. Product owner approves *B. subtilis* as the first named organism.
+1. Product owner approves *B. subtilis* as the first named organism. Completed on 3 August 2026.
 2. A qualified microbiology reviewer checks the player-facing claims and records reviewer and review date.
 3. The implementation preserves schema-version-2 save compatibility and deterministic replay.
 4. Tests assert the reviewed metadata, moderate confidence, retained definition version `1`, and unchanged simulation values.
