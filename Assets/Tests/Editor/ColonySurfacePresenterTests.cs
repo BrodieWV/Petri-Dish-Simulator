@@ -16,6 +16,7 @@ namespace PetriDish.Tests.Editor
         private GameObject sourceObject;
         private GameObject targetObject;
         private Material material;
+        private Mesh mesh;
 
         [TearDown]
         public void TearDown()
@@ -23,6 +24,7 @@ namespace PetriDish.Tests.Editor
             if (sourceObject != null) Object.DestroyImmediate(sourceObject);
             if (targetObject != null) Object.DestroyImmediate(targetObject);
             if (material != null) Object.DestroyImmediate(material);
+            if (mesh != null) Object.DestroyImmediate(mesh);
         }
 
         [Test]
@@ -141,6 +143,139 @@ namespace PetriDish.Tests.Editor
                 new Vector4(-0.9f, 0.7f, 0.95f, 0.15f),
                 block.GetVector(Shader.PropertyToID("_MainTex_ST")));
             Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+        }
+
+        [Test]
+        public void AutoCentrePreservesScaleAndFlipsWhileCenteringUvBounds()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            AssignUvMesh(
+                target,
+                new Vector2(0.2f, 0.1f),
+                new Vector2(0.6f, 0.1f),
+                new Vector2(0.6f, 0.7f),
+                new Vector2(0.2f, 0.7f));
+            Assert.That(
+                presenter.SetTextureAlignment(
+                    new Vector2(0.8f, 0.6f),
+                    new Vector2(0.3f, -0.2f),
+                    horizontalFlip: true),
+                Is.True,
+                presenter.LastValidationError);
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+
+            Assert.That(presenter.AutoCentre(), Is.True, presenter.LastValidationError);
+
+            Assert.That(presenter.TextureScale, Is.EqualTo(new Vector2(0.8f, 0.6f)));
+            Assert.That(presenter.FlipX, Is.True);
+            Assert.That(presenter.FlipY, Is.False);
+            Assert.That(Vector2.Distance(presenter.TextureOffset, new Vector2(0.02f, 0.26f)), Is.LessThan(0.000001f));
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(-0.8f, 0.6f, 0.82f, 0.26f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+        }
+
+        [Test]
+        public void AutoFitUsesUniformScaleToContainAndCenterUvBounds()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            AssignUvMesh(
+                target,
+                new Vector2(0.2f, 0.1f),
+                new Vector2(0.6f, 0.1f),
+                new Vector2(0.6f, 0.9f),
+                new Vector2(0.2f, 0.9f));
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+
+            Assert.That(presenter.AutoFit(), Is.True, presenter.LastValidationError);
+
+            Assert.That(Vector2.Distance(presenter.TextureScale, new Vector2(1.25f, 1.25f)), Is.LessThan(0.000001f));
+            Assert.That(Vector2.Distance(presenter.TextureOffset, new Vector2(0f, -0.125f)), Is.LessThan(0.000001f));
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(1.25f, 1.25f, 0f, -0.125f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+        }
+
+        [Test]
+        public void ResetAlignmentRestoresDefaultsWithoutReplacingLiveTexture()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+            Assert.That(
+                presenter.SetTextureAlignment(
+                    new Vector2(1.4f, 0.7f),
+                    new Vector2(0.2f, -0.1f),
+                    horizontalFlip: true,
+                    verticalFlip: true),
+                Is.True,
+                presenter.LastValidationError);
+
+            Assert.That(presenter.ResetAlignment(), Is.True, presenter.LastValidationError);
+
+            Assert.That(presenter.TextureScale, Is.EqualTo(Vector2.one));
+            Assert.That(presenter.TextureOffset, Is.EqualTo(Vector2.zero));
+            Assert.That(presenter.FlipX, Is.False);
+            Assert.That(presenter.FlipY, Is.False);
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            AssertVectorApproximately(
+                new Vector4(1f, 1f, 0f, 0f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+        }
+
+        [Test]
+        public void AutoFitFailureKeepsExistingBindingAndAlignment()
+        {
+            DishRenderer source = CreateSource();
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Assert.That(
+                presenter.SetTextureAlignment(
+                    new Vector2(0.8f, 0.6f),
+                    new Vector2(0.1f, 0.2f)),
+                Is.True,
+                presenter.LastValidationError);
+            Assert.That(presenter.Bind(source), Is.True, presenter.LastValidationError);
+            LogAssert.Expect(
+                LogType.Error,
+                "ColonySurfacePresenter: MeshRenderer 'PetriDish_ColonySurface' requires a MeshFilter with a shared Mesh before calculating texture alignment.");
+
+            Assert.That(presenter.AutoFit(), Is.False);
+
+            Assert.That(presenter.HasAppliedTexture, Is.True);
+            Assert.That(presenter.TextureScale, Is.EqualTo(new Vector2(0.8f, 0.6f)));
+            Assert.That(presenter.TextureOffset, Is.EqualTo(new Vector2(0.1f, 0.2f)));
+            var block = new MaterialPropertyBlock();
+            target.GetPropertyBlock(block);
+            Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(source.ColonyTexture));
+            AssertVectorApproximately(
+                new Vector4(0.8f, 0.6f, 0.1f, 0.2f),
+                block.GetVector(Shader.PropertyToID("_MainTex_ST")));
+        }
+
+        [Test]
+        public void CustomInspectorProvidesAlignmentActions()
+        {
+            ColonySurfacePresenter presenter = CreatePresenter(out _);
+            UnityEditor.Editor inspector = UnityEditor.Editor.CreateEditor(presenter);
+            try
+            {
+                Assert.That(
+                    inspector.GetType().FullName,
+                    Is.EqualTo("PetriDish.Editor.ColonySurfacePresenterEditor"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(inspector);
+            }
         }
 
         [Test]
@@ -279,6 +414,22 @@ namespace PetriDish.Tests.Editor
                 2468,
                 catalog.DefaultOrganism,
                 catalog.DefaultMedium).CreateSnapshot();
+        }
+
+        private void AssignUvMesh(MeshRenderer target, params Vector2[] uvs)
+        {
+            Assert.That(uvs, Has.Length.EqualTo(4));
+            mesh = new Mesh { name = "ColonySurfaceTestMesh" };
+            mesh.vertices = new[]
+            {
+                new Vector3(-1f, 0f, -1f),
+                new Vector3(1f, 0f, -1f),
+                new Vector3(1f, 0f, 1f),
+                new Vector3(-1f, 0f, 1f)
+            };
+            mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            mesh.uv = uvs;
+            target.GetComponent<MeshFilter>().sharedMesh = mesh;
         }
 
         private static void AssertVectorApproximately(Vector4 expected, Vector4 actual)

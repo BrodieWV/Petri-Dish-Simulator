@@ -1,6 +1,6 @@
 # Implementation Status — Phase 1 Complete / Phase 2 Active
 
-Updated: 1 August 2026.
+Updated: 2 August 2026.
 
 ## Current project state
 
@@ -181,6 +181,13 @@ through `_MainTex`. Quarter-turn rotation is not included because the built-in S
 shader's scale/offset transform cannot swap UV axes without changing the shader/material or
 copying the live texture.
 
+The presenter Inspector also provides Auto Centre, Auto Fit, and Reset Alignment actions.
+Auto Centre preserves the selected scale and flips while centring against the colony
+surface's UV0 bounds. Auto Fit applies a uniform, aspect-preserving scale from those bounds
+and then centres the texture. Reset Alignment restores the default scale, offset, and flip
+values. These actions read mesh data without editing the FBX, UVs, materials, transforms, or
+scene hierarchy, and a failed action leaves the existing live binding unchanged.
+
 The combined viewport and alignment branch requires refreshed complete Edit Mode verification
 after reconciliation.
 
@@ -191,6 +198,7 @@ Manual verification still required:
 - add `ColonySurfacePresenter` to `PetriDish_ColonySurface`;
 - assign that object's `MeshRenderer`;
 - verify the material's texture property (`_MainTex` for the built-in Standard shader);
+- try Auto Fit, then Auto Centre, and use Reset Alignment to return to the known default;
 - enter Play Mode and adjust Texture Scale, Texture Offset, Flip X, and Flip Y on the
   presenter until the circular simulation mask is centred on the agar;
 - start with scale 1,1 and offset 0,0, adjust scale first, then offset in small increments,

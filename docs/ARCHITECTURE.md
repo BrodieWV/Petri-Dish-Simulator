@@ -51,6 +51,14 @@ the same cached `MaterialPropertyBlock`. The built-in Standard shader therefore 
 `_MainTex` and `_MainTex_ST`. These controls do not change the generated texture, model UVs,
 shared material, simulation state, flat fallback, or inspection surface.
 
+The custom presenter Inspector adds `Auto Centre`, `Auto Fit`, and `Reset Alignment`
+actions. Auto Centre derives an offset from the target mesh's UV0 bounds while preserving
+the selected scale and flips. Auto Fit uses the larger UV0 extent to calculate one uniform
+scale, preserving the circular texture rather than stretching it, and then centres it.
+Reset Alignment restores scale 1,1, offset 0,0, and disabled flips. Editor calculations use
+read-only mesh data and do not require a model import-setting change; runtime calls require
+a readable mesh and fail without replacing an existing live texture binding otherwise.
+
 `RuntimeBootstrap` binds scene `ColonySurfacePresenter` components to its runtime-created
 `DishRenderer` after initial UI construction and after later scene loads. The existing 2D
 `RawImage` remains available as a visual fallback and as the current normalized tap input

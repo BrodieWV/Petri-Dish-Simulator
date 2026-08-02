@@ -1,4 +1,6 @@
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace PetriDish.Presentation
 {
@@ -6,6 +8,7 @@ namespace PetriDish.Presentation
     public sealed class ColonySurfacePresenter : MonoBehaviour
     {
         private const string DefaultTexturePropertyName = "_MainTex";
+        private const float MinimumUvExtent = 0.000001f;
 
         [Header("Texture Binding")]
         [SerializeField] private MeshRenderer targetRenderer;
@@ -106,6 +109,45 @@ namespace PetriDish.Presentation
             }
 
             return TryApply(textureSource.ColonyTexture, true);
+        }
+
+        public bool AutoCentre()
+        {
+            if (!TryGetUvBounds(out Vector2 uvMinimum, out Vector2 uvMaximum, out string error))
+                return FailAlignmentAction(error);
+
+            Vector2 uvCenter = (uvMinimum + uvMaximum) * 0.5f;
+            Vector2 centeredOffset = CalculateCenteredOffset(
+                uvCenter,
+                textureScale,
+                flipX,
+                flipY);
+            return SetTextureAlignment(textureScale, centeredOffset, flipX, flipY);
+        }
+
+        public bool AutoFit()
+        {
+            if (!TryGetUvBounds(out Vector2 uvMinimum, out Vector2 uvMaximum, out string error))
+                return FailAlignmentAction(error);
+
+            Vector2 uvSize = uvMaximum - uvMinimum;
+            float largestExtent = Mathf.Max(uvSize.x, uvSize.y);
+            if (!IsFinite(largestExtent) || largestExtent < MinimumUvExtent)
+                return FailAlignmentAction("The target mesh UV0 bounds must have a non-zero width or height for Auto Fit.");
+
+            float uniformScale = 1f / largestExtent;
+            var fittedScale = new Vector2(uniformScale, uniformScale);
+            Vector2 centeredOffset = CalculateCenteredOffset(
+                (uvMinimum + uvMaximum) * 0.5f,
+                fittedScale,
+                flipX,
+                flipY);
+            return SetTextureAlignment(fittedScale, centeredOffset, flipX, flipY);
+        }
+
+        public bool ResetAlignment()
+        {
+            return SetTextureAlignment(Vector2.one, Vector2.zero, false, false);
         }
 
         public bool Bind(DishRenderer source)
@@ -255,6 +297,13 @@ namespace PetriDish.Presentation
             return false;
         }
 
+        private bool FailAlignmentAction(string error)
+        {
+            LastValidationError = error;
+            Debug.LogError($"ColonySurfacePresenter: {error}", this);
+            return false;
+        }
+
         private void PreparePropertyBlocks(int propertyId, int transformPropertyId)
         {
             if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
@@ -306,6 +355,104 @@ namespace PetriDish.Presentation
             float offsetX = textureOffset.x + (flipX ? textureScale.x : 0f);
             float offsetY = textureOffset.y + (flipY ? textureScale.y : 0f);
             return new Vector4(scaleX, scaleY, offsetX, offsetY);
+        }
+
+        private bool TryGetUvBounds(
+            out Vector2 uvMinimum,
+            out Vector2 uvMaximum,
+            out string error)
+        {
+            uvMinimum = default;
+            uvMaximum = default;
+
+            if (targetRenderer == null)
+            {
+                error = "A target MeshRenderer is required before calculating texture alignment.";
+                return false;
+            }
+
+            MeshFilter meshFilter = targetRenderer.GetComponent<MeshFilter>();
+            Mesh mesh = meshFilter != null ? meshFilter.sharedMesh : null;
+            if (mesh == null)
+            {
+                error =
+                    $"MeshRenderer '{targetRenderer.name}' requires a MeshFilter with a shared Mesh " +
+                    "before calculating texture alignment.";
+                return false;
+            }
+
+            if (!mesh.HasVertexAttribute(VertexAttribute.TexCoord0))
+            {
+                error = $"Mesh '{mesh.name}' does not contain UV0 texture coordinates.";
+                return false;
+            }
+
+#if !UNITY_EDITOR
+            if (!mesh.isReadable)
+            {
+                error =
+                    $"Mesh '{mesh.name}' is not readable at runtime. Auto Centre and Auto Fit remain " +
+                    "available in the Unity Editor without changing the model import settings.";
+                return false;
+            }
+#endif
+
+#if UNITY_EDITOR
+            using (Mesh.MeshDataArray meshDataArray = UnityEditor.MeshUtility.AcquireReadOnlyMeshData(mesh))
+#else
+            using (Mesh.MeshDataArray meshDataArray = Mesh.AcquireReadOnlyMeshData(mesh))
+#endif
+            {
+                Mesh.MeshData meshData = meshDataArray[0];
+                if (meshData.vertexCount == 0)
+                {
+                    error = $"Mesh '{mesh.name}' has no vertices to align.";
+                    return false;
+                }
+
+                using (var uvs = new NativeArray<Vector2>(meshData.vertexCount, Allocator.Temp))
+                {
+                    meshData.GetUVs(0, uvs);
+                    uvMinimum = uvs[0];
+                    uvMaximum = uvs[0];
+                    if (!IsFinite(uvMinimum.x) || !IsFinite(uvMinimum.y))
+                    {
+                        error = $"Mesh '{mesh.name}' contains non-finite UV0 coordinates.";
+                        return false;
+                    }
+
+                    for (int index = 1; index < uvs.Length; index++)
+                    {
+                        Vector2 uv = uvs[index];
+                        if (!IsFinite(uv.x) || !IsFinite(uv.y))
+                        {
+                            error = $"Mesh '{mesh.name}' contains non-finite UV0 coordinates.";
+                            return false;
+                        }
+
+                        uvMinimum = Vector2.Min(uvMinimum, uv);
+                        uvMaximum = Vector2.Max(uvMaximum, uv);
+                    }
+                }
+            }
+
+            error = null;
+            return true;
+        }
+
+        private static Vector2 CalculateCenteredOffset(
+            Vector2 uvCenter,
+            Vector2 scale,
+            bool horizontalFlip,
+            bool verticalFlip)
+        {
+            float effectiveScaleX = horizontalFlip ? -scale.x : scale.x;
+            float effectiveScaleY = verticalFlip ? -scale.y : scale.y;
+            float appliedOffsetX = 0.5f - uvCenter.x * effectiveScaleX;
+            float appliedOffsetY = 0.5f - uvCenter.y * effectiveScaleY;
+            return new Vector2(
+                appliedOffsetX - (horizontalFlip ? scale.x : 0f),
+                appliedOffsetY - (verticalFlip ? scale.y : 0f));
         }
 
         private static bool IsFinite(float value) =>
