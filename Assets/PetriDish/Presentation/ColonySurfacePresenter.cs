@@ -12,6 +12,16 @@ namespace PetriDish.Presentation
         [SerializeField] private string texturePropertyName = DefaultTexturePropertyName;
         [SerializeField] private bool hideFlatDishImageAfterSuccessfulBinding;
 
+        [Header("Texture Alignment")]
+        [Tooltip("UV tiling applied before optional flipping. (1, 1) preserves the source texture size.")]
+        [SerializeField] private Vector2 textureScale = Vector2.one;
+        [Tooltip("UV offset applied after scale and flip compensation. (0, 0) preserves the source position.")]
+        [SerializeField] private Vector2 textureOffset = Vector2.zero;
+        [Tooltip("Mirror the colony texture horizontally without changing the model UVs.")]
+        [SerializeField] private bool flipX;
+        [Tooltip("Mirror the colony texture vertically without changing the model UVs.")]
+        [SerializeField] private bool flipY;
+
         private MaterialPropertyBlock propertyBlock;
         private MaterialPropertyBlock originalPropertyBlock;
         private MeshRenderer appliedRenderer;
@@ -21,6 +31,10 @@ namespace PetriDish.Presentation
         public MeshRenderer TargetRenderer => targetRenderer;
         public DishRenderer TextureSource => textureSource;
         public string TexturePropertyName => texturePropertyName;
+        public Vector2 TextureScale => textureScale;
+        public Vector2 TextureOffset => textureOffset;
+        public bool FlipX => flipX;
+        public bool FlipY => flipY;
         public string LastValidationError { get; private set; }
         public bool HasAppliedTexture { get; private set; }
 
@@ -28,6 +42,15 @@ namespace PetriDish.Presentation
         {
             targetRenderer = GetComponent<MeshRenderer>();
             texturePropertyName = DefaultTexturePropertyName;
+            textureScale = Vector2.one;
+            textureOffset = Vector2.zero;
+        }
+
+        private void OnValidate()
+        {
+            if (!isActiveAndEnabled || textureSource == null || textureSource.ColonyTexture == null)
+                return;
+            TryApply(textureSource.ColonyTexture, false);
         }
 
         private void OnEnable()
@@ -56,6 +79,28 @@ namespace PetriDish.Presentation
             targetRenderer = renderer;
             texturePropertyName = shaderTextureProperty;
             hideFlatDishImageAfterSuccessfulBinding = hideFlatDishImage;
+        }
+
+        public bool SetTextureAlignment(
+            Vector2 scale,
+            Vector2 offset,
+            bool horizontalFlip = false,
+            bool verticalFlip = false)
+        {
+            textureScale = scale;
+            textureOffset = offset;
+            flipX = horizontalFlip;
+            flipY = verticalFlip;
+
+            if (!ValidateAlignment(out string error))
+                return Fail(error, true);
+            if (textureSource == null || textureSource.ColonyTexture == null)
+            {
+                LastValidationError = null;
+                return true;
+            }
+
+            return TryApply(textureSource.ColonyTexture, true);
         }
 
         public bool Bind(DishRenderer source)
@@ -108,6 +153,8 @@ namespace PetriDish.Presentation
                 return false;
             }
 
+            if (!ValidateAlignment(out error)) return false;
+
             error = null;
             return true;
         }
@@ -143,6 +190,9 @@ namespace PetriDish.Presentation
             PreparePropertyBlocks(propertyId);
             targetRenderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetTexture(propertyId, colonyTexture);
+            propertyBlock.SetVector(
+                Shader.PropertyToID(texturePropertyName + "_ST"),
+                CalculateTextureTransform(textureScale, textureOffset, flipX, flipY));
             targetRenderer.SetPropertyBlock(propertyBlock);
 
             HasAppliedTexture = true;
@@ -150,6 +200,42 @@ namespace PetriDish.Presentation
             if (hideFlatDishImageAfterSuccessfulBinding && textureSource != null)
                 textureSource.SetFlatPresentationVisible(false);
             return true;
+        }
+
+        public static Vector4 CalculateTextureTransform(
+            Vector2 scale,
+            Vector2 offset,
+            bool horizontalFlip,
+            bool verticalFlip)
+        {
+            float scaleX = horizontalFlip ? -scale.x : scale.x;
+            float scaleY = verticalFlip ? -scale.y : scale.y;
+            float offsetX = horizontalFlip ? offset.x + scale.x : offset.x;
+            float offsetY = verticalFlip ? offset.y + scale.y : offset.y;
+            return new Vector4(scaleX, scaleY, offsetX, offsetY);
+        }
+
+        private bool ValidateAlignment(out string error)
+        {
+            if (!IsFinite(textureScale.x) || !IsFinite(textureScale.y))
+            {
+                error = "Texture scale values must be finite.";
+                return false;
+            }
+
+            if (!IsFinite(textureOffset.x) || !IsFinite(textureOffset.y))
+            {
+                error = "Texture offset values must be finite.";
+                return false;
+            }
+
+            error = null;
+            return true;
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
         private bool Fail(string error, bool logError)
