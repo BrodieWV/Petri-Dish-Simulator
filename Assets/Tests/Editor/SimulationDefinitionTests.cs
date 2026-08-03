@@ -202,6 +202,80 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void LowNutrientAgarHasQualifiedMetadataAndDistinctTunableValues()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            MediumDefinition definition = catalog.ResolveMedium(
+                SimulationDefinitionCatalog.LowNutrientAgarId);
+            MediumSimulationValues medium = definition.ToSimulationValues();
+
+            Assert.That(definition.DisplayName, Is.EqualTo("Low-Nutrient Agar"));
+            Assert.That(definition.EducationalDescription, Does.Contain("fewer available nutrients"));
+            Assert.That(definition.ScientificLabel, Does.Contain("not a laboratory formulation"));
+            Assert.That(definition.SourceNotes, Does.Contain("Reasoner and Geldreich (1985)"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1128/AEM.49.1.1-7.1985"));
+            Assert.That(definition.Confidence, Is.EqualTo(ScientificConfidence.Low));
+            Assert.That(definition.SimplificationNotes, Does.Contain("gameplay abstractions"));
+            Assert.That(definition.VisualProfileId, Is.EqualTo("low-nutrient-agar-default"));
+            Assert.That(medium.Id, Is.EqualTo(SimulationDefinitionCatalog.LowNutrientAgarId));
+            Assert.That(medium.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(medium.InitialNutrients, Is.EqualTo(0.45f));
+            Assert.That(medium.MaximumNutrients, Is.EqualTo(0.55f));
+            Assert.That(medium.InitialMoisture, Is.EqualTo(0.66f));
+            Assert.That(medium.MaximumMoisture, Is.EqualTo(0.85f));
+            Assert.That(medium.MoistureAbsorptionMultiplier, Is.EqualTo(0.8f));
+            Assert.That(medium.MoistureApplicationVariance, Is.EqualTo(0.1f));
+            Assert.That(medium.MoistureDiffusion, Is.EqualTo(0.01f));
+            Assert.That(medium.NutrientDiffusion, Is.EqualTo(0.004f));
+            Assert.That(medium.SpreadResistance, Is.EqualTo(0.12f));
+            Assert.That(medium.TemperatureResponseRate, Is.EqualTo(0.16f));
+            Assert.That(medium.InteriorEvaporation, Is.EqualTo(0.00065f));
+            Assert.That(medium.EdgeEvaporation, Is.EqualTo(0.002275f).Within(FloatTolerance));
+            Assert.That(medium.EdgeFalloffDepthCells, Is.EqualTo(10f));
+            Assert.That(medium.HeatEvaporationStartTemperature, Is.EqualTo(24f));
+            Assert.That(medium.HeatEvaporationPerDegree, Is.EqualTo(0.00015f));
+        }
+
+        [Test]
+        public void ProductionMediaProduceMeaningfullyDifferentOutcomes()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            MediumDefinition lowNutrient = catalog.ResolveMedium(
+                SimulationDefinitionCatalog.LowNutrientAgarId);
+            var nutrientRich = new PetriSimulation(
+                20260803,
+                catalog.DefaultOrganism,
+                catalog.DefaultMedium);
+            var nutrientLimited = new PetriSimulation(
+                20260803,
+                catalog.DefaultOrganism,
+                lowNutrient);
+
+            nutrientRich.SetTargetTemperature(26f);
+            nutrientLimited.SetTargetTemperature(26f);
+            for (int i = 0; i < 160; i++)
+            {
+                nutrientRich.Step();
+                nutrientLimited.Step();
+            }
+
+            SimulationSnapshot richSnapshot = nutrientRich.CreateSnapshot();
+            SimulationSnapshot limitedSnapshot = nutrientLimited.CreateSnapshot();
+            Assert.That(
+                TotalBiomass(richSnapshot),
+                Is.GreaterThan(TotalBiomass(limitedSnapshot) * 1.1f),
+                "The production media should create visibly different colony growth.");
+            Assert.That(
+                richSnapshot.AverageNutrients,
+                Is.GreaterThan(limitedSnapshot.AverageNutrients + 0.35f),
+                "Low-Nutrient Agar should retain a clearly lower nutrient state.");
+            Assert.That(
+                richSnapshot.AverageMoisture,
+                Is.GreaterThan(limitedSnapshot.AverageMoisture + 0.03f),
+                "Low-Nutrient Agar should dry more quickly than Nutrient Agar.");
+        }
+
+        [Test]
         public void CustomDefinitionsRemainDeterministicForSameSeedAndInputs()
         {
             SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();

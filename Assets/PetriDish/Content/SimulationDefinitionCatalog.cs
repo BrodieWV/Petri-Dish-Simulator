@@ -12,6 +12,7 @@ namespace PetriDish.Content
         public const string DefaultResourcePath = "PetriDish/DefaultSimulationDefinitionCatalog";
         public const string RapidBacteriumId = "rapid-bacterium";
         public const string NutrientAgarId = "nutrient-agar";
+        public const string LowNutrientAgarId = "low-nutrient-agar";
 
         [SerializeField] private OrganismDefinition defaultOrganism;
         [SerializeField] private MediumDefinition defaultMedium;
