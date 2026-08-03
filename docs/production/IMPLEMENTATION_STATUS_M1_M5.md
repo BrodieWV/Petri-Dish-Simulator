@@ -147,7 +147,7 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
-### 3D dish presentation — Code and runtime viewport implemented; manual verification pending
+### 3D dish presentation — Scene hookup and runtime viewport implemented; manual verification pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:
 
@@ -188,24 +188,29 @@ and then centres the texture. Reset Alignment restores the default scale, offset
 values. These actions read mesh data without editing the FBX, UVs, materials, transforms, or
 scene hierarchy, and a failed action leaves the existing live binding unchanged.
 
-The combined viewport and alignment branch requires refreshed complete Edit Mode verification
-after reconciliation.
+The approved scene already contains `ColonySurfacePresenter` on
+`PetriDish_ColonySurface`, references that object's `MeshRenderer`, targets `_MainTex`, hides
+the flat image only after successful binding, and retains the product owner's authored
+alignment of scale `1.8,1.8`, offset `0.05,0.05`, with flips disabled.
+
+Complete Unity `6000.5.3f1` Edit Mode verification after branch reconciliation on
+3 August 2026: 99 passed, 0 failed, 0 skipped. Targeted colony-surface verification passed
+15 tests. The full suite includes viewport, binding, alignment, determinism, save/load,
+migration, inspection, restart, accessibility, and simulation coverage.
 
 Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
 
 Manual verification still required:
 
-- add `ColonySurfacePresenter` to `PetriDish_ColonySurface`;
-- assign that object's `MeshRenderer`;
-- verify the material's texture property (`_MainTex` for the built-in Standard shader);
-- try Auto Fit, then Auto Centre, and use Reset Alignment to return to the known default;
-- enter Play Mode and adjust Texture Scale, Texture Offset, Flip X, and Flip Y on the
-  presenter until the circular simulation mask is centred on the agar;
-- start with scale 1,1 and offset 0,0, adjust scale first, then offset in small increments,
-  and use flips only when the model UV direction is reversed;
+- open the approved scene and confirm the existing presenter, renderer reference, `_MainTex`
+  property, flat-image hiding, and authored alignment remain intact;
+- enter Play Mode and confirm the circular simulation texture is centred on the agar using
+  the authored scale `1.8,1.8` and offset `0.05,0.05` as the baseline;
+- if adjustment is still needed, use Auto Fit or Auto Centre and Unity Undo to compare with
+  the authored baseline; save scene changes only after product-owner visual approval;
 - confirm live growth, restart, new-seed restart, save/load, and scene reload;
-- enable flat-image hiding only after the 3D output is confirmed;
 - confirm the runtime viewport exposes the 3D dish across representative portrait safe areas;
+- review glass, agar, and colony-surface materials and profile mobile performance;
 - retain the current 2D tap surface until a later 3D raycast mapping is designed and tested.
 
 ## Planned later systems

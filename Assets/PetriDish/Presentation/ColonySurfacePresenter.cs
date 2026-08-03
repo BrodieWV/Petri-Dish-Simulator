@@ -203,8 +203,6 @@ namespace PetriDish.Presentation
                 return false;
             }
 
-            if (!ValidateAlignment(out error)) return false;
-
             error = null;
             return true;
         }
@@ -262,29 +260,6 @@ namespace PetriDish.Presentation
             float offsetX = horizontalFlip ? offset.x + scale.x : offset.x;
             float offsetY = verticalFlip ? offset.y + scale.y : offset.y;
             return new Vector4(scaleX, scaleY, offsetX, offsetY);
-        }
-
-        private bool ValidateAlignment(out string error)
-        {
-            if (!IsFinite(textureScale.x) || !IsFinite(textureScale.y))
-            {
-                error = "Texture scale values must be finite.";
-                return false;
-            }
-
-            if (!IsFinite(textureOffset.x) || !IsFinite(textureOffset.y))
-            {
-                error = "Texture offset values must be finite.";
-                return false;
-            }
-
-            error = null;
-            return true;
-        }
-
-        private static bool IsFinite(float value)
-        {
-            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
         private bool Fail(string error, bool logError)
