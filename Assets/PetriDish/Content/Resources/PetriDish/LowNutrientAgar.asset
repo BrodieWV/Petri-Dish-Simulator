@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd36d7da5fba4510bde15ed63b0c5e14, type: 3}
+  m_Name: LowNutrientAgar
+  m_EditorClassIdentifier:
+  id: low-nutrient-agar
+  definitionVersion: 1
+  displayName: Low-Nutrient Agar
+  educationalDescription: A simplified agar with fewer available nutrients, slightly less moisture, and more resistance to colony spread than the default medium.
+  scientificLabel: Educationalised low-nutrient agar category; this is not a laboratory formulation or R2A recipe.
+  sourceNotes: "Qualitative context: Reasoner and Geldreich (1985), Applied and Environmental Microbiology 49(1):1-7, doi:10.1128/AEM.49.1.1-7.1985. The paper supports low-nutrient media as biologically meaningful; it does not source these normalized game values."
+  scientificConfidence: 2
+  simplificationNotes: Nutrient availability, moisture, drying, diffusion, and spread resistance are normalized gameplay abstractions chosen to create a distinct experiment. No ingredient recipe, culture protocol, or laboratory prediction is represented.
+  visualProfileId: low-nutrient-agar-default
+  startingNutrientLevel: 0.45
+  maximumNutrientCapacity: 0.55
+  startingMoisture: 0.66
+  maximumMoistureCapacity: 0.85
+  moistureAbsorptionMultiplier: 0.8
+  moistureApplicationVariance: 0.1
+  moistureDiffusion: 0.01
+  nutrientDiffusion: 0.004
+  spreadResistance: 0.12
+  temperatureResponseRate: 0.16
+  evaporationRate: 0.00065
+  edgeDryingMultiplier: 3.5
+  edgeFalloffDepthCells: 10
+  heatEvaporationStartTemperature: 24
+  heatEvaporationPerDegree: 0.00015
