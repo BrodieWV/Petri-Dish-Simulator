@@ -6,6 +6,8 @@ Status: active from 30 July 2026.
 
 Expand the completed single-dish vertical slice into a reusable experimental framework with simplified real organisms, configurable media, a 3D dish presentation, and the first systems needed for comparative experiments.
 
+Phase 2 completion follows milestone M6: two organisms, two media, save-compatible selection, the live 3D colony texture, nutrient intervention, content validation, and regression tests. Expansion to four organisms and four media, additional guided experiments, discovery/journal flows, multiple dishes, and colony transfer belongs to M7 and is not required for Phase 2 exit.
+
 ## Working order
 
 Complete epics in dependency order. Do not begin later biological systems merely because an earlier task is small.
@@ -31,18 +33,20 @@ Exit criteria:
 
 ## Epic B — Real-organism content foundation
 
+Status: first organism approved and implemented on `codex/phase-2-real-organism-review` in draft PR #9; second organism still requires content and safety review.
+
 - Replace the generic Rapid Bacterium content identity with the first approved real organism after scientific review.
 - Use named real organisms with deliberately simplified educational behaviour.
 - Store scientific name, player-facing name, short description, source notes, confidence, and simplification notes.
-- Add organisms individually, with tests and visibly distinct behaviour.
-- Select the first four organisms before creating a large content catalogue.
+- Add the first two organisms individually, with tests and visibly distinct behaviour.
+- Select the remaining organisms for the four-organism M7 set before creating a large content catalogue.
 
 Candidate groups include bacteria, yeast, and filamentous mould. Final species selection requires a dedicated content and safety review.
 
 ## Epic C — Media system
 
-- Add four media with distinct nutrient availability, moisture retention, diffusion, drying, and spread resistance.
-- Begin with nutrient agar and add media one at a time.
+- Add one medium beyond Nutrient Agar so Phase 2 has two media with distinct nutrient availability, moisture retention, diffusion, drying, and spread resistance.
+- Add the remaining two media during M7, one at a time.
 - Keep laboratory media separate from later fungal-growing substrates.
 - Ensure each medium changes player decisions rather than only colour or naming.
 
@@ -73,21 +77,23 @@ rotation remain outside the automated change.
 - Record interventions in experiment history.
 - Add tutorial feedback and regression coverage.
 
-## Epic F — Experiment selection and discoveries
+## Epic F — Organism and medium selection
 
 - Add organism and medium selection flow.
-- Add at least three guided experiments.
-- Add discovery results and journal entries.
 - Keep the current Comfortable Range experiment functional.
 
+Additional guided experiments and discovery/journal entries are M7 content work.
+
 ## Epic G — Multiple dishes and colony transfer
+
+Status: deferred to M7; not required for Phase 2 exit.
 
 - Allow a colony sample to be cloned into a new dish.
 - Preserve source lineage and selected organism identity.
 - Allow dishes to run under different environments for comparison.
 - Define save structure and limits before implementing the user interface.
 
-This epic follows stable organism/media definitions and is not the immediate next task.
+This epic follows stable organism/media definitions and the completed M6 selection flow. Do not begin it during Phase 2.
 
 ## Explicitly deferred systems
 
@@ -105,13 +111,13 @@ These systems must be designed after multi-dish experiments and lineage tracking
 
 ## Automation-safe next-task order
 
-1. Complete and verify the organism/media framework.
-2. Update documentation and save compatibility notes.
-3. Manually attach and verify the implemented colony-surface presenter on the approved 3D dish; preserve local Unity work in a separate reviewed commit.
-4. Add one reviewed real organism.
-5. Add one additional medium.
+1. Merge or otherwise incorporate the approved first-organism PR after review; do not duplicate it.
+2. Reconcile and review the existing 3D viewport and texture-alignment branch without overwriting product-owner assets.
+3. Add one additional medium.
+4. Complete content and safety review for a second organism, then implement it only after approval.
+5. Add save-compatible organism and medium selection.
 6. Add nutrient intervention.
-7. Expand toward four organisms and four media.
+7. Complete M6 content validation, regression testing, and manual 3D verification.
 
 ## Definition of done for automated work
 

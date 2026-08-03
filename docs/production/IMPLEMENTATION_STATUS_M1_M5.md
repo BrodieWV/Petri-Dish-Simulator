@@ -1,14 +1,16 @@
 # Implementation Status — Phase 1 Complete / Phase 2 Active
 
-Updated: 31 July 2026.
+Updated: 3 August 2026.
 
 ## Current project state
 
 The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
 
-The data-driven organism and medium framework is merged. The immediate engineering focus
-is connecting its existing generated colony texture to the product owner's local 3D dish
-without changing authoritative simulation state or locally owned scene composition.
+The data-driven organism and medium framework and colony-surface code bridge are merged.
+The first named organism, *Bacillus subtilis*, is product-owner approved and implemented
+in draft PR #9. Phase 2 completion now follows M6: reconcile the existing 3D viewport and
+alignment work, add a second organism and medium, add save-compatible selection and
+nutrient intervention, then complete content, regression, and manual 3D verification.
 
 ## Engine baseline
 
@@ -39,11 +41,11 @@ Implemented:
 
 Deliberately deferred:
 
-- Runtime organism or medium selection UI
-- Additional production organisms or media
+- Third and fourth production organisms and media beyond the two required by M6
 - Visual-profile registry and visual/audio asset selection
 - Compatibility rules, multiple nutrient pools, waste, and competition
 - Content-version migration beyond the safe schema-2 default mapping
+- Additional guided experiments, discovery/journal flows, multiple dishes, and colony transfer
 
 ## M1 — Unity project and responsive dish scene — Complete
 
@@ -147,6 +149,8 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
+The product owner approved *Bacillus subtilis* as the first named organism. Its reviewed content implementation is in draft PR #9 on `codex/phase-2-real-organism-review`; it is not yet merged into `main`. A second species still requires a dedicated content and safety review and product-owner approval.
+
 ### 3D dish presentation — Code bridge implemented; manual hookup pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:
@@ -184,14 +188,15 @@ Manual verification still required:
 
 ## Planned later systems
 
-After stable organism/media definitions:
+Remaining M6 work:
 
-1. Add one reviewed real organism and one additional medium.
-2. Add nutrient intervention.
-3. Expand to four organisms and four media.
-4. Add experiment selection and discoveries.
-5. Add multiple dishes and colony transfer.
-6. Add evolution, antibacterial/antifungal treatment, and resistance only after lineage tracking is stable.
+1. Reconcile the existing 3D viewport and texture-alignment work.
+2. Add one additional medium and one approved reviewed organism.
+3. Add save-compatible organism and medium selection.
+4. Add nutrient intervention.
+5. Complete content validation, regression tests, and manual 3D verification.
+
+M7 then expands to four organisms and four media, guided experiments, discoveries and journal, multiple dishes, and colony transfer. Evolution, antibacterial/antifungal treatment, and resistance remain later than M7 and require stable lineage tracking.
 
 ## Running and verification
 
