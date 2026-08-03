@@ -16,22 +16,19 @@ Exit achieved: players can produce visibly different outcomes by changing condit
 
 ## Phase 2 — Multi-Organism Experimental Slice — Active
 
-- Data-driven organism definitions using named real organisms with simplified educational behaviour
-- Data-driven medium definitions
-- Four organisms and four media
+- Validated data-driven organism and medium definitions
+- Two named real organisms and two media with meaningfully distinct behaviour
 - Organism and medium selection
 - 3D petri-dish presentation with the live 2D colony texture on the colony surface
 - Nutrient intervention
-- Three guided experiments
-- Discovery and journal results
 - Save compatibility across selected organisms and media
-- Initial audio, haptic, accessibility, and visual polish
+- Content validation and regression tests
 
 Exit: players can select organisms and media, run meaningfully different experiments, intervene with temperature, moisture, and nutrients, and understand why outcomes differ.
 
 ## Phase 3 — Comparative Experiments and Progression
 
-Multiple dishes, colony transfer and cloning, source lineage, comparison tools, full guided set, challenges, unlock tree, journal, collection, contamination, cosmetics, achievements, and statistics.
+Expand to four organisms and four media, multiple dishes, colony transfer and cloning, source lineage, comparison tools, full guided set, challenges, unlock tree, journal, collection, contamination, cosmetics, achievements, and statistics.
 
 ## Phase 4 — Advanced Biology Systems
 
