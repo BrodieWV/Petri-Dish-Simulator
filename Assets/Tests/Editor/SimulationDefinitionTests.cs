@@ -185,6 +185,61 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void ExperimentSetupSelectionCyclesValidatedDefinitionsAndWraps()
+        {
+            SimulationDefinitionCatalog defaults = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition secondOrganism = CloneOrganism(
+                defaults.DefaultOrganism,
+                "second-selection-organism",
+                growthRate: 0.031f);
+            MediumDefinition secondMedium = CloneMedium(
+                defaults.DefaultMedium,
+                "second-selection-medium",
+                edgeEvaporation: 0.0025f,
+                interiorEvaporation: 0.0008f);
+            SimulationDefinitionCatalog catalog = CreateCatalog(
+                defaults.DefaultOrganism,
+                defaults.DefaultMedium,
+                new[] { defaults.DefaultOrganism, secondOrganism },
+                new[] { defaults.DefaultMedium, secondMedium });
+            var selection = new ExperimentSetupSelection(
+                catalog,
+                defaults.DefaultOrganism.Id,
+                defaults.DefaultMedium.Id);
+
+            selection.SelectNextOrganism();
+            selection.SelectPreviousMedium();
+            Assert.That(selection.Organism.Id, Is.EqualTo(secondOrganism.Id));
+            Assert.That(selection.Medium.Id, Is.EqualTo(secondMedium.Id));
+
+            selection.SelectNextOrganism();
+            selection.SelectNextMedium();
+            Assert.That(selection.Organism.Id, Is.EqualTo(defaults.DefaultOrganism.Id));
+            Assert.That(selection.Medium.Id, Is.EqualTo(defaults.DefaultMedium.Id));
+            Assert.That(catalog.OrganismCount, Is.EqualTo(2));
+            Assert.That(catalog.MediumCount, Is.EqualTo(2));
+            Assert.Throws<ArgumentOutOfRangeException>(() => catalog.GetOrganismAt(2));
+            Assert.Throws<ArgumentOutOfRangeException>(() => catalog.GetMediumAt(-1));
+        }
+
+        [Test]
+        public void ExperimentSetupSelectionRejectsUnknownActiveIds()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+
+            Assert.Throws<DefinitionValidationException>(() =>
+                new ExperimentSetupSelection(
+                    catalog,
+                    "missing-selection-organism",
+                    catalog.DefaultMedium.Id));
+            Assert.Throws<DefinitionValidationException>(() =>
+                new ExperimentSetupSelection(
+                    catalog,
+                    catalog.DefaultOrganism.Id,
+                    "missing-selection-medium"));
+        }
+
+        [Test]
         public void CustomDefinitionsRemainDeterministicForSameSeedAndInputs()
         {
             SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();

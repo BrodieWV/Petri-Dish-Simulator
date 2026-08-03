@@ -20,6 +20,8 @@ namespace PetriDish.Content
 
         public OrganismDefinition DefaultOrganism => defaultOrganism;
         public MediumDefinition DefaultMedium => defaultMedium;
+        public int OrganismCount => organisms?.Length ?? 0;
+        public int MediumCount => media?.Length ?? 0;
 
         public static SimulationDefinitionCatalog LoadDefaultOrThrow()
         {
@@ -64,6 +66,22 @@ namespace PetriDish.Content
             if (!map.TryGetValue(id, out MediumDefinition definition))
                 throw new DefinitionValidationException($"Medium definition '{id}' is not available.");
             return definition;
+        }
+
+        public OrganismDefinition GetOrganismAt(int index)
+        {
+            ValidateOrThrow();
+            if (index < 0 || index >= organisms.Length)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            return organisms[index];
+        }
+
+        public MediumDefinition GetMediumAt(int index)
+        {
+            ValidateOrThrow();
+            if (index < 0 || index >= media.Length)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            return media[index];
         }
 
         private Dictionary<string, OrganismDefinition> BuildOrganismMap()
