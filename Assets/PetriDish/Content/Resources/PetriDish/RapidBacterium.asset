@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91be6f69e8a24eb3ac1c87d024d53af0, type: 3}
-  m_Name: RapidBacterium
+  m_Name: BacillusSubtilis
   m_EditorClassIdentifier:
   id: rapid-bacterium
   definitionVersion: 1
-  displayName: Rapid Bacterium
-  scientificName: Gameplay bacterial archetype (not a species)
-  educationalDescription: A simplified fast-growing culture used to show how temperature, moisture, and nutrients affect colony growth.
-  scientificLabel: Educationalised fast-growing bacterial archetype; not a cultivation model.
-  sourceNotes: No species-specific source. Provisional Phase 1 balance is preserved for compatibility.
-  scientificConfidence: 1
-  simplificationNotes: Generic gameplay archetype with deliberately abstract tolerances and rates. It must not be interpreted as laboratory guidance.
+  displayName: Bacillus subtilis
+  scientificName: Bacillus subtilis
+  educationalDescription: A simplified model bacterium used to explore how temperature, moisture, and nutrients influence colony growth.
+  scientificLabel: Named real organism with educationalised behaviour; not a strain-specific cultivation or prediction model.
+  sourceNotes: "Model-organism context: Errington and van der Aart (2020), DOI 10.1099/mic.0.000922. Sporulation context: Higgins and Dworkin (2012), DOI 10.1111/j.1574-6976.2011.00310.x. Colony variation: Earl, Losick, and Kolter (2008), DOI 10.1016/j.tim.2008.03.004. Safety qualification: EFSA QPS framework. Review: docs/research/BACILLUS_SUBTILIS_CONTENT_SAFETY_REVIEW.md."
+  scientificConfidence: 3
+  simplificationNotes: All temperature, moisture, growth, stress, demand, capacity, and spread values are gameplay tuning values retained from the Phase 1 archetype. The model does not simulate a particular strain, endospore formation, biofilm differentiation, motility, genetics, or laboratory outcomes.
   visualProfileId: rapid-bacterium-default
   initialHealth: 1
   seedRadiusCells: 2.3

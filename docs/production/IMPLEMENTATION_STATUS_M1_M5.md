@@ -149,7 +149,7 @@ Recommended branch: `feature/data-driven-organisms-media`.
 
 The project will use named real organisms with simplified educational behaviour. It will not attempt laboratory-grade prediction. Organism content requires scientific names, source-backed traits, confidence, and simplification notes.
 
-The product owner approved *Bacillus subtilis* as the first named organism. Its reviewed content implementation is in draft PR #9 on `codex/phase-2-real-organism-review`; it is not yet merged into `main`. A second species still requires a dedicated content and safety review and product-owner approval.
+The product owner approved *Bacillus subtilis* as the first named organism. Its reviewed identity and educational metadata replace the generic display content while the `rapid-bacterium` stable ID, definition version `1`, Phase 1 simulation balance, and visual profile remain unchanged for schema-version-3 identity matching, older-save migration, and deterministic continuity. The implementation remains in draft PR #9 until review and merge. Qualified microbiology and manual visual review remain release gates, and a second species still requires a dedicated content and safety review plus product-owner approval. See `docs/research/BACILLUS_SUBTILIS_CONTENT_SAFETY_REVIEW.md`.
 
 ### 3D dish presentation — Code bridge implemented; manual hookup pending
 

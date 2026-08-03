@@ -49,15 +49,32 @@ namespace PetriDish.Tests.Editor
             OrganismSimulationValues organism = catalog.DefaultOrganism.ToSimulationValues();
             MediumSimulationValues medium = catalog.DefaultMedium.ToSimulationValues();
 
+            Assert.That(PetriSimulation.CurrentSaveSchemaVersion, Is.EqualTo(3));
             Assert.That(organism.Id, Is.EqualTo("rapid-bacterium"));
             Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
-            Assert.That(catalog.DefaultOrganism.ScientificName, Is.Not.Empty);
-            Assert.That(catalog.DefaultOrganism.EducationalDescription, Is.Not.Empty);
-            Assert.That(catalog.DefaultOrganism.SourceNotes, Is.Not.Empty);
+            Assert.That(catalog.DefaultOrganism.DisplayName, Is.EqualTo("Bacillus subtilis"));
+            Assert.That(catalog.DefaultOrganism.ScientificName, Is.EqualTo("Bacillus subtilis"));
+            Assert.That(
+                catalog.DefaultOrganism.EducationalDescription,
+                Is.EqualTo(
+                    "A simplified model bacterium used to explore how temperature, moisture, " +
+                    "and nutrients influence colony growth."));
+            Assert.That(
+                catalog.DefaultOrganism.ScientificLabel,
+                Is.EqualTo(
+                    "Named real organism with educationalised behaviour; not a strain-specific " +
+                    "cultivation or prediction model."));
+            Assert.That(catalog.DefaultOrganism.SourceNotes, Does.Contain("10.1099/mic.0.000922"));
+            Assert.That(catalog.DefaultOrganism.SourceNotes, Does.Contain("EFSA QPS framework"));
             Assert.That(
                 catalog.DefaultOrganism.Confidence,
-                Is.EqualTo(ScientificConfidence.EducationalPlaceholder));
-            Assert.That(catalog.DefaultOrganism.SimplificationNotes, Is.Not.Empty);
+                Is.EqualTo(ScientificConfidence.Moderate));
+            Assert.That(
+                catalog.DefaultOrganism.SimplificationNotes,
+                Does.Contain("gameplay tuning values retained from the Phase 1 archetype"));
+            Assert.That(
+                catalog.DefaultOrganism.SimplificationNotes,
+                Does.Contain("does not simulate a particular strain"));
             Assert.That(catalog.DefaultOrganism.VisualProfileId, Is.EqualTo("rapid-bacterium-default"));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMinimum, Is.EqualTo(24f));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMaximum, Is.EqualTo(29f));

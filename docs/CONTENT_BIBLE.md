@@ -6,9 +6,9 @@ Curious, observational, playful, and scientifically respectful. Avoid medical ho
 
 ## Organism archetypes
 
-### Rapid Bacterium
+### Bacillus subtilis
 
-Fast glossy colonies; teaches exponential growth, resource limits, drying, and temperature tolerance.
+A stylised model bacterium for exploring colony growth, resource limits, drying, and temperature response. Its simulation values are educational gameplay tuning, not strain-specific measurements or cultivation guidance.
 
 ### Filamentous Fungus
 
