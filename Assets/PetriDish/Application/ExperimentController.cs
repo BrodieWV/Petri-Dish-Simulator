@@ -47,6 +47,7 @@ namespace PetriDish.Application
         public GuidedStage Stage => stage;
         public bool Paused => paused;
         public float SimulationSpeed => simulationSpeed;
+        public SimulationDefinitionCatalog DefinitionCatalog => definitionCatalog;
         public string LastPersistenceError { get; private set; }
 
         private void Awake()
