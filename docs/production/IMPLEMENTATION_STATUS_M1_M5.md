@@ -6,11 +6,13 @@ Updated: 3 August 2026.
 
 The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
 
-The data-driven organism and medium framework and colony-surface code bridge are merged.
-The first named organism, *Bacillus subtilis*, is product-owner approved and implemented
-in draft PR #9. Phase 2 completion now follows M6: reconcile the existing 3D viewport and
-alignment work, add a second organism and medium, add save-compatible selection and
-nutrient intervention, then complete content, regression, and manual 3D verification.
+The data-driven organism and medium framework and live colony-texture bridge are merged.
+Draft Phase 2 PRs add the product-owner-approved *Bacillus subtilis* identity (#9), reconcile
+the 3D viewport and colony alignment (#11), add Low-Nutrient Agar (#12), and add
+save-compatible organism/medium selection (#13). The runtime UI exposes a transparent
+central viewport for the product owner's 3D dish without changing authoritative simulation
+state. Remaining M6 work is the second approved organism, the nutrient intervention, combined
+review, and manual 3D/mobile verification.
 
 ## Engine baseline
 
@@ -151,7 +153,7 @@ The project will use named real organisms with simplified educational behaviour.
 
 The product owner approved *Bacillus subtilis* as the first named organism. Its reviewed identity and educational metadata replace the generic display content while the `rapid-bacterium` stable ID, definition version `1`, Phase 1 simulation balance, and visual profile remain unchanged for schema-version-3 identity matching, older-save migration, and deterministic continuity. The implementation remains in draft PR #9 until review and merge. Qualified microbiology and manual visual review remain release gates, and a second species still requires a dedicated content and safety review plus product-owner approval. See `docs/research/BACILLUS_SUBTILIS_CONTENT_SAFETY_REVIEW.md`.
 
-### 3D dish presentation — Code bridge implemented; manual hookup pending
+### 3D dish presentation — Scene hookup and runtime viewport implemented; manual verification pending
 
 The product owner has created and imported a reusable 3D petri dish with separate:
 
@@ -170,20 +172,51 @@ The bridge reuses the same live texture for restarts and save/load. If the textu
 is recreated, the presenter receives the replacement without creating another simulation
 or copying texture pixels. Shared imported materials are never modified.
 
-Complete Unity `6000.5.3f1` Edit Mode verification on 31 July 2026: 87 passed,
-0 failed, 0 skipped. This includes six colony-surface presentation tests plus all existing
-determinism, save/load, migration, inspection, restart, accessibility, and simulation tests.
+The runtime `ScreenSpaceOverlay` UI previously placed an opaque full-screen `Background`
+behind an opaque `DishPanel`, so hiding only the old `RawImage` could not reveal the world
+camera. `DishViewportPresenter` now builds four non-raycastable background regions around
+the dish rectangle, leaving its centre transparent. The fallback `DishPanel` remains opaque
+while the 2D dish is visible and becomes transparent only when a successful 3D binding hides
+the flat image. The transparent `RawImage` stays active as the existing tap-inspection surface.
+
+The presenter now exposes texture scale X/Y, offset X/Y, Flip X, and Flip Y controls for
+aligning the generated colony texture to the approved colony-surface UVs. Defaults preserve
+the previous 1,1 tiling and 0,0 offset. Inspector and runtime changes update `_MainTex_ST`
+through the presenter's cached `MaterialPropertyBlock` while the live texture remains bound
+through `_MainTex`. Quarter-turn rotation is not included because the built-in Standard
+shader's scale/offset transform cannot swap UV axes without changing the shader/material or
+copying the live texture.
+
+The presenter Inspector also provides Auto Centre, Auto Fit, and Reset Alignment actions.
+Auto Centre preserves the selected scale and flips while centring against the colony
+surface's UV0 bounds. Auto Fit applies a uniform, aspect-preserving scale from those bounds
+and then centres the texture. Reset Alignment restores the default scale, offset, and flip
+values. These actions read mesh data without editing the FBX, UVs, materials, transforms, or
+scene hierarchy, and a failed action leaves the existing live binding unchanged.
+
+The approved scene already contains `ColonySurfacePresenter` on
+`PetriDish_ColonySurface`, references that object's `MeshRenderer`, targets `_MainTex`, hides
+the flat image only after successful binding, and retains the product owner's authored
+alignment of scale `1.8,1.8`, offset `0.05,0.05`, with flips disabled.
+
+Complete Unity `6000.5.3f1` Edit Mode verification after branch reconciliation on
+3 August 2026: 99 passed, 0 failed, 0 skipped. Targeted colony-surface verification passed
+15 tests. The full suite includes viewport, binding, alignment, determinism, save/load,
+migration, inspection, restart, accessibility, and simulation coverage.
 
 Automated agents must not overwrite the current scene placement, camera framing, model, materials, or lid setup without explicit assignment.
 
 Manual verification still required:
 
-- add `ColonySurfacePresenter` to `PetriDish_ColonySurface`;
-- assign that object's `MeshRenderer`;
-- verify the material's texture property (`_MainTex` for the built-in Standard shader);
+- open the approved scene and confirm the existing presenter, renderer reference, `_MainTex`
+  property, flat-image hiding, and authored alignment remain intact;
+- enter Play Mode and confirm the circular simulation texture is centred on the agar using
+  the authored scale `1.8,1.8` and offset `0.05,0.05` as the baseline;
+- if adjustment is still needed, use Auto Fit or Auto Centre and Unity Undo to compare with
+  the authored baseline; save scene changes only after product-owner visual approval;
 - confirm live growth, restart, new-seed restart, save/load, and scene reload;
-- enable flat-image hiding only after the 3D output is confirmed;
-- review whether the existing opaque UI/background composition exposes the 3D dish as intended;
+- confirm the runtime viewport exposes the 3D dish across representative portrait safe areas;
+- review glass, agar, and colony-surface materials and profile mobile performance;
 - retain the current 2D tap surface until a later 3D raycast mapping is designed and tested.
 
 ## Planned later systems

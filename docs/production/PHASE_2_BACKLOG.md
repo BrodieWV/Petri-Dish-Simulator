@@ -54,8 +54,9 @@ The first-candidate review is recorded in `docs/research/BACILLUS_SUBTILIS_CONTE
 
 ## Epic D — 3D petri-dish integration
 
-Status: colony-texture bridge implemented in code; manual scene hookup, visual review,
-portrait framing, materials, and mobile performance verification remain.
+Status: colony-texture bridge, approved-scene hookup, transparent runtime viewport, authored
+alignment, and Inspector alignment actions are implemented on the reconciled presentation
+branch; visual review, portrait framing, materials, and mobile performance verification remain.
 
 - Preserve the deterministic 2D simulation and generated colony texture.
 - Display the live colony texture on `PetriDish_ColonySurface` in the 3D dish asset.
@@ -70,6 +71,12 @@ The code integration uses `ColonySurfacePresenter` and `MaterialPropertyBlock`. 
 runtime bootstrap supplies the existing `DishRenderer` texture source after scene load.
 The product owner's scene, imported model, material settings, camera, transforms, and lid
 rotation remain outside the automated change.
+
+The runtime UI uses `DishViewportPresenter` to replace the former opaque full-screen
+background with four non-raycastable regions around the central dish opening. The fallback
+panel follows flat-dish visibility, while the transparent `RawImage` preserves the current
+tap-inspection path. The scene retains the product owner's renderer, transform, material,
+camera, and alignment choices. Manual device and Simulator verification remains required.
 
 ## Epic E — Nutrient intervention
 

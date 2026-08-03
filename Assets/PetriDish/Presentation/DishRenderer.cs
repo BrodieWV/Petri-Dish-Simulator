@@ -19,6 +19,7 @@ namespace PetriDish.Presentation
 
         public event Action<Vector2> DishTapped;
         public event Action<Texture2D> ColonyTextureChanged;
+        public event Action<bool> FlatPresentationVisibilityChanged;
 
         public Texture2D ColonyTexture => texture;
         public bool FlatPresentationVisible { get; private set; } = true;
@@ -150,6 +151,7 @@ namespace PetriDish.Presentation
         public void SetFlatPresentationVisible(bool visible)
         {
             if (target == null) target = GetComponent<RawImage>();
+            bool changed = FlatPresentationVisible != visible;
             Color color = target.color;
             if (visible)
                 color.a = visibleAlpha;
@@ -161,6 +163,7 @@ namespace PetriDish.Presentation
 
             target.color = color;
             FlatPresentationVisible = visible;
+            if (changed) FlatPresentationVisibilityChanged?.Invoke(visible);
         }
 
         private static bool IsGrowthEdge(float[] biomass, int x, int y, float value)
