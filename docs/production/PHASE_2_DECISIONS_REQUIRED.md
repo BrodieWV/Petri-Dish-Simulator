@@ -18,7 +18,7 @@ Approval is required for:
 
 After approval, the content needs primary-source review, explicit confidence and simplification metadata, externally tunable values, a distinct-outcome regression test, and qualified subject-matter review before release.
 
-The Content Bible's existing Yeast-like Culture archetype makes *Saccharomyces cerevisiae* a plausible candidate for review, not an approved selection. No species asset or simulation values have been created for it.
+The Content Bible's existing Yeast-like Culture archetype makes *Saccharomyces cerevisiae* a plausible candidate for review, not an approved selection. The decision-support packet is in `docs/research/SACCHAROMYCES_CEREVISIAE_CANDIDATE_REVIEW.md`. No species asset or simulation values have been created for it.
 
 ## Decision 2: bounded delayed nutrient intervention
 
@@ -34,6 +34,8 @@ Approval is required for:
 - player-facing feedback and the point at which the action is considered complete;
 - history fields that must survive save/load;
 - whether adding intervention history requires a schema-v3 additive migration or a new schema version.
+
+The alternatives, current simulation constraints, recommended bounded contract, and save-version tradeoff are detailed in `docs/design/NUTRIENT_INTERVENTION_DECISION_PACKET.md`. No option is approved by that packet.
 
 The implementation must remain deterministic, validate malformed saved history, avoid instant health recovery, expose all balance values outside core simulation logic, and add exact-continuation tests across pending interventions. Choosing these values in code without approval would change game balance and save behaviour.
 
