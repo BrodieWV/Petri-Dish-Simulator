@@ -223,11 +223,18 @@ Manual verification still required:
 
 Remaining M6 work:
 
-1. Reconcile the existing 3D viewport and texture-alignment work.
-2. Add one additional medium and one approved reviewed organism.
-3. Add save-compatible organism and medium selection.
-4. Add nutrient intervention.
-5. Complete content validation, regression tests, and manual 3D verification.
+1. Approve, review, implement, and test the second named organism.
+2. Approve the nutrient intervention contract, then implement and test it.
+3. Complete qualified content review and manual 3D/mobile verification.
+
+The reconciled 3D viewport/alignment work, Low-Nutrient Agar, and save-compatible selection
+are implemented in draft PRs #11, #12, and #13. Exact unresolved product decisions are
+recorded in `docs/production/PHASE_2_DECISIONS_REQUIRED.md`.
+
+Combined integration verification on `codex/phase-2-integration-verification` used Unity
+`6000.5.3f1` in a temporary isolated project copy: 103 Edit Mode tests passed, with 0 failed
+and 0 skipped. The protected FBX/art and approved scene remain byte-identical to the reviewed
+presentation branch.
 
 M7 then expands to four organisms and four media, guided experiments, discoveries and journal, multiple dishes, and colony transfer. Evolution, antibacterial/antifungal treatment, and resistance remain later than M7 and require stable lineage tracking.
 

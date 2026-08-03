@@ -47,6 +47,8 @@ The first-candidate review is recorded in `docs/research/BACILLUS_SUBTILIS_CONTE
 
 ## Epic C — Media system
 
+Status: Low-Nutrient Agar is implemented and tested as the second M6 medium in draft PR #12. Nutrient Agar remains the migration default.
+
 - Add one medium beyond Nutrient Agar so Phase 2 has two media with distinct nutrient availability, moisture retention, diffusion, drying, and spread resistance.
 - Add the remaining two media during M7, one at a time.
 - Keep laboratory media separate from later fungal-growing substrates.
@@ -80,6 +82,8 @@ camera, and alignment choices. Manual device and Simulator verification remains 
 
 ## Epic E — Nutrient intervention
 
+Status: blocked on the product decisions recorded in `PHASE_2_DECISIONS_REQUIRED.md`. The repository requires a bounded, delayed, recorded intervention but does not approve its numeric limits or save-history contract.
+
 - Add a bounded nutrient dose action.
 - Define finite supply, cooldown, or experiment-specific limits.
 - Apply delayed simulation effects rather than instant recovery.
@@ -87,6 +91,8 @@ camera, and alignment choices. Manual device and Simulator verification remains 
 - Add tutorial feedback and regression coverage.
 
 ## Epic F — Organism and medium selection
+
+Status: implemented and tested in draft PR #13. The runtime panel enumerates validated catalog content and applies stable IDs through the existing schema-v3 controller/save path.
 
 - Add organism and medium selection flow.
 - Keep the current Comfortable Range experiment functional.
