@@ -1,6 +1,7 @@
 # Nutrient Intervention Decision Packet
 
-Status: product decision support only. No option is approved or implemented by this document.
+Status: Option A and experiment-wrapper schema v4 were approved by the product owner on
+3 August 2026 and implemented on the dedicated nutrient-intervention branch.
 
 ## Existing authoritative requirements
 
@@ -28,7 +29,7 @@ These facts mean a dose may have no immediate effect when a medium is already at
 
 ## Option A: bounded global gradual dose
 
-Recommended for M6, pending approval:
+Approved for M6:
 
 - fixed global dose: `0.12` normalized nutrient units;
 - maximum supply: 3 doses per experiment;
@@ -91,10 +92,7 @@ Changing the simulation schema too would be justified only if nutrient delivery 
 - both production media show explainable, meaningfully different responses;
 - the full Unity Edit Mode suite passes.
 
-## Approval response
+## Recorded approval
 
-The product owner can unblock implementation with one of:
-
-- "Approve nutrient Option A and experiment schema v4."
-- "Approve Option B" plus initial amount, supply, cooldown, delay, and release values.
-- A replacement contract covering amount, finite limit, cooldown, delay/release, spatial scope, feedback, history fields, and save-version policy.
+The product owner approved nutrient Option A and experiment schema v4 on 3 August 2026.
+Options B and C remain unapproved future alternatives.

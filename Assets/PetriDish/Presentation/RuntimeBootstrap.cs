@@ -27,6 +27,7 @@ namespace PetriDish.Presentation
         private Text speedLabel;
         private Text pauseLabel;
         private Text simulationState;
+        private Text nutrientStatus;
         private Text textScaleLabel;
         private GameObject setupPanel;
         private Text setupOrganismName;
@@ -35,6 +36,7 @@ namespace PetriDish.Presentation
         private Text setupMediumDescription;
         private Slider temperature;
         private Button moisture;
+        private Button nutrients;
         private Font font;
         private SimulationSnapshot currentSnapshot;
         private TextScaleMode textScaleMode;
@@ -192,15 +194,19 @@ namespace PetriDish.Presentation
             });
 
             simulationState = Text(controls.transform, "SimulationState", 18, TextAnchor.MiddleCenter);
-            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.45f), new Vector2(0.96f, 0.53f));
+            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.53f), new Vector2(0.96f, 0.60f));
+            nutrientStatus = Text(controls.transform, "NutrientStatus", 17, TextAnchor.MiddleCenter);
+            SetRect(nutrientStatus.rectTransform, new Vector2(0.04f, 0.44f), new Vector2(0.96f, 0.52f));
 
             moisture = CreateButton(controls.transform, "Add moisture", AddMoisture);
-            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.37f, 0.43f));
+            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.27f, 0.43f));
+            nutrients = CreateButton(controls.transform, "Add nutrients", AddNutrients);
+            SetRect(nutrients.GetComponent<RectTransform>(), new Vector2(0.29f, 0.22f), new Vector2(0.52f, 0.43f));
             var pause = CreateButton(controls.transform, AccessibilityPresentation.PauseButtonLabel(controller.Paused), TogglePause);
-            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.22f), new Vector2(0.72f, 0.43f));
+            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.54f, 0.22f), new Vector2(0.75f, 0.43f));
             pauseLabel = pause.GetComponentInChildren<Text>();
             var speed = CreateButton(controls.transform, SimulationSpeedCycle.Label(controller.SimulationSpeed), CycleSpeed);
-            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.22f), new Vector2(0.96f, 0.43f));
+            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.77f, 0.22f), new Vector2(0.96f, 0.43f));
             speedLabel = speed.GetComponentInChildren<Text>();
 
             SetRect(CreateButton(controls.transform, "Save", Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.01f), new Vector2(0.24f, 0.19f));
@@ -213,6 +219,7 @@ namespace PetriDish.Presentation
             temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
             moisture.interactable = true;
             RefreshCulture();
+            RefreshNutrientState();
             ApplyTextScale();
         }
 
@@ -263,6 +270,7 @@ namespace PetriDish.Presentation
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
             RefreshInspection();
             RefreshPlaybackState();
+            RefreshNutrientState();
         }
 
         private void OnDishTapped(Vector2 normalizedPoint)
@@ -334,6 +342,13 @@ namespace PetriDish.Presentation
         {
             controller.AddMoisture();
             outcome.text = "Moisture added. The agar is rehydrating.";
+        }
+
+        private void AddNutrients()
+        {
+            controller.TryRequestNutrientDose(out string feedback);
+            outcome.text = feedback;
+            RefreshNutrientState();
         }
 
         private void OpenSetup()
@@ -453,6 +468,39 @@ namespace PetriDish.Presentation
                 pauseLabel.text = AccessibilityPresentation.PauseButtonLabel(controller.Paused);
             if (simulationState != null)
                 simulationState.text = AccessibilityPresentation.SimulationStateLabel(controller.Paused, controller.SimulationSpeed);
+        }
+
+        private void RefreshNutrientState()
+        {
+            if (nutrientStatus == null || controller == null) return;
+
+            if (controller.NutrientDeliveryPending)
+            {
+                nutrientStatus.text =
+                    $"Nutrients: delivering {controller.NutrientReleaseStepsCompleted}/" +
+                    $"{controller.NutrientReleaseStepCount} • {controller.NutrientDosesRemaining} doses left";
+            }
+            else if (controller.NutrientCooldownRemainingSteps > 0)
+            {
+                float seconds = controller.NutrientCooldownRemainingSteps *
+                    PetriSimulation.FixedStepSeconds;
+                nutrientStatus.text =
+                    $"Nutrients: {controller.NutrientDosesRemaining} doses left • ready in {seconds:0.##}s";
+            }
+            else
+            {
+                nutrientStatus.text =
+                    $"Nutrients: {controller.NutrientDosesRemaining} doses left • ready";
+            }
+
+            if (!string.IsNullOrWhiteSpace(controller.NutrientFeedback) &&
+                controller.NutrientFeedback.Contains("capacity"))
+                nutrientStatus.text += " • capacity limited";
+
+            nutrients.interactable =
+                controller.NutrientDosesRemaining > 0 &&
+                !controller.NutrientDeliveryPending &&
+                controller.NutrientCooldownRemainingSteps == 0;
         }
 
         private Image Image(Transform parent, string name, Color color)

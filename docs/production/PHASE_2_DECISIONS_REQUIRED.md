@@ -7,9 +7,11 @@ decisions were approved by the product owner on 3 August 2026.
 
 ## Decision 1: second named organism — approved
 
-M6 requires two named real organisms with meaningfully different behaviour. The product owner approved *Bacillus subtilis* as organism one, but the repository does not select organism two.
+The product owner approved *Saccharomyces cerevisiae* as the second M6 organism, using a
+non-strain-specific educational identity and the stable ID
+`saccharomyces-cerevisiae`. Its implementation is isolated on the organism feature branch.
 
-Approval is required for:
+The approved scope defines:
 
 - the species and player-facing name;
 - the stable content ID and whether it represents a species, strain, or educational archetype;
@@ -17,7 +19,9 @@ Approval is required for:
 - the intended gameplay contrast with *Bacillus subtilis*;
 - the visual-profile direction.
 
-After approval, the content needs primary-source review, explicit confidence and simplification metadata, externally tunable values, a distinct-outcome regression test, and qualified subject-matter review before release.
+The content implementation needs primary-source review, explicit confidence and
+simplification metadata, externally tunable values, a distinct-outcome regression test,
+and qualified subject-matter review before release.
 
 The approved organism is *Saccharomyces cerevisiae*, represented as a non-strain-specific
 educational culture with the stable ID `saccharomyces-cerevisiae`. The approved contrast,
@@ -26,9 +30,10 @@ visual boundaries, exclusions, and sources are recorded in
 
 ## Decision 2: bounded delayed nutrient intervention — approved
 
-M6 requires a nutrient dose that is bounded, delayed rather than an instant recovery, and recorded in experiment history. The repository does not approve the concrete interaction contract.
+M6 uses a bounded global nutrient dose that is delayed rather than an instant recovery
+and recorded in experiment history.
 
-Approval is required for:
+The approved contract defines:
 
 - dose amount or adjustable range in normalized simulation units;
 - per-experiment supply, maximum use count, or another finite limit;
@@ -45,7 +50,9 @@ cooldown, four-step initial delay, equal delivery over 12 steps, per-cell medium
 clamping, recorded request/start/completion ticks and requested/delivered amounts, and
 experiment wrapper schema v4. Simulation saves remain schema v3.
 
-The implementation must remain deterministic, validate malformed saved history, avoid instant health recovery, expose all balance values outside core simulation logic, and add exact-continuation tests across pending interventions. Choosing these values in code without approval would change game balance and save behaviour.
+The implementation remains deterministic, validates malformed saved history, avoids
+instant health recovery, exposes balance values on the controller, and covers exact
+continuation across pending interventions.
 
 ## Release verification still owned by the product team
 

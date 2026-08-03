@@ -25,11 +25,18 @@ default content pair. Their original random position was not stored, so they use
 deterministic fallback derived from the seed and tick. They are stable after loading, but
 cannot reproduce the exact pre-save random stream.
 
-Simulation and experiment save schema version 3 store the selected organism and medium
-IDs and definition versions. Existing schema-version-2 experiment saves migrate to Rapid
+Simulation save schema version 3 and experiment-wrapper schema version 4 store the
+selected organism and medium IDs and definition versions. Existing schema-version-2
+experiment saves migrate to Rapid
 Bacterium on Nutrient Agar, the only pair available when they were written. Schema 3
 resolves and validates exact definitions before replacing a running experiment; missing
 or incompatible content produces a controlled load error.
+
+Experiment-wrapper schema 4 additionally stores the bounded nutrient-dose supply,
+cooldown-end tick, delayed-release progress, and ordered intervention history. Wrapper
+schema 3 migrates with full supply and no pending/history state. Saves taken during the
+delay or gradual release continue exactly; malformed schema-4 intervention state fails
+without replacing the running experiment.
 
 The application save wrapper now preserves the fractional fixed-step accumulator, pause state, simulation speed, guided stage, and active simulation state. Loading validates the complete candidate before replacing the running experiment, so malformed or unsupported data cannot partially mutate live state. Writes use a temporary file and retain the previous save as a recovery backup.
 
@@ -62,16 +69,22 @@ The test suite covers:
 16. selected-definition ID preservation and exact continuation;
 17. schema-version-2 content migration;
 18. malformed, duplicate, missing, and unsupported definition rejection;
-19. same-seed and new-seed restarts preserve the selected definitions.
+19. same-seed and new-seed restarts preserve the selected definitions;
+20. nutrient-dose delay, gradual release, finite supply, and cooldown;
+21. deterministic nutrient schedules and exact continuation during delay and release;
+22. wrapper-schema-3 nutrient migration and malformed-schema-4 isolation;
+23. medium-capacity clamping and distinct outcomes on both production media.
 
 Application-level persistence and lifecycle tests are located at:
 
-`Assets/Tests/Editor/ExperimentControllerTests.cs`
+`Assets/Tests/Editor/ExperimentControllerTests.cs` and
+`Assets/Tests/Editor/NutrientInterventionTests.cs`
 
 ## Latest automated verification
 
-On 30 July 2026, the complete Edit Mode suite compiled and passed all 80 test cases using
-the production-baseline Unity `6000.5.3f1` editor.
+On 3 August 2026, the nutrient-intervention branch's complete Edit Mode suite compiled
+and passed all 112 test cases using the production-baseline Unity `6000.5.3f1` editor in
+an isolated temporary project copy.
 
 ## Running in Unity
 

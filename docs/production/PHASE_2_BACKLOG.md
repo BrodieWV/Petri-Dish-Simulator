@@ -84,9 +84,9 @@ camera, and alignment choices. Manual device and Simulator verification remains 
 
 ## Epic E — Nutrient intervention
 
-Status: Option A and experiment schema v4 were approved by the product owner on
-3 August 2026. Implementation and verification are pending on the dedicated nutrient
-intervention branch.
+Status: Option A is implemented with bounded supply, delayed gradual delivery,
+medium-capacity feedback, experiment history, deterministic continuation, and
+experiment-wrapper schema v4. Manual touch/readability review remains.
 
 - Add a bounded nutrient dose action.
 - Define finite supply, cooldown, or experiment-specific limits.

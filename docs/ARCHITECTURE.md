@@ -100,9 +100,16 @@ migration or controlled incompatibility message.
 Save schema version, content version, seed, tick, dish state, player actions, challenge state, discoveries, progression, and random-stream state. Never serialise transient Unity objects.
 
 Simulation save schema version 3 stores stable organism and medium IDs plus their
-definition versions. Experiment save schema version 3 resolves those IDs through the
+definition versions. Experiment save schema version 4 resolves those IDs through the
 validated catalog before constructing the restored simulation. Existing experiment and
 simulation schema-version-2 saves migrate to the original `rapid-bacterium` and
 `nutrient-agar` definitions because those saves predate content selection. Missing,
 duplicate, malformed, or version-mismatched definitions fail before replacing the running
 experiment.
+
+The M6 nutrient schedule is application-owned: the controller tracks finite supply,
+fixed-step delay, gradual release, cooldown, and history. Each release step asks the
+simulation to add one deterministic global nutrient increment; the simulation clamps to
+the selected medium capacity and returns the actual normalized amount absorbed. This
+keeps pending action/history state in wrapper schema 4 while authoritative grid state and
+simulation saves remain schema 3.
