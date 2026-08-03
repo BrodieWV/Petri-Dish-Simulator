@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91be6f69e8a24eb3ac1c87d024d53af0, type: 3}
+  m_Name: SaccharomycesCerevisiae
+  m_EditorClassIdentifier:
+  id: saccharomyces-cerevisiae
+  definitionVersion: 1
+  displayName: Saccharomyces cerevisiae
+  scientificName: Saccharomyces cerevisiae
+  educationalDescription: A simplified budding yeast culture used to compare how organisms respond differently to temperature and nutrient availability.
+  scientificLabel: Named real organism with non-strain-specific educationalised behaviour; not cultivation, fermentation, identification, or prediction guidance.
+  sourceNotes: "Colony morphology and nutrient/strain context: Granek and Magwene (2010), DOI 10.1371/journal.pgen.1000823. Temperature and strain-variation context: Salvado et al. (2011), DOI 10.1128/AEM.01861-10. Bud formation context: Singer, Bedard, and Johnston (1984), DOI 10.1083/jcb.98.2.678. Material-specific safety caution: ATCC MSV-1 page. Review: docs/research/SACCHAROMYCES_CEREVISIAE_CANDIDATE_REVIEW.md."
+  scientificConfidence: 2
+  simplificationNotes: All numeric values are low-confidence gameplay abstractions for a non-strain-specific educational culture. The model compresses cell division, metabolism, nutrient composition, colony age, and strain variation into normalized values. It does not simulate individual budding cells, carbon or nitrogen pools, fermentation, ethanol production, pseudohyphae, sporulation, diagnostic appearance, or laboratory outcomes.
+  visualProfileId: saccharomyces-cerevisiae-default
+  initialHealth: 1
+  seedRadiusCells: 1.8
+  seedCenterBiomass: 0.32
+  seedEdgeBiomass: 0.1
+  preferredTemperatureMinimum: 29
+  preferredTemperatureMaximum: 34
+  growthTemperatureMinimum: 20
+  growthTemperatureMaximum: 38
+  survivalTemperatureMinimum: 12
+  survivalTemperatureMaximum: 41
+  temperatureOptimum: 32
+  temperatureResponseHalfRange: 8
+  preferredMoistureMinimum: 0.58
+  preferredMoistureMaximum: 0.78
+  growthMoistureThreshold: 0.32
+  survivalMoistureThreshold: 0.14
+  moistureOptimum: 0.68
+  moistureResponseHalfRange: 0.34
+  nutrientsForFullSuitability: 0.38
+  healthySuitabilityThreshold: 0.58
+  healthRecoveryRate: 0.014
+  damageSensitivity: 0.017
+  healthDeclineStressFloor: 0.35
+  stressRecovery: 0.023
+  stressSensitivity: 0.026
+  lethalStressSensitivity: 0.06
+  baseGrowthRate: 0.048
+  lethalDeathRate: 0.034
+  stressDeathRate: 0.004
+  nutrientDemand: 0.52
+  moistureDemand: 0.022
+  carryingCapacity: 0.95
+  spreadMinimumBiomass: 0.05
+  spreadMinimumSuitability: 0.35
+  spreadRate: 0.0035
+  spreadRandomMinimum: 0.85
+  spreadRandomMaximum: 1.15

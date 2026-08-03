@@ -1,12 +1,15 @@
 # Saccharomyces cerevisiae Candidate Review
 
-Status: decision support only. This species is **not approved**, no production definition exists, and no simulation values are authorized by this document.
+Status: approved by the product owner on 3 August 2026 as the second M6 organism. The
+production definition is a non-strain-specific educational culture with low-confidence
+gameplay values. Qualified subject-matter review remains a release gate.
 
 ## Why it is a plausible M6 candidate
 
 The Content Bible already includes a Yeast-like Culture archetype. *Saccharomyces cerevisiae* would give the first two-organism comparison one bacterium and one budding yeast rather than two visually similar bacteria. It is also well represented in primary research, which makes educational claims and their limits easier to review.
 
-This is a product-fit argument, not a scientific conclusion. The product owner must still approve the species, identity scope, gameplay contrast, and visual direction.
+This is a product-fit argument, not a scientific conclusion. The product owner approved
+the species, identity scope, gameplay contrast, and visual direction recorded below.
 
 ## Source-backed statements suitable for review
 
@@ -32,17 +35,21 @@ This is a product-fit argument, not a scientific conclusion. The product owner m
 - Do not represent budding, pseudohyphae, sporulation, ethanol production, or fermentation as simulated unless those systems are separately approved and implemented.
 - Do not reuse the existing `rapid-bacterium` stable ID or visual profile.
 
-## Proposed educational contrast, pending approval
+## Approved educational contrast
 
-The candidate could be tuned to form denser, more compact clusters, expand more slowly across the agar, prefer a somewhat warmer range than the current *B. subtilis* gameplay profile, and show a stronger visible response to nutrient limitation. These are proposed design goals only. Each numeric mapping would remain a low-confidence gameplay abstraction and would need same-seed distinct-outcome tests.
+The definition is tuned to form denser, more compact clusters, expand more slowly across
+the agar, prefer a somewhat warmer range than the current *B. subtilis* gameplay profile,
+and show a stronger response to nutrient limitation. Each numeric mapping remains a
+low-confidence gameplay abstraction and is covered by same-seed distinct-outcome tests.
 
-## Product decisions required
+## Product decisions recorded
 
-1. Approve or reject *Saccharomyces cerevisiae* as organism two.
-2. If approved, decide whether the content identity is species-level or explicitly a non-strain-specific educational culture.
-3. Approve the compact-cluster/slower-spread/warmer-preference/nutrient-sensitive gameplay contrast, or provide a different contrast.
-4. Approve a rounded clustered visual direction that is clearly stylised and non-diagnostic.
-5. Confirm that fermentation, sporulation, pseudohyphae, and strain-specific traits remain outside M6.
+1. *Saccharomyces cerevisiae* is organism two.
+2. Its content identity is explicitly a non-strain-specific educational culture.
+3. Compact clusters, slower spread, warmer preference, and stronger nutrient sensitivity
+   define the gameplay contrast.
+4. Rounded clustered visuals must be clearly stylised and non-diagnostic.
+5. Fermentation, sporulation, pseudohyphae, and strain-specific traits remain outside M6.
 
 ## Sources
 

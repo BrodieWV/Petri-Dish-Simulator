@@ -176,6 +176,94 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void SaccharomycesCerevisiaeHasApprovedMetadataAndDistinctTunableValues()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition definition = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            OrganismSimulationValues organism = definition.ToSimulationValues();
+
+            Assert.That(catalog.OrganismCount, Is.EqualTo(2));
+            Assert.That(definition.DisplayName, Is.EqualTo("Saccharomyces cerevisiae"));
+            Assert.That(definition.ScientificName, Is.EqualTo("Saccharomyces cerevisiae"));
+            Assert.That(definition.EducationalDescription, Does.Contain("budding yeast"));
+            Assert.That(definition.ScientificLabel, Does.Contain("non-strain-specific"));
+            Assert.That(definition.ScientificLabel, Does.Contain("not cultivation"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1371/journal.pgen.1000823"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1128/AEM.01861-10"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1083/jcb.98.2.678"));
+            Assert.That(definition.Confidence, Is.EqualTo(ScientificConfidence.Low));
+            Assert.That(definition.SimplificationNotes, Does.Contain("gameplay abstractions"));
+            Assert.That(definition.SimplificationNotes, Does.Contain("does not simulate individual budding cells"));
+            Assert.That(definition.SimplificationNotes, Does.Contain("fermentation"));
+            Assert.That(definition.VisualProfileId, Is.EqualTo("saccharomyces-cerevisiae-default"));
+            Assert.That(organism.Id, Is.EqualTo(SimulationDefinitionCatalog.SaccharomycesCerevisiaeId));
+            Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(organism.SeedRadiusCells, Is.EqualTo(1.8f));
+            Assert.That(organism.PreferredTemperature, Is.EqualTo(32f));
+            Assert.That(organism.GrowthTemperatureMinimum, Is.EqualTo(20f));
+            Assert.That(organism.GrowthTemperatureMaximum, Is.EqualTo(38f));
+            Assert.That(organism.NutrientsForFullSuitability, Is.EqualTo(0.38f));
+            Assert.That(organism.GrowthRate, Is.EqualTo(0.048f));
+            Assert.That(organism.NutrientConsumptionPerGrowth, Is.EqualTo(0.52f));
+            Assert.That(organism.CarryingCapacity, Is.EqualTo(0.95f));
+            Assert.That(organism.SpreadRate, Is.EqualTo(0.0035f));
+        }
+
+        [TestCase(SimulationDefinitionCatalog.NutrientAgarId)]
+        [TestCase(SimulationDefinitionCatalog.LowNutrientAgarId)]
+        public void ProductionOrganismsProduceMeaningfullyDistinctGrowth(string mediumId)
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition yeast = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            MediumDefinition medium = catalog.ResolveMedium(mediumId);
+            var bacteriumSimulation = new PetriSimulation(20260803, catalog.DefaultOrganism, medium);
+            var yeastSimulation = new PetriSimulation(20260803, yeast, medium);
+
+            bacteriumSimulation.SetTargetTemperature(26f);
+            yeastSimulation.SetTargetTemperature(32f);
+            for (int i = 0; i < 160; i++)
+            {
+                bacteriumSimulation.Step();
+                yeastSimulation.Step();
+            }
+
+            SimulationSnapshot bacterium = bacteriumSimulation.CreateSnapshot();
+            SimulationSnapshot yeastSnapshot = yeastSimulation.CreateSnapshot();
+            Assert.That(
+                TotalBiomass(bacterium),
+                Is.GreaterThan(TotalBiomass(yeastSnapshot) * 1.1f),
+                "The yeast profile should grow more slowly on each production medium.");
+            Assert.That(
+                bacterium.Coverage,
+                Is.GreaterThan(yeastSnapshot.Coverage),
+                "The yeast profile should remain more compact than the bacterium profile.");
+        }
+
+        [Test]
+        public void SaccharomycesCerevisiaeRespondsBetterAtItsWarmerPreferredTemperature()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition yeast = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            var cool = new PetriSimulation(27182, yeast, catalog.DefaultMedium);
+            var preferred = new PetriSimulation(27182, yeast, catalog.DefaultMedium);
+            cool.SetTargetTemperature(26f);
+            preferred.SetTargetTemperature(32f);
+
+            for (int i = 0; i < 120; i++)
+            {
+                cool.Step();
+                preferred.Step();
+            }
+
+            Assert.That(
+                TotalBiomass(preferred.CreateSnapshot()),
+                Is.GreaterThan(TotalBiomass(cool.CreateSnapshot()) * 1.05f));
+        }
+
+        [Test]
         public void DifferentMediumDefinitionsProduceDifferentMoistureBehaviour()
         {
             SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
@@ -397,6 +485,34 @@ namespace PetriDish.Tests.Editor
             Assert.That(reader.Simulation.OrganismId, Is.EqualTo(organism.Id));
             Assert.That(reader.Simulation.MediumId, Is.EqualTo(medium.Id));
             for (int i = 0; i < 20; i++) reader.Simulation.Step();
+
+            AssertSnapshotsEqual(expected, reader.Simulation.CreateSnapshot());
+        }
+
+        [TestCase(SimulationDefinitionCatalog.NutrientAgarId)]
+        [TestCase(SimulationDefinitionCatalog.LowNutrientAgarId)]
+        public void SaccharomycesSelectionUsesSchemaThreeAndContinuesExactly(string mediumId)
+        {
+            ExperimentController writer = CreateController(ref firstControllerObject);
+            writer.StartNew(
+                314159,
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId,
+                mediumId);
+            writer.SetTemperature(32f);
+            for (int i = 0; i < 36; i++) writer.Simulation.Step();
+            Assert.That(writer.Simulation.CaptureSave().schemaVersion, Is.EqualTo(3));
+            Assert.That(writer.SaveToPath(savePath), Is.True, writer.LastPersistenceError);
+
+            for (int i = 0; i < 24; i++) writer.Simulation.Step();
+            SimulationSnapshot expected = writer.Simulation.CreateSnapshot();
+
+            ExperimentController reader = CreateController(ref secondControllerObject);
+            Assert.That(reader.LoadFromPath(savePath), Is.True, reader.LastPersistenceError);
+            Assert.That(
+                reader.Simulation.OrganismId,
+                Is.EqualTo(SimulationDefinitionCatalog.SaccharomycesCerevisiaeId));
+            Assert.That(reader.Simulation.MediumId, Is.EqualTo(mediumId));
+            for (int i = 0; i < 24; i++) reader.Simulation.Step();
 
             AssertSnapshotsEqual(expected, reader.Simulation.CreateSnapshot());
         }
