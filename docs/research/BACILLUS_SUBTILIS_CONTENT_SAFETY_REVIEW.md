@@ -62,7 +62,7 @@ Do not describe *B. subtilis* as universally harmless or safe to culture. EFSA's
 
 ## Proposed content metadata
 
-- Stable ID: keep `rapid-bacterium` for schema-version-2 save compatibility unless a separate migration decision is approved.
+- Stable ID: keep `rapid-bacterium` because schema-version-3 saves require an exact catalog identity match and schema-version-2 migration explicitly targets this ID.
 - Definition version: retain version `1` while only non-authoritative identity and education metadata changes. Schema-version-2 migration explicitly accepts only definition version `1`; any biological tuning change requires a separately approved versioning and migration design.
 - Display name: `Bacillus subtilis`.
 - Scientific name: `Bacillus subtilis`.
@@ -83,7 +83,7 @@ Do not describe *B. subtilis* as universally harmless or safe to culture. EFSA's
 
 1. Product owner approves *B. subtilis* as the first named organism. Completed on 3 August 2026.
 2. A qualified microbiology reviewer checks the player-facing claims and records reviewer and review date.
-3. The implementation preserves schema-version-2 save compatibility and deterministic replay.
+3. The implementation preserves schema-version-3 exact identity matching, schema-version-2 migration, and deterministic replay.
 4. Tests assert the reviewed metadata, moderate confidence, retained definition version `1`, and unchanged simulation values.
 5. The UI displays the scientific label and simplification context anywhere species-specific results are explained.
 6. Manual visual review confirms the colony texture is clearly stylised and not represented as diagnostic or strain-specific.

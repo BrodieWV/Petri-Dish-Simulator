@@ -49,6 +49,7 @@ namespace PetriDish.Tests.Editor
             OrganismSimulationValues organism = catalog.DefaultOrganism.ToSimulationValues();
             MediumSimulationValues medium = catalog.DefaultMedium.ToSimulationValues();
 
+            Assert.That(PetriSimulation.CurrentSaveSchemaVersion, Is.EqualTo(3));
             Assert.That(organism.Id, Is.EqualTo("rapid-bacterium"));
             Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
             Assert.That(catalog.DefaultOrganism.DisplayName, Is.EqualTo("Bacillus subtilis"));
