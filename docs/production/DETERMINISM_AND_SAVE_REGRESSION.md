@@ -82,9 +82,9 @@ Application-level persistence and lifecycle tests are located at:
 
 ## Latest automated verification
 
-On 3 August 2026, the nutrient-intervention branch's complete Edit Mode suite compiled
-and passed all 112 test cases using the production-baseline Unity `6000.5.3f1` editor in
-an isolated temporary project copy.
+On 3 August 2026, exact integrated commit `96cdddf` compiled and passed all 118 Edit Mode
+test cases using the production-baseline Unity `6000.5.3f1` editor in an isolated
+temporary project copy.
 
 ## Running in Unity
 

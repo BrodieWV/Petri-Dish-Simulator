@@ -1,6 +1,7 @@
 # Phase 2 Backlog — Multi-Organism Experimental Slice
 
-Status: active from 30 July 2026.
+Status: automated M6 implementation complete on the integrated Phase 2 completion branch;
+manual product, scientific, approved-scene, accessibility, and device checks remain.
 
 ## Phase objective
 
@@ -130,13 +131,10 @@ These systems must be designed after multi-dish experiments and lineage tracking
 
 ## Automation-safe next-task order
 
-1. Merge or otherwise incorporate the approved first-organism PR after review; do not duplicate it.
-2. Reconcile and review the existing 3D viewport and texture-alignment branch without overwriting product-owner assets.
-3. Add one additional medium.
-4. Complete content and safety review for a second organism, then implement it only after approval.
-5. Add save-compatible organism and medium selection.
-6. Add nutrient intervention.
-7. Complete M6 content validation, regression testing, and manual 3D verification.
+The M6 implementation sequence is complete. Do not begin deferred M7 systems. The next
+work is review and manual verification: qualified organism-content review, approved-scene
+Play Mode flows, 3D alignment/material confirmation, portrait and Large-text readability,
+touch targets, save/load/restart on device, and representative mobile performance.
 
 ## Definition of done for automated work
 

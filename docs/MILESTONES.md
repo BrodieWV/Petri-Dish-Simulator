@@ -26,7 +26,7 @@ Complete setup-to-outcome flow, one guided experiment, saving, onboarding, infor
 
 Remaining presentation work includes the 3D dish integration, final materials, audio, haptics, and final art.
 
-## M6 — Data-driven experimental framework — Active
+## M6 — Data-driven experimental framework — Automated implementation complete; review active
 
 - Validated organism and medium definitions
 - Named real organisms with simplified educational behaviour
@@ -37,6 +37,10 @@ Remaining presentation work includes the 3D dish integration, final materials, a
 - Content validation and regression tests
 
 Exit: the current vertical slice runs through external definitions, two organisms and two media produce meaningfully different outcomes, and all tests pass.
+
+The integrated completion branch satisfies the automated exit checks. Qualified
+microbiology review, approved-scene Play Mode checks, portrait/touch/readability review,
+and representative mobile performance verification remain before M6 is closed.
 
 ## M7 — Content-complete MVP — Not started
 

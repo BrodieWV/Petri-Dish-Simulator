@@ -2,7 +2,8 @@
 
 ## Current status
 
-Phase 1 is complete. Phase 2 is active.
+Phase 1 is complete. Phase 2 automated implementation is complete; product and release
+verification remain active.
 
 ## Phase 0 — Foundation — Complete
 
@@ -14,7 +15,7 @@ One dish, one medium, one organism, temperature, moisture, deterministic simulat
 
 Exit achieved: players can produce visibly different outcomes by changing conditions, and the Unity Edit Mode suite passes on the locked production editor.
 
-## Phase 2 — Multi-Organism Experimental Slice — Active
+## Phase 2 — Multi-Organism Experimental Slice — Implementation complete; review active
 
 - Validated data-driven organism and medium definitions
 - Two named real organisms and two media with meaningfully distinct behaviour
@@ -25,6 +26,10 @@ Exit achieved: players can produce visibly different outcomes by changing condit
 - Content validation and regression tests
 
 Exit: players can select organisms and media, run meaningfully different experiments, intervene with temperature, moisture, and nutrients, and understand why outcomes differ.
+
+The integrated branch passes the complete automated suite. Phase 2 remains open for
+qualified scientific review and manual approved-scene, touch, portrait, accessibility,
+and representative-device performance verification.
 
 ## Phase 3 — Comparative Experiments and Progression
 
