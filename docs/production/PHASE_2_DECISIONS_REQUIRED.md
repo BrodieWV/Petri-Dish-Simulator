@@ -2,9 +2,10 @@
 
 Updated: 3 August 2026.
 
-This document records the M6 work that automated implementation cannot complete without changing unapproved scientific content, player-facing balance, or save semantics. No placeholder choice should be treated as approved.
+This document records the product decisions that unblocked the remaining M6 work. Both
+decisions were approved by the product owner on 3 August 2026.
 
-## Decision 1: second named organism
+## Decision 1: second named organism — approved
 
 M6 requires two named real organisms with meaningfully different behaviour. The product owner approved *Bacillus subtilis* as organism one, but the repository does not select organism two.
 
@@ -18,9 +19,12 @@ Approval is required for:
 
 After approval, the content needs primary-source review, explicit confidence and simplification metadata, externally tunable values, a distinct-outcome regression test, and qualified subject-matter review before release.
 
-The Content Bible's existing Yeast-like Culture archetype makes *Saccharomyces cerevisiae* a plausible candidate for review, not an approved selection. The decision-support packet is in `docs/research/SACCHAROMYCES_CEREVISIAE_CANDIDATE_REVIEW.md`. No species asset or simulation values have been created for it.
+The approved organism is *Saccharomyces cerevisiae*, represented as a non-strain-specific
+educational culture with the stable ID `saccharomyces-cerevisiae`. The approved contrast,
+visual boundaries, exclusions, and sources are recorded in
+`docs/research/SACCHAROMYCES_CEREVISIAE_CANDIDATE_REVIEW.md` and D-017.
 
-## Decision 2: bounded delayed nutrient intervention
+## Decision 2: bounded delayed nutrient intervention — approved
 
 M6 requires a nutrient dose that is bounded, delayed rather than an instant recovery, and recorded in experiment history. The repository does not approve the concrete interaction contract.
 
@@ -35,7 +39,11 @@ Approval is required for:
 - history fields that must survive save/load;
 - whether adding intervention history requires a schema-v3 additive migration or a new schema version.
 
-The alternatives, current simulation constraints, recommended bounded contract, and save-version tradeoff are detailed in `docs/design/NUTRIENT_INTERVENTION_DECISION_PACKET.md`. No option is approved by that packet.
+Option A in `docs/design/NUTRIENT_INTERVENTION_DECISION_PACKET.md` is approved: a global
+fixed dose of 0.12 normalized nutrient units, three doses per experiment, a 20-step
+cooldown, four-step initial delay, equal delivery over 12 steps, per-cell medium-capacity
+clamping, recorded request/start/completion ticks and requested/delivered amounts, and
+experiment wrapper schema v4. Simulation saves remain schema v3.
 
 The implementation must remain deterministic, validate malformed saved history, avoid instant health recovery, expose all balance values outside core simulation logic, and add exact-continuation tests across pending interventions. Choosing these values in code without approval would change game balance and save behaviour.
 

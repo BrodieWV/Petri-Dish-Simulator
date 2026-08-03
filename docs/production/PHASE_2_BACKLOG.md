@@ -33,7 +33,9 @@ Exit criteria:
 
 ## Epic B — Real-organism content foundation
 
-Status: first *Bacillus subtilis* content identity approved and implemented with the legacy simulation balance and save-compatible ID/version in draft PR #9; qualified subject-matter review remains before release. The second organism still requires content and safety review plus product-owner approval.
+Status: *Bacillus subtilis* and *Saccharomyces cerevisiae* are approved and implemented
+as the two M6 organisms. Both retain explicit source, confidence, simplification, and
+save-compatible identity metadata; qualified subject-matter review remains before release.
 
 - Replace the generic Rapid Bacterium content identity with the first approved real organism after scientific review.
 - Use named real organisms with deliberately simplified educational behaviour.
@@ -82,7 +84,9 @@ camera, and alignment choices. Manual device and Simulator verification remains 
 
 ## Epic E — Nutrient intervention
 
-Status: blocked on the product decisions recorded in `PHASE_2_DECISIONS_REQUIRED.md`. The repository requires a bounded, delayed, recorded intervention but does not approve its numeric limits or save-history contract.
+Status: Option A and experiment schema v4 were approved by the product owner on
+3 August 2026. Implementation and verification are pending on the dedicated nutrient
+intervention branch.
 
 - Add a bounded nutrient dose action.
 - Define finite supply, cooldown, or experiment-specific limits.

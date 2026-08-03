@@ -60,3 +60,15 @@ source notes, scientific confidence, simplification notes, carrying and medium c
 optional deterministic diffusion, spread resistance, and presentation-only visual-profile
 IDs. Scientific and presentation metadata are not authoritative biological state and do
 not connect the simulation to the 3D dish.
+
+## D-017 — Saccharomyces cerevisiae is the second M6 organism
+
+Accepted by the product owner on 3 August 2026. The definition represents a
+non-strain-specific educational culture with the stable ID
+`saccharomyces-cerevisiae`. Its approved gameplay contrast is a smaller initial colony,
+slower and more compact spread, a warmer preferred temperature, and stronger nutrient
+sensitivity than the existing *Bacillus subtilis* profile. Rounded clustered visuals
+must remain stylised and non-diagnostic. Fermentation, ethanol production, pseudohyphae,
+sporulation, individual budding cells, and strain-specific traits remain outside M6.
+All numeric mappings are low-confidence gameplay abstractions, not cultivation guidance
+or laboratory prediction.
