@@ -82,7 +82,9 @@ camera, and alignment choices. Manual device and Simulator verification remains 
 
 ## Epic E — Nutrient intervention
 
-Status: blocked on the product decisions recorded in `PHASE_2_DECISIONS_REQUIRED.md`. The repository requires a bounded, delayed, recorded intervention but does not approve its numeric limits or save-history contract.
+Status: Option A is implemented with bounded supply, delayed gradual delivery,
+medium-capacity feedback, experiment history, deterministic continuation, and
+experiment-wrapper schema v4. Manual touch/readability review remains.
 
 - Add a bounded nutrient dose action.
 - Define finite supply, cooldown, or experiment-specific limits.

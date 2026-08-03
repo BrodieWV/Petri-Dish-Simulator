@@ -442,7 +442,7 @@ namespace PetriDish.Tests.Editor
             for (int i = 0; i < 20; i++) writer.Simulation.Step();
             Assert.That(writer.SaveToPath(savePath), Is.True, writer.LastPersistenceError);
             string json = File.ReadAllText(savePath);
-            json = json.Replace("\"schemaVersion\": 3", "\"schemaVersion\": 2");
+            json = json.Replace("\"schemaVersion\": 4", "\"schemaVersion\": 2");
             File.WriteAllText(savePath, json);
 
             ExperimentController reader = CreateController(ref secondControllerObject);

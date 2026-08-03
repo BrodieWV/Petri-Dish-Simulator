@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security;
 using System.Text;
@@ -8,6 +9,47 @@ using UnityEngine;
 
 namespace PetriDish.Application
 {
+    [Serializable]
+    public sealed class NutrientInterventionRecord
+    {
+        [SerializeField] private long requestTick;
+        [SerializeField] private long deliveryStartTick = -1;
+        [SerializeField] private long completionTick = -1;
+        [SerializeField] private float requestedAmount;
+        [SerializeField] private float deliveredAmount;
+
+        public long RequestTick => requestTick;
+        public long DeliveryStartTick => deliveryStartTick;
+        public long CompletionTick => completionTick;
+        public float RequestedAmount => requestedAmount;
+        public float DeliveredAmount => deliveredAmount;
+        public bool IsComplete => completionTick >= 0;
+
+        internal NutrientInterventionRecord(long requestedAtTick, float amount)
+        {
+            requestTick = requestedAtTick;
+            requestedAmount = amount;
+        }
+
+        internal NutrientInterventionRecord Clone()
+        {
+            return new NutrientInterventionRecord(requestTick, requestedAmount)
+            {
+                deliveryStartTick = deliveryStartTick,
+                completionTick = completionTick,
+                deliveredAmount = deliveredAmount
+            };
+        }
+
+        internal void RecordDelivery(long tick, float amount)
+        {
+            if (deliveryStartTick < 0) deliveryStartTick = tick;
+            deliveredAmount += amount;
+        }
+
+        internal void Complete(long tick) => completionTick = tick;
+    }
+
     public enum GuidedStage
     {
         ObserveCoolStart,
@@ -23,7 +65,7 @@ namespace PetriDish.Application
     public sealed class ExperimentController : MonoBehaviour
     {
         public const int TutorialSeed = 260726;
-        private const int CurrentExperimentSaveSchemaVersion = 3;
+        public const int CurrentExperimentSaveSchemaVersion = 4;
         private const long MaxSaveFileBytes = 4L * 1024L * 1024L;
         private const float MaxPendingSimulationSeconds = 3600f;
 
@@ -35,12 +77,23 @@ namespace PetriDish.Application
         [SerializeField] private SimulationDefinitionCatalog definitionCatalog;
         [SerializeField] private string selectedOrganismId;
         [SerializeField] private string selectedMediumId;
+        [Header("Nutrient intervention")]
+        [SerializeField, Range(0.001f, 1f)] private float nutrientDoseAmount = 0.12f;
+        [SerializeField, Min(1)] private int nutrientDoseSupply = 3;
+        [SerializeField, Min(0)] private int nutrientCooldownSteps = 20;
+        [SerializeField, Min(1)] private int nutrientDelaySteps = 4;
+        [SerializeField, Min(1)] private int nutrientReleaseSteps = 12;
         private PetriSimulation simulation;
         private float accumulator;
         private bool paused;
         private GuidedStage stage;
         private float stageStartSeconds;
         private bool moistureAddedDuringRescue;
+        private readonly List<NutrientInterventionRecord> nutrientHistory =
+            new List<NutrientInterventionRecord>();
+        private int nutrientDosesRemaining;
+        private long nutrientCooldownEndTick;
+        private PendingNutrientDelivery pendingNutrientDelivery;
         private string savePath;
 
         public PetriSimulation Simulation => simulation;
@@ -49,9 +102,19 @@ namespace PetriDish.Application
         public float SimulationSpeed => simulationSpeed;
         public SimulationDefinitionCatalog DefinitionCatalog => definitionCatalog;
         public string LastPersistenceError { get; private set; }
+        public int NutrientDosesRemaining => nutrientDosesRemaining;
+        public long NutrientCooldownRemainingSteps => simulation == null
+            ? 0
+            : Math.Max(0, nutrientCooldownEndTick - simulation.Tick);
+        public bool NutrientDeliveryPending => pendingNutrientDelivery != null;
+        public int NutrientReleaseStepsCompleted => pendingNutrientDelivery?.releaseStepsCompleted ?? 0;
+        public int NutrientReleaseStepCount => nutrientReleaseSteps;
+        public IReadOnlyList<NutrientInterventionRecord> NutrientHistory => nutrientHistory;
+        public string NutrientFeedback { get; private set; }
 
         private void Awake()
         {
+            ValidateNutrientConfiguration();
             savePath = Path.Combine(UnityEngine.Application.persistentDataPath, "petri_vertical_slice.json");
             EnsureDefinitionSelection();
             ResetExperiment(TutorialSeed, false);
@@ -88,6 +151,7 @@ namespace PetriDish.Application
             {
                 accumulator -= PetriSimulation.FixedStepSeconds;
                 simulation.Step();
+                ProcessNutrientDelivery();
                 UpdateGuidedFlow();
                 steps++;
             }
@@ -131,6 +195,11 @@ namespace PetriDish.Application
             paused = false;
             simulationSpeed = 1f;
             moistureAddedDuringRescue = false;
+            nutrientHistory.Clear();
+            nutrientDosesRemaining = nutrientDoseSupply;
+            nutrientCooldownEndTick = 0;
+            pendingNutrientDelivery = null;
+            NutrientFeedback = "Nutrient doses are ready.";
             SetStage(GuidedStage.ObserveCoolStart,
                 "Observe the slow colony. The dish is cooler than this culture prefers.", notify);
             if (notify) PublishSnapshot();
@@ -146,6 +215,84 @@ namespace PetriDish.Application
             simulation.AddMoisture(0.16f);
             if (stage == GuidedStage.MoistureRescue) moistureAddedDuringRescue = true;
             PublishSnapshot();
+        }
+
+        public bool TryRequestNutrientDose(out string feedback)
+        {
+            if (simulation == null)
+            {
+                feedback = "The experiment has not started.";
+                NutrientFeedback = feedback;
+                return false;
+            }
+            if (nutrientDosesRemaining <= 0)
+            {
+                feedback = "No nutrient doses remain in this experiment.";
+                NutrientFeedback = feedback;
+                return false;
+            }
+            if (pendingNutrientDelivery != null)
+            {
+                feedback = "The current nutrient dose is still being delivered.";
+                NutrientFeedback = feedback;
+                return false;
+            }
+            if (NutrientCooldownRemainingSteps > 0)
+            {
+                float seconds = NutrientCooldownRemainingSteps * PetriSimulation.FixedStepSeconds;
+                feedback = $"Nutrient dose ready in {seconds:0.##} simulated seconds.";
+                NutrientFeedback = feedback;
+                return false;
+            }
+
+            long requestTick = simulation.Tick;
+            var record = new NutrientInterventionRecord(requestTick, nutrientDoseAmount);
+            nutrientHistory.Add(record);
+            pendingNutrientDelivery = new PendingNutrientDelivery
+            {
+                historyIndex = nutrientHistory.Count - 1,
+                requestTick = requestTick,
+                scheduledStartTick = requestTick + nutrientDelaySteps,
+                requestedAmount = nutrientDoseAmount
+            };
+            nutrientDosesRemaining--;
+            nutrientCooldownEndTick = requestTick + nutrientCooldownSteps;
+            feedback = "Nutrient dose scheduled; delivery begins after the fixed delay.";
+            NutrientFeedback = feedback;
+            PublishSnapshot();
+            return true;
+        }
+
+        private void ProcessNutrientDelivery()
+        {
+            if (pendingNutrientDelivery == null ||
+                simulation.Tick < pendingNutrientDelivery.scheduledStartTick)
+                return;
+
+            float stepAmount =
+                pendingNutrientDelivery.requestedAmount / nutrientReleaseSteps;
+            float delivered = simulation.AddNutrients(stepAmount);
+            NutrientInterventionRecord record =
+                nutrientHistory[pendingNutrientDelivery.historyIndex];
+            record.RecordDelivery(simulation.Tick, delivered);
+            pendingNutrientDelivery.deliveredAmount += delivered;
+            pendingNutrientDelivery.releaseStepsCompleted++;
+            if (delivered + 0.000001f < stepAmount)
+                pendingNutrientDelivery.capacityLimited = true;
+
+            if (pendingNutrientDelivery.releaseStepsCompleted < nutrientReleaseSteps)
+            {
+                NutrientFeedback = pendingNutrientDelivery.capacityLimited
+                    ? "Nutrient delivery is active; agar capacity is limiting absorption."
+                    : "Nutrient delivery is active.";
+                return;
+            }
+
+            record.Complete(simulation.Tick);
+            NutrientFeedback = pendingNutrientDelivery.capacityLimited
+                ? $"Dose complete: agar capacity limited absorption to {record.DeliveredAmount:0.###} of {record.RequestedAmount:0.###}."
+                : $"Dose complete: {record.DeliveredAmount:0.###} nutrient units absorbed.";
+            pendingNutrientDelivery = null;
         }
 
         public void SetSpeed(float value)
@@ -183,7 +330,11 @@ namespace PetriDish.Application
                     moistureAddedDuringRescue = moistureAddedDuringRescue,
                     accumulator = accumulator,
                     paused = paused,
-                    simulationSpeed = simulationSpeed
+                    simulationSpeed = simulationSpeed,
+                    nutrientDosesRemaining = nutrientDosesRemaining,
+                    nutrientCooldownEndTick = nutrientCooldownEndTick,
+                    pendingNutrientDelivery = pendingNutrientDelivery?.Clone(),
+                    nutrientHistory = CopyNutrientHistory()
                 };
                 string json = JsonUtility.ToJson(wrapper, true);
                 WriteSaveAtomically(fullPath, json);
@@ -333,6 +484,7 @@ namespace PetriDish.Application
                 accumulator = legacy ? 0f : wrapper.accumulator;
                 paused = legacy ? false : wrapper.paused;
                 simulationSpeed = legacy ? 1f : wrapper.simulationSpeed;
+                RestoreNutrientState(wrapper);
                 PublishStage();
                 PublishSnapshot();
                 return true;
@@ -344,12 +496,13 @@ namespace PetriDish.Application
             }
         }
 
-        private static void ValidateExperimentSave(ExperimentSave wrapper)
+        private void ValidateExperimentSave(ExperimentSave wrapper)
         {
             if (wrapper == null || wrapper.simulation == null)
                 throw new InvalidDataException("Save data is incomplete.");
             if (wrapper.schemaVersion != 0 &&
                 wrapper.schemaVersion != 2 &&
+                wrapper.schemaVersion != 3 &&
                 wrapper.schemaVersion != CurrentExperimentSaveSchemaVersion)
                 throw new InvalidDataException($"Unsupported experiment save schema {wrapper.schemaVersion}.");
             if (wrapper.schemaVersion >= 3 &&
@@ -369,6 +522,7 @@ namespace PetriDish.Application
             if (!IsFinite(wrapper.simulationSpeed) ||
                 wrapper.simulationSpeed < 0.5f || wrapper.simulationSpeed > 8f)
                 throw new InvalidDataException("Save data contains an invalid simulation speed.");
+            if (wrapper.schemaVersion >= 4) ValidateNutrientSave(wrapper);
         }
 
         private void ResolveSavedDefinitions(
@@ -390,6 +544,140 @@ namespace PetriDish.Application
 
             organismDefinition = definitionCatalog.ResolveOrganism(wrapper.simulation.organismId);
             mediumDefinition = definitionCatalog.ResolveMedium(wrapper.simulation.mediumId);
+        }
+
+        private NutrientInterventionRecord[] CopyNutrientHistory()
+        {
+            var copy = new NutrientInterventionRecord[nutrientHistory.Count];
+            for (int i = 0; i < copy.Length; i++) copy[i] = nutrientHistory[i].Clone();
+            return copy;
+        }
+
+        private void RestoreNutrientState(ExperimentSave wrapper)
+        {
+            nutrientHistory.Clear();
+            if (wrapper.schemaVersion < 4)
+            {
+                nutrientDosesRemaining = nutrientDoseSupply;
+                nutrientCooldownEndTick = 0;
+                pendingNutrientDelivery = null;
+                NutrientFeedback = "Legacy save loaded; all nutrient doses are available.";
+                return;
+            }
+
+            nutrientDosesRemaining = wrapper.nutrientDosesRemaining;
+            nutrientCooldownEndTick = wrapper.nutrientCooldownEndTick;
+            for (int i = 0; i < wrapper.nutrientHistory.Length; i++)
+                nutrientHistory.Add(wrapper.nutrientHistory[i].Clone());
+            pendingNutrientDelivery = HasPendingNutrientDelivery(wrapper.pendingNutrientDelivery)
+                ? wrapper.pendingNutrientDelivery.Clone()
+                : null;
+            NutrientFeedback = pendingNutrientDelivery != null
+                ? "Saved nutrient delivery resumed."
+                : nutrientDosesRemaining > 0
+                    ? "Nutrient doses are ready."
+                    : "No nutrient doses remain in this experiment.";
+        }
+
+        private void ValidateNutrientSave(ExperimentSave wrapper)
+        {
+            if (wrapper.nutrientDosesRemaining < 0 ||
+                wrapper.nutrientDosesRemaining > nutrientDoseSupply)
+                throw new InvalidDataException("Save data contains an invalid nutrient supply.");
+            if (wrapper.nutrientCooldownEndTick < 0)
+                throw new InvalidDataException("Save data contains an invalid nutrient cooldown.");
+            if (wrapper.nutrientHistory == null)
+                throw new InvalidDataException("Save data is missing nutrient intervention history.");
+            if (wrapper.nutrientHistory.Length !=
+                nutrientDoseSupply - wrapper.nutrientDosesRemaining)
+                throw new InvalidDataException("Nutrient supply does not match intervention history.");
+
+            int incompleteIndex = -1;
+            for (int i = 0; i < wrapper.nutrientHistory.Length; i++)
+            {
+                NutrientInterventionRecord record = wrapper.nutrientHistory[i];
+                if (record == null ||
+                    record.RequestTick < 0 ||
+                    record.RequestTick > wrapper.simulation.tick ||
+                    !IsFinite(record.RequestedAmount) ||
+                    Mathf.Abs(record.RequestedAmount - nutrientDoseAmount) > 0.000001f ||
+                    !IsFinite(record.DeliveredAmount) ||
+                    record.DeliveredAmount < 0f ||
+                    record.DeliveredAmount > record.RequestedAmount + 0.000001f)
+                    throw new InvalidDataException("Save data contains an invalid nutrient history record.");
+                if (i > 0 && record.RequestTick < wrapper.nutrientHistory[i - 1].RequestTick)
+                    throw new InvalidDataException("Nutrient history is not ordered by request tick.");
+                if (record.DeliveryStartTick >= 0 &&
+                    (record.DeliveryStartTick != record.RequestTick + nutrientDelaySteps ||
+                     record.DeliveryStartTick > wrapper.simulation.tick))
+                    throw new InvalidDataException("Nutrient history contains an invalid delivery start tick.");
+                if (record.IsComplete)
+                {
+                    if (record.DeliveryStartTick < 0 ||
+                        record.CompletionTick != record.DeliveryStartTick + nutrientReleaseSteps - 1 ||
+                        record.CompletionTick > wrapper.simulation.tick)
+                        throw new InvalidDataException("Nutrient history contains an invalid completion tick.");
+                }
+                else
+                {
+                    if (incompleteIndex >= 0 || i != wrapper.nutrientHistory.Length - 1)
+                        throw new InvalidDataException("Save data contains multiple pending nutrient doses.");
+                    incompleteIndex = i;
+                }
+            }
+
+            if (wrapper.nutrientHistory.Length == 0)
+            {
+                if (wrapper.nutrientCooldownEndTick != 0 ||
+                    HasPendingNutrientDelivery(wrapper.pendingNutrientDelivery))
+                    throw new InvalidDataException("Empty nutrient history contains pending state.");
+                return;
+            }
+
+            NutrientInterventionRecord latest =
+                wrapper.nutrientHistory[wrapper.nutrientHistory.Length - 1];
+            if (wrapper.nutrientCooldownEndTick != latest.RequestTick + nutrientCooldownSteps)
+                throw new InvalidDataException("Save data contains an invalid nutrient cooldown tick.");
+            if (incompleteIndex < 0)
+            {
+                if (HasPendingNutrientDelivery(wrapper.pendingNutrientDelivery))
+                    throw new InvalidDataException("Completed nutrient history contains pending state.");
+                return;
+            }
+
+            PendingNutrientDelivery pending = wrapper.pendingNutrientDelivery;
+            if (pending == null ||
+                pending.historyIndex != incompleteIndex ||
+                pending.requestTick != latest.RequestTick ||
+                pending.scheduledStartTick != latest.RequestTick + nutrientDelaySteps ||
+                !IsFinite(pending.requestedAmount) ||
+                Mathf.Abs(pending.requestedAmount - latest.RequestedAmount) > 0.000001f ||
+                !IsFinite(pending.deliveredAmount) ||
+                Mathf.Abs(pending.deliveredAmount - latest.DeliveredAmount) > 0.000001f ||
+                pending.releaseStepsCompleted < 0 ||
+                pending.releaseStepsCompleted >= nutrientReleaseSteps)
+                throw new InvalidDataException("Save data contains malformed pending nutrient delivery.");
+            if ((pending.releaseStepsCompleted == 0 && latest.DeliveryStartTick >= 0) ||
+                (pending.releaseStepsCompleted > 0 && latest.DeliveryStartTick < 0))
+                throw new InvalidDataException("Pending nutrient progress does not match its history.");
+        }
+
+        private static bool HasPendingNutrientDelivery(PendingNutrientDelivery pending)
+        {
+            return pending != null &&
+                (pending.requestedAmount != 0f || pending.scheduledStartTick != 0 ||
+                 pending.requestTick != 0 || pending.deliveredAmount != 0f ||
+                 pending.releaseStepsCompleted != 0 || pending.capacityLimited);
+        }
+
+        private void ValidateNutrientConfiguration()
+        {
+            if (!IsFinite(nutrientDoseAmount) || nutrientDoseAmount <= 0f ||
+                nutrientDoseAmount > 1f || nutrientDoseSupply < 1 ||
+                nutrientCooldownSteps < 0 || nutrientDelaySteps < 1 ||
+                nutrientReleaseSteps < 1)
+                throw new InvalidOperationException(
+                    "Nutrient intervention settings are outside the supported range.");
         }
 
         private void EnsureDefinitionSelection()
@@ -542,6 +830,36 @@ namespace PetriDish.Application
             public float accumulator;
             public bool paused;
             public float simulationSpeed;
+            public int nutrientDosesRemaining;
+            public long nutrientCooldownEndTick;
+            public PendingNutrientDelivery pendingNutrientDelivery;
+            public NutrientInterventionRecord[] nutrientHistory;
+        }
+
+        [Serializable]
+        private sealed class PendingNutrientDelivery
+        {
+            public int historyIndex;
+            public long requestTick;
+            public long scheduledStartTick;
+            public float requestedAmount;
+            public float deliveredAmount;
+            public int releaseStepsCompleted;
+            public bool capacityLimited;
+
+            public PendingNutrientDelivery Clone()
+            {
+                return new PendingNutrientDelivery
+                {
+                    historyIndex = historyIndex,
+                    requestTick = requestTick,
+                    scheduledStartTick = scheduledStartTick,
+                    requestedAmount = requestedAmount,
+                    deliveredAmount = deliveredAmount,
+                    releaseStepsCompleted = releaseStepsCompleted,
+                    capacityLimited = capacityLimited
+                };
+            }
         }
     }
 }

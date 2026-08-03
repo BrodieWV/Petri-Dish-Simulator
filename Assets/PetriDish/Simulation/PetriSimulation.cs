@@ -264,6 +264,28 @@ namespace PetriDish.Simulation
             }
         }
 
+        public float AddNutrients(float amount)
+        {
+            if (!IsFinite(amount) || amount < 0f)
+                throw new ArgumentOutOfRangeException(
+                    nameof(amount),
+                    "Nutrient amount must be finite and non-negative.");
+
+            float delivered = 0f;
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (!DishMask[i]) continue;
+                float before = cells[i].nutrients;
+                cells[i].nutrients = Mathf.Clamp(
+                    before + amount,
+                    0f,
+                    medium.MaximumNutrients);
+                delivered += cells[i].nutrients - before;
+            }
+
+            return delivered / DishCellCount;
+        }
+
         public void Step()
         {
             temperature = Mathf.MoveTowards(
