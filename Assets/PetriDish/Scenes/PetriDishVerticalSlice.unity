@@ -119,7 +119,129 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &1604208359
+--- !u!1 &1050874772 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8335992247629806929, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
+  m_PrefabInstance: {fileID: 1774594721}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &1050874774 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4146744487496859226, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
+  m_PrefabInstance: {fileID: 1774594721}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1050874776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1050874772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39534517c529463cb8db60359a305d56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PetriDish.Presentation.ColonySurfacePresenter
+  targetRenderer: {fileID: 1050874774}
+  textureSource: {fileID: 0}
+  texturePropertyName: _MainTex
+  hideFlatDishImageAfterSuccessfulBinding: 0
+  textureScale: {x: 1.7, y: 1.7}
+  textureOffset: {x: 0.08, y: 0.08}
+  flipX: 0
+  flipY: 0
+--- !u!1 &1645904202
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1645904205}
+  - component: {fileID: 1645904204}
+  - component: {fileID: 1645904203}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &1645904203
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645904202}
+  m_Enabled: 1
+--- !u!20 &1645904204
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645904202}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.05, g: 0.07, b: 0.06, a: 1}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &1645904205
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645904202}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1774594721
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -128,28 +250,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       propertyPath: m_LocalRotation.w
@@ -209,133 +319,11 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -8335992247629806929, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1643819078}
+      addedObject: {fileID: 1050874776}
   m_SourcePrefab: {fileID: 100100000, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
---- !u!1 &1643819074 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -8335992247629806929, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
-  m_PrefabInstance: {fileID: 1604208359}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &1643819076 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: -4146744487496859226, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
-  m_PrefabInstance: {fileID: 1604208359}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1643819078
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1643819074}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39534517c529463cb8db60359a305d56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PetriDish.Presentation.ColonySurfacePresenter
-  targetRenderer: {fileID: 1643819076}
-  textureSource: {fileID: 0}
-  texturePropertyName: _MainTex
-  hideFlatDishImageAfterSuccessfulBinding: 1
-  textureScale: {x: 1.8, y: 1.8}
-  textureOffset: {x: 0.05, y: 0.05}
-  flipX: 0
-  flipY: 0
---- !u!1 &1795506907
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1795506910}
-  - component: {fileID: 1795506909}
-  - component: {fileID: 1795506908}
-  m_Layer: 0
-  m_Name: Main Camera
-  m_TagString: MainCamera
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!81 &1795506908
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1795506907}
-  m_Enabled: 1
---- !u!20 &1795506909
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1795506907}
-  m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.05, g: 0.07, b: 0.06, a: 1}
-  m_projectionMatrixMode: 1
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_Iso: 200
-  m_ShutterSpeed: 0.005
-  m_Aperture: 16
-  m_FocusDistance: 10
-  m_FocalLength: 50
-  m_BladeCount: 5
-  m_Curvature: {x: 2, y: 11}
-  m_BarrelClipping: 0.25
-  m_Anamorphism: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 60
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!4 &1795506910
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1795506907}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.2596447, y: -0.32747412, z: 0.0941073, w: 0.90359795}
-  m_LocalPosition: {x: 0.5434044, y: 0.5786186, z: -0.65266997}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1795506910}
-  - {fileID: 1604208359}
+  - {fileID: 1645904205}
+  - {fileID: 1774594721}
