@@ -35,7 +35,7 @@ namespace PetriDish.Presentation
         private void Update()
         {
             var currentSize = new Vector2Int(Screen.width, Screen.height);
-            if (currentSize == lastScreenSize && Application.isPlaying)
+            if (currentSize == lastScreenSize && global::UnityEngine.Application.isPlaying)
                 return;
 
             lastScreenSize = currentSize;
