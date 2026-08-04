@@ -59,6 +59,14 @@ Simulation save schema version 3 adds `organismId`, `organismDefinitionVersion`,
 `mediumId`, and `mediumDefinitionVersion`. Schema-version-2 experiment/simulation saves
 migrate to `rapid-bacterium` on `nutrient-agar`; schema 3 requires exact catalog matches.
 
+Experiment-wrapper schema version 4 adds application-owned nutrient intervention state:
+remaining supply, cooldown-end tick, optional pending delivery progress, and ordered
+history records containing request, delivery-start, completion, requested-amount, and
+actual-delivered-amount fields. Simulation grid saves remain schema 3. Wrapper-schema-3
+saves migrate with three available doses, no pending delivery or cooldown, and empty
+history. Malformed wrapper-schema-4 intervention state is rejected before the live
+experiment is replaced.
+
 PlayerProfile stores settings, unlocks, discoveries, challenge results, achievements, statistics, cosmetics, and tutorial progress.
 
 ## Rules

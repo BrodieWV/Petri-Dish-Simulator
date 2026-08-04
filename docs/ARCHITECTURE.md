@@ -44,6 +44,21 @@ texture and assigns it to a configured `MeshRenderer` shader property through on
 `MaterialPropertyBlock`. It does not copy pixels, instantiate materials per frame, mutate
 shared imported materials, retain snapshots, or access `PetriSimulation`.
 
+`ColonySurfacePresenter` also owns presentation-only scale, offset, and horizontal/vertical
+flip controls for correcting model-UV alignment. It writes the live texture to the configured
+shader texture property and the alignment to that property's conventional `_ST` vector in
+the same cached `MaterialPropertyBlock`. The built-in Standard shader therefore uses
+`_MainTex` and `_MainTex_ST`. These controls do not change the generated texture, model UVs,
+shared material, simulation state, flat fallback, or inspection surface.
+
+The custom presenter Inspector adds `Auto Centre`, `Auto Fit`, and `Reset Alignment`
+actions. Auto Centre derives an offset from the target mesh's UV0 bounds while preserving
+the selected scale and flips. Auto Fit uses the larger UV0 extent to calculate one uniform
+scale, preserving the circular texture rather than stretching it, and then centres it.
+Reset Alignment restores scale 1,1, offset 0,0, and disabled flips. Editor calculations use
+read-only mesh data and do not require a model import-setting change; runtime calls require
+a readable mesh and fail without replacing an existing live texture binding otherwise.
+
 `RuntimeBootstrap` binds scene `ColonySurfacePresenter` components to its runtime-created
 `DishRenderer` after initial UI construction and after later scene loads. The existing 2D
 `RawImage` remains available as a visual fallback and as the current normalized tap input
@@ -85,9 +100,16 @@ migration or controlled incompatibility message.
 Save schema version, content version, seed, tick, dish state, player actions, challenge state, discoveries, progression, and random-stream state. Never serialise transient Unity objects.
 
 Simulation save schema version 3 stores stable organism and medium IDs plus their
-definition versions. Experiment save schema version 3 resolves those IDs through the
+definition versions. Experiment save schema version 4 resolves those IDs through the
 validated catalog before constructing the restored simulation. Existing experiment and
 simulation schema-version-2 saves migrate to the original `rapid-bacterium` and
 `nutrient-agar` definitions because those saves predate content selection. Missing,
 duplicate, malformed, or version-mismatched definitions fail before replacing the running
 experiment.
+
+The M6 nutrient schedule is application-owned: the controller tracks finite supply,
+fixed-step delay, gradual release, cooldown, and history. Each release step asks the
+simulation to add one deterministic global nutrient increment; the simulation clamps to
+the selected medium capacity and returns the actual normalized amount absorbed. This
+keeps pending action/history state in wrapper schema 4 while authoritative grid state and
+simulation saves remain schema 3.

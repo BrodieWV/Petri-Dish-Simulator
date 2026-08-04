@@ -11,11 +11,14 @@ namespace PetriDish.Presentation
     public sealed class RuntimeBootstrap : MonoBehaviour
     {
         private const string TextScalePreferenceKey = "PetriDish.TextScaleMode";
+        private static readonly Color BackgroundColor = new Color(0.035f, 0.055f, 0.047f);
+        private static readonly Color DishPanelColor = new Color(0.075f, 0.115f, 0.095f);
 
         private readonly Dictionary<Text, int> baseFontSizes = new Dictionary<Text, int>();
         private ExperimentController controller;
         private DishRenderer renderer;
         private Text instruction;
+        private Text culture;
         private Text condition;
         private Text metrics;
         private Text temperatureValue;
@@ -24,12 +27,20 @@ namespace PetriDish.Presentation
         private Text speedLabel;
         private Text pauseLabel;
         private Text simulationState;
+        private Text nutrientStatus;
         private Text textScaleLabel;
+        private GameObject setupPanel;
+        private Text setupOrganismName;
+        private Text setupOrganismDescription;
+        private Text setupMediumName;
+        private Text setupMediumDescription;
         private Slider temperature;
         private Button moisture;
+        private Button nutrients;
         private Font font;
         private SimulationSnapshot currentSnapshot;
         private TextScaleMode textScaleMode;
+        private ExperimentSetupSelection setupSelection;
         private bool hasSnapshot;
         private int selectedX = -1;
         private int selectedY = -1;
@@ -108,8 +119,13 @@ namespace PetriDish.Presentation
             scaler.referenceResolution = new Vector2(1080, 1920);
             scaler.matchWidthOrHeight = 0.5f;
 
-            var bg = Image(canvasGo.transform, "Background", new Color(0.035f, 0.055f, 0.047f));
-            SetRect(bg.rectTransform, Vector2.zero, Vector2.one);
+            var backgroundObject = new GameObject(
+                "Background",
+                typeof(RectTransform),
+                typeof(DishViewportPresenter));
+            backgroundObject.transform.SetParent(canvasGo.transform, false);
+            SetRect(backgroundObject.GetComponent<RectTransform>(), Vector2.zero, Vector2.one);
+            var viewportPresenter = backgroundObject.GetComponent<DishViewportPresenter>();
 
             var safeAreaObject = new GameObject("SafeArea", typeof(RectTransform));
             safeAreaObject.transform.SetParent(canvasGo.transform, false);
@@ -126,10 +142,11 @@ namespace PetriDish.Presentation
             SetRect(textScale.GetComponent<RectTransform>(), new Vector2(0.78f, 0.91f), new Vector2(0.96f, 0.97f));
             textScaleLabel = textScale.GetComponentInChildren<Text>();
 
-            var culture = Text(content, "Culture", 19, TextAnchor.MiddleCenter);
-            SetRect(culture.rectTransform, new Vector2(0.05f, 0.865f), new Vector2(0.95f, 0.90f));
-            culture.text = "RAPID BACTERIUM  /  NUTRIENT AGAR";
+            culture = Text(content, "Culture", 19, TextAnchor.MiddleCenter);
+            SetRect(culture.rectTransform, new Vector2(0.05f, 0.865f), new Vector2(0.76f, 0.90f));
             culture.color = new Color(0.58f, 0.76f, 0.66f);
+            var setup = CreateButton(content, "Setup", OpenSetup);
+            SetRect(setup.GetComponent<RectTransform>(), new Vector2(0.78f, 0.865f), new Vector2(0.96f, 0.905f));
 
             condition = Text(content, "Condition", 29, TextAnchor.MiddleLeft);
             SetRect(condition.rectTransform, new Vector2(0.05f, 0.81f), new Vector2(0.58f, 0.865f));
@@ -137,7 +154,8 @@ namespace PetriDish.Presentation
             metrics = Text(content, "Metrics", 24, TextAnchor.MiddleRight);
             SetRect(metrics.rectTransform, new Vector2(0.54f, 0.80f), new Vector2(0.95f, 0.865f));
 
-            var dishPanel = Image(content, "DishPanel", new Color(0.075f, 0.115f, 0.095f));
+            var dishPanel = Image(content, "DishPanel", DishPanelColor);
+            dishPanel.raycastTarget = false;
             SetRect(dishPanel.rectTransform, new Vector2(0.08f, 0.375f), new Vector2(0.92f, 0.80f));
             var dish = new GameObject("Dish", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter), typeof(DishRenderer));
             dish.transform.SetParent(dishPanel.transform, false);
@@ -145,6 +163,7 @@ namespace PetriDish.Presentation
             dish.GetComponent<AspectRatioFitter>().aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             dish.GetComponent<AspectRatioFitter>().aspectRatio = 1f;
             renderer = dish.GetComponent<DishRenderer>();
+            viewportPresenter.Configure(dishPanel.rectTransform, dishPanel, renderer, BackgroundColor);
 
             var inspectionPanel = Image(content, "InspectionPanel", new Color(0.045f, 0.075f, 0.062f, 0.96f));
             inspectionPanel.raycastTarget = false;
@@ -175,15 +194,19 @@ namespace PetriDish.Presentation
             });
 
             simulationState = Text(controls.transform, "SimulationState", 18, TextAnchor.MiddleCenter);
-            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.45f), new Vector2(0.96f, 0.53f));
+            SetRect(simulationState.rectTransform, new Vector2(0.04f, 0.53f), new Vector2(0.96f, 0.60f));
+            nutrientStatus = Text(controls.transform, "NutrientStatus", 17, TextAnchor.MiddleCenter);
+            SetRect(nutrientStatus.rectTransform, new Vector2(0.04f, 0.44f), new Vector2(0.96f, 0.52f));
 
             moisture = CreateButton(controls.transform, "Add moisture", AddMoisture);
-            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.37f, 0.43f));
+            SetRect(moisture.GetComponent<RectTransform>(), new Vector2(0.04f, 0.22f), new Vector2(0.27f, 0.43f));
+            nutrients = CreateButton(controls.transform, "Add nutrients", AddNutrients);
+            SetRect(nutrients.GetComponent<RectTransform>(), new Vector2(0.29f, 0.22f), new Vector2(0.52f, 0.43f));
             var pause = CreateButton(controls.transform, AccessibilityPresentation.PauseButtonLabel(controller.Paused), TogglePause);
-            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.39f, 0.22f), new Vector2(0.72f, 0.43f));
+            SetRect(pause.GetComponent<RectTransform>(), new Vector2(0.54f, 0.22f), new Vector2(0.75f, 0.43f));
             pauseLabel = pause.GetComponentInChildren<Text>();
             var speed = CreateButton(controls.transform, SimulationSpeedCycle.Label(controller.SimulationSpeed), CycleSpeed);
-            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.74f, 0.22f), new Vector2(0.96f, 0.43f));
+            SetRect(speed.GetComponent<RectTransform>(), new Vector2(0.77f, 0.22f), new Vector2(0.96f, 0.43f));
             speedLabel = speed.GetComponentInChildren<Text>();
 
             SetRect(CreateButton(controls.transform, "Save", Save).GetComponent<RectTransform>(), new Vector2(0.04f, 0.01f), new Vector2(0.24f, 0.19f));
@@ -191,9 +214,47 @@ namespace PetriDish.Presentation
             SetRect(CreateButton(controls.transform, "Restart", RestartSameSeed).GetComponent<RectTransform>(), new Vector2(0.48f, 0.01f), new Vector2(0.70f, 0.19f));
             SetRect(CreateButton(controls.transform, "New seed", RestartNewSeed).GetComponent<RectTransform>(), new Vector2(0.72f, 0.01f), new Vector2(0.96f, 0.19f));
 
+            BuildSetupPanel(content);
+
             temperature.SetValueWithoutNotify(controller.Simulation.TargetTemperature);
             moisture.interactable = true;
+            RefreshCulture();
+            RefreshNutrientState();
             ApplyTextScale();
+        }
+
+        private void BuildSetupPanel(Transform parent)
+        {
+            var overlay = Image(parent, "ExperimentSetupOverlay", new Color(0.01f, 0.02f, 0.016f, 0.72f));
+            setupPanel = overlay.gameObject;
+            SetRect(overlay.rectTransform, Vector2.zero, Vector2.one);
+            var panel = Image(overlay.transform, "ExperimentSetupPanel", new Color(0.035f, 0.065f, 0.052f, 0.99f));
+            SetRect(panel.rectTransform, new Vector2(0.08f, 0.29f), new Vector2(0.92f, 0.82f));
+
+            var title = Text(panel.transform, "SetupTitle", 30, TextAnchor.MiddleCenter);
+            title.text = "Choose experiment setup";
+            title.fontStyle = FontStyle.Bold;
+            SetRect(title.rectTransform, new Vector2(0.05f, 0.88f), new Vector2(0.95f, 0.97f));
+
+            setupOrganismName = Text(panel.transform, "OrganismName", 24, TextAnchor.MiddleCenter);
+            setupOrganismName.fontStyle = FontStyle.Bold;
+            SetRect(setupOrganismName.rectTransform, new Vector2(0.18f, 0.77f), new Vector2(0.82f, 0.87f));
+            SetRect(CreateButton(panel.transform, "< Previous", SelectPreviousOrganism).GetComponent<RectTransform>(), new Vector2(0.04f, 0.77f), new Vector2(0.17f, 0.87f));
+            SetRect(CreateButton(panel.transform, "Next >", SelectNextOrganism).GetComponent<RectTransform>(), new Vector2(0.83f, 0.77f), new Vector2(0.96f, 0.87f));
+            setupOrganismDescription = Text(panel.transform, "OrganismDescription", 19, TextAnchor.UpperLeft);
+            SetRect(setupOrganismDescription.rectTransform, new Vector2(0.06f, 0.55f), new Vector2(0.94f, 0.76f));
+
+            setupMediumName = Text(panel.transform, "MediumName", 24, TextAnchor.MiddleCenter);
+            setupMediumName.fontStyle = FontStyle.Bold;
+            SetRect(setupMediumName.rectTransform, new Vector2(0.18f, 0.44f), new Vector2(0.82f, 0.54f));
+            SetRect(CreateButton(panel.transform, "< Previous", SelectPreviousMedium).GetComponent<RectTransform>(), new Vector2(0.04f, 0.44f), new Vector2(0.17f, 0.54f));
+            SetRect(CreateButton(panel.transform, "Next >", SelectNextMedium).GetComponent<RectTransform>(), new Vector2(0.83f, 0.44f), new Vector2(0.96f, 0.54f));
+            setupMediumDescription = Text(panel.transform, "MediumDescription", 19, TextAnchor.UpperLeft);
+            SetRect(setupMediumDescription.rectTransform, new Vector2(0.06f, 0.22f), new Vector2(0.94f, 0.43f));
+
+            SetRect(CreateButton(panel.transform, "Cancel", CloseSetup).GetComponent<RectTransform>(), new Vector2(0.05f, 0.04f), new Vector2(0.45f, 0.17f));
+            SetRect(CreateButton(panel.transform, "Start experiment", ApplySetup).GetComponent<RectTransform>(), new Vector2(0.55f, 0.04f), new Vector2(0.95f, 0.17f));
+            setupPanel.SetActive(false);
         }
 
         private void OnSnapshot(SimulationSnapshot snapshot)
@@ -209,6 +270,7 @@ namespace PetriDish.Presentation
             temperatureValue.text = controller.Simulation.TargetTemperature.ToString("0.0") + "°C target";
             RefreshInspection();
             RefreshPlaybackState();
+            RefreshNutrientState();
         }
 
         private void OnDishTapped(Vector2 normalizedPoint)
@@ -282,12 +344,95 @@ namespace PetriDish.Presentation
             outcome.text = "Moisture added. The agar is rehydrating.";
         }
 
+        private void AddNutrients()
+        {
+            controller.TryRequestNutrientDose(out string feedback);
+            outcome.text = feedback;
+            RefreshNutrientState();
+        }
+
+        private void OpenSetup()
+        {
+            setupSelection = new ExperimentSetupSelection(
+                controller.DefinitionCatalog,
+                controller.Simulation.OrganismId,
+                controller.Simulation.MediumId);
+            RefreshSetupPanel();
+            setupPanel.SetActive(true);
+        }
+
+        private void CloseSetup()
+        {
+            setupPanel.SetActive(false);
+            setupSelection = null;
+        }
+
+        private void SelectPreviousOrganism()
+        {
+            setupSelection.SelectPreviousOrganism();
+            RefreshSetupPanel();
+        }
+
+        private void SelectNextOrganism()
+        {
+            setupSelection.SelectNextOrganism();
+            RefreshSetupPanel();
+        }
+
+        private void SelectPreviousMedium()
+        {
+            setupSelection.SelectPreviousMedium();
+            RefreshSetupPanel();
+        }
+
+        private void SelectNextMedium()
+        {
+            setupSelection.SelectNextMedium();
+            RefreshSetupPanel();
+        }
+
+        private void ApplySetup()
+        {
+            int seed = controller.Simulation.Seed;
+            string organismId = setupSelection.Organism.Id;
+            string mediumId = setupSelection.Medium.Id;
+            controller.StartNew(seed, organismId, mediumId);
+            CloseSetup();
+            ResetInspection();
+            outcome.text = "New experiment started with the selected organism and medium.";
+            RefreshCulture();
+            RefreshPlaybackState();
+        }
+
+        private void RefreshSetupPanel()
+        {
+            setupOrganismName.text = setupSelection.Organism.DisplayName;
+            setupOrganismDescription.text =
+                setupSelection.Organism.EducationalDescription + "\n" +
+                setupSelection.Organism.ScientificLabel;
+            setupMediumName.text = setupSelection.Medium.DisplayName;
+            setupMediumDescription.text =
+                setupSelection.Medium.EducationalDescription + "\n" +
+                setupSelection.Medium.ScientificLabel;
+        }
+
+        private void RefreshCulture()
+        {
+            if (culture == null || controller?.Simulation == null) return;
+            var catalog = controller.DefinitionCatalog;
+            culture.text =
+                catalog.ResolveOrganism(controller.Simulation.OrganismId).DisplayName.ToUpperInvariant() +
+                "  /  " +
+                catalog.ResolveMedium(controller.Simulation.MediumId).DisplayName.ToUpperInvariant();
+        }
+
         private void Load()
         {
             if (controller.Load())
             {
                 ResetInspection();
                 speedLabel.text = SimulationSpeedCycle.Label(controller.SimulationSpeed);
+                RefreshCulture();
             }
             else
                 outcome.text = controller.LastPersistenceError;
@@ -323,6 +468,39 @@ namespace PetriDish.Presentation
                 pauseLabel.text = AccessibilityPresentation.PauseButtonLabel(controller.Paused);
             if (simulationState != null)
                 simulationState.text = AccessibilityPresentation.SimulationStateLabel(controller.Paused, controller.SimulationSpeed);
+        }
+
+        private void RefreshNutrientState()
+        {
+            if (nutrientStatus == null || controller == null) return;
+
+            if (controller.NutrientDeliveryPending)
+            {
+                nutrientStatus.text =
+                    $"Nutrients: delivering {controller.NutrientReleaseStepsCompleted}/" +
+                    $"{controller.NutrientReleaseStepCount} • {controller.NutrientDosesRemaining} doses left";
+            }
+            else if (controller.NutrientCooldownRemainingSteps > 0)
+            {
+                float seconds = controller.NutrientCooldownRemainingSteps *
+                    PetriSimulation.FixedStepSeconds;
+                nutrientStatus.text =
+                    $"Nutrients: {controller.NutrientDosesRemaining} doses left • ready in {seconds:0.##}s";
+            }
+            else
+            {
+                nutrientStatus.text =
+                    $"Nutrients: {controller.NutrientDosesRemaining} doses left • ready";
+            }
+
+            if (!string.IsNullOrWhiteSpace(controller.NutrientFeedback) &&
+                controller.NutrientFeedback.Contains("capacity"))
+                nutrientStatus.text += " • capacity limited";
+
+            nutrients.interactable =
+                controller.NutrientDosesRemaining > 0 &&
+                !controller.NutrientDeliveryPending &&
+                controller.NutrientCooldownRemainingSteps == 0;
         }
 
         private Image Image(Transform parent, string name, Color color)

@@ -49,15 +49,32 @@ namespace PetriDish.Tests.Editor
             OrganismSimulationValues organism = catalog.DefaultOrganism.ToSimulationValues();
             MediumSimulationValues medium = catalog.DefaultMedium.ToSimulationValues();
 
+            Assert.That(PetriSimulation.CurrentSaveSchemaVersion, Is.EqualTo(3));
             Assert.That(organism.Id, Is.EqualTo("rapid-bacterium"));
             Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
-            Assert.That(catalog.DefaultOrganism.ScientificName, Is.Not.Empty);
-            Assert.That(catalog.DefaultOrganism.EducationalDescription, Is.Not.Empty);
-            Assert.That(catalog.DefaultOrganism.SourceNotes, Is.Not.Empty);
+            Assert.That(catalog.DefaultOrganism.DisplayName, Is.EqualTo("Bacillus subtilis"));
+            Assert.That(catalog.DefaultOrganism.ScientificName, Is.EqualTo("Bacillus subtilis"));
+            Assert.That(
+                catalog.DefaultOrganism.EducationalDescription,
+                Is.EqualTo(
+                    "A simplified model bacterium used to explore how temperature, moisture, " +
+                    "and nutrients influence colony growth."));
+            Assert.That(
+                catalog.DefaultOrganism.ScientificLabel,
+                Is.EqualTo(
+                    "Named real organism with educationalised behaviour; not a strain-specific " +
+                    "cultivation or prediction model."));
+            Assert.That(catalog.DefaultOrganism.SourceNotes, Does.Contain("10.1099/mic.0.000922"));
+            Assert.That(catalog.DefaultOrganism.SourceNotes, Does.Contain("EFSA QPS framework"));
             Assert.That(
                 catalog.DefaultOrganism.Confidence,
-                Is.EqualTo(ScientificConfidence.EducationalPlaceholder));
-            Assert.That(catalog.DefaultOrganism.SimplificationNotes, Is.Not.Empty);
+                Is.EqualTo(ScientificConfidence.Moderate));
+            Assert.That(
+                catalog.DefaultOrganism.SimplificationNotes,
+                Does.Contain("gameplay tuning values retained from the Phase 1 archetype"));
+            Assert.That(
+                catalog.DefaultOrganism.SimplificationNotes,
+                Does.Contain("does not simulate a particular strain"));
             Assert.That(catalog.DefaultOrganism.VisualProfileId, Is.EqualTo("rapid-bacterium-default"));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMinimum, Is.EqualTo(24f));
             Assert.That(catalog.DefaultOrganism.PreferredTemperatureMaximum, Is.EqualTo(29f));
@@ -159,6 +176,94 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void SaccharomycesCerevisiaeHasApprovedMetadataAndDistinctTunableValues()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition definition = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            OrganismSimulationValues organism = definition.ToSimulationValues();
+
+            Assert.That(catalog.OrganismCount, Is.EqualTo(2));
+            Assert.That(definition.DisplayName, Is.EqualTo("Saccharomyces cerevisiae"));
+            Assert.That(definition.ScientificName, Is.EqualTo("Saccharomyces cerevisiae"));
+            Assert.That(definition.EducationalDescription, Does.Contain("budding yeast"));
+            Assert.That(definition.ScientificLabel, Does.Contain("non-strain-specific"));
+            Assert.That(definition.ScientificLabel, Does.Contain("not cultivation"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1371/journal.pgen.1000823"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1128/AEM.01861-10"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1083/jcb.98.2.678"));
+            Assert.That(definition.Confidence, Is.EqualTo(ScientificConfidence.Low));
+            Assert.That(definition.SimplificationNotes, Does.Contain("gameplay abstractions"));
+            Assert.That(definition.SimplificationNotes, Does.Contain("does not simulate individual budding cells"));
+            Assert.That(definition.SimplificationNotes, Does.Contain("fermentation"));
+            Assert.That(definition.VisualProfileId, Is.EqualTo("saccharomyces-cerevisiae-default"));
+            Assert.That(organism.Id, Is.EqualTo(SimulationDefinitionCatalog.SaccharomycesCerevisiaeId));
+            Assert.That(organism.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(organism.SeedRadiusCells, Is.EqualTo(1.8f));
+            Assert.That(organism.PreferredTemperature, Is.EqualTo(32f));
+            Assert.That(organism.GrowthTemperatureMinimum, Is.EqualTo(20f));
+            Assert.That(organism.GrowthTemperatureMaximum, Is.EqualTo(38f));
+            Assert.That(organism.NutrientsForFullSuitability, Is.EqualTo(0.38f));
+            Assert.That(organism.GrowthRate, Is.EqualTo(0.048f));
+            Assert.That(organism.NutrientConsumptionPerGrowth, Is.EqualTo(0.52f));
+            Assert.That(organism.CarryingCapacity, Is.EqualTo(0.95f));
+            Assert.That(organism.SpreadRate, Is.EqualTo(0.0035f));
+        }
+
+        [TestCase(SimulationDefinitionCatalog.NutrientAgarId)]
+        [TestCase(SimulationDefinitionCatalog.LowNutrientAgarId)]
+        public void ProductionOrganismsProduceMeaningfullyDistinctGrowth(string mediumId)
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition yeast = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            MediumDefinition medium = catalog.ResolveMedium(mediumId);
+            var bacteriumSimulation = new PetriSimulation(20260803, catalog.DefaultOrganism, medium);
+            var yeastSimulation = new PetriSimulation(20260803, yeast, medium);
+
+            bacteriumSimulation.SetTargetTemperature(26f);
+            yeastSimulation.SetTargetTemperature(32f);
+            for (int i = 0; i < 160; i++)
+            {
+                bacteriumSimulation.Step();
+                yeastSimulation.Step();
+            }
+
+            SimulationSnapshot bacterium = bacteriumSimulation.CreateSnapshot();
+            SimulationSnapshot yeastSnapshot = yeastSimulation.CreateSnapshot();
+            Assert.That(
+                TotalBiomass(bacterium),
+                Is.GreaterThan(TotalBiomass(yeastSnapshot) * 1.1f),
+                "The yeast profile should grow more slowly on each production medium.");
+            Assert.That(
+                bacterium.Coverage,
+                Is.GreaterThan(yeastSnapshot.Coverage),
+                "The yeast profile should remain more compact than the bacterium profile.");
+        }
+
+        [Test]
+        public void SaccharomycesCerevisiaeRespondsBetterAtItsWarmerPreferredTemperature()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition yeast = catalog.ResolveOrganism(
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId);
+            var cool = new PetriSimulation(27182, yeast, catalog.DefaultMedium);
+            var preferred = new PetriSimulation(27182, yeast, catalog.DefaultMedium);
+            cool.SetTargetTemperature(26f);
+            preferred.SetTargetTemperature(32f);
+
+            for (int i = 0; i < 120; i++)
+            {
+                cool.Step();
+                preferred.Step();
+            }
+
+            Assert.That(
+                TotalBiomass(preferred.CreateSnapshot()),
+                Is.GreaterThan(TotalBiomass(cool.CreateSnapshot()) * 1.05f));
+        }
+
+        [Test]
         public void DifferentMediumDefinitionsProduceDifferentMoistureBehaviour()
         {
             SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
@@ -182,6 +287,135 @@ namespace PetriDish.Tests.Editor
             Assert.That(
                 nutrientAgar.CreateMetrics().AverageMoisture,
                 Is.GreaterThan(fastDrying.CreateMetrics().AverageMoisture + 0.08f));
+        }
+
+        [Test]
+        public void LowNutrientAgarHasQualifiedMetadataAndDistinctTunableValues()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            MediumDefinition definition = catalog.ResolveMedium(
+                SimulationDefinitionCatalog.LowNutrientAgarId);
+            MediumSimulationValues medium = definition.ToSimulationValues();
+
+            Assert.That(definition.DisplayName, Is.EqualTo("Low-Nutrient Agar"));
+            Assert.That(definition.EducationalDescription, Does.Contain("fewer available nutrients"));
+            Assert.That(definition.ScientificLabel, Does.Contain("not a laboratory formulation"));
+            Assert.That(definition.SourceNotes, Does.Contain("Reasoner and Geldreich (1985)"));
+            Assert.That(definition.SourceNotes, Does.Contain("10.1128/AEM.49.1.1-7.1985"));
+            Assert.That(definition.Confidence, Is.EqualTo(ScientificConfidence.Low));
+            Assert.That(definition.SimplificationNotes, Does.Contain("gameplay abstractions"));
+            Assert.That(definition.VisualProfileId, Is.EqualTo("low-nutrient-agar-default"));
+            Assert.That(medium.Id, Is.EqualTo(SimulationDefinitionCatalog.LowNutrientAgarId));
+            Assert.That(medium.DefinitionVersion, Is.EqualTo(1));
+            Assert.That(medium.InitialNutrients, Is.EqualTo(0.45f));
+            Assert.That(medium.MaximumNutrients, Is.EqualTo(0.55f));
+            Assert.That(medium.InitialMoisture, Is.EqualTo(0.66f));
+            Assert.That(medium.MaximumMoisture, Is.EqualTo(0.85f));
+            Assert.That(medium.MoistureAbsorptionMultiplier, Is.EqualTo(0.8f));
+            Assert.That(medium.MoistureApplicationVariance, Is.EqualTo(0.1f));
+            Assert.That(medium.MoistureDiffusion, Is.EqualTo(0.01f));
+            Assert.That(medium.NutrientDiffusion, Is.EqualTo(0.004f));
+            Assert.That(medium.SpreadResistance, Is.EqualTo(0.12f));
+            Assert.That(medium.TemperatureResponseRate, Is.EqualTo(0.16f));
+            Assert.That(medium.InteriorEvaporation, Is.EqualTo(0.00065f));
+            Assert.That(medium.EdgeEvaporation, Is.EqualTo(0.002275f).Within(FloatTolerance));
+            Assert.That(medium.EdgeFalloffDepthCells, Is.EqualTo(10f));
+            Assert.That(medium.HeatEvaporationStartTemperature, Is.EqualTo(24f));
+            Assert.That(medium.HeatEvaporationPerDegree, Is.EqualTo(0.00015f));
+        }
+
+        [Test]
+        public void ProductionMediaProduceMeaningfullyDifferentOutcomes()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            MediumDefinition lowNutrient = catalog.ResolveMedium(
+                SimulationDefinitionCatalog.LowNutrientAgarId);
+            var nutrientRich = new PetriSimulation(
+                20260803,
+                catalog.DefaultOrganism,
+                catalog.DefaultMedium);
+            var nutrientLimited = new PetriSimulation(
+                20260803,
+                catalog.DefaultOrganism,
+                lowNutrient);
+
+            nutrientRich.SetTargetTemperature(26f);
+            nutrientLimited.SetTargetTemperature(26f);
+            for (int i = 0; i < 160; i++)
+            {
+                nutrientRich.Step();
+                nutrientLimited.Step();
+            }
+
+            SimulationSnapshot richSnapshot = nutrientRich.CreateSnapshot();
+            SimulationSnapshot limitedSnapshot = nutrientLimited.CreateSnapshot();
+            Assert.That(
+                TotalBiomass(richSnapshot),
+                Is.GreaterThan(TotalBiomass(limitedSnapshot) * 1.1f),
+                "The production media should create visibly different colony growth.");
+            Assert.That(
+                richSnapshot.AverageNutrients,
+                Is.GreaterThan(limitedSnapshot.AverageNutrients + 0.35f),
+                "Low-Nutrient Agar should retain a clearly lower nutrient state.");
+            Assert.That(
+                richSnapshot.AverageMoisture,
+                Is.GreaterThan(limitedSnapshot.AverageMoisture + 0.03f),
+                "Low-Nutrient Agar should dry more quickly than Nutrient Agar.");
+        }
+
+        [Test]
+        public void ExperimentSetupSelectionCyclesValidatedDefinitionsAndWraps()
+        {
+            SimulationDefinitionCatalog defaults = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+            OrganismDefinition secondOrganism = CloneOrganism(
+                defaults.DefaultOrganism,
+                "second-selection-organism",
+                growthRate: 0.031f);
+            MediumDefinition secondMedium = CloneMedium(
+                defaults.DefaultMedium,
+                "second-selection-medium",
+                edgeEvaporation: 0.0025f,
+                interiorEvaporation: 0.0008f);
+            SimulationDefinitionCatalog catalog = CreateCatalog(
+                defaults.DefaultOrganism,
+                defaults.DefaultMedium,
+                new[] { defaults.DefaultOrganism, secondOrganism },
+                new[] { defaults.DefaultMedium, secondMedium });
+            var selection = new ExperimentSetupSelection(
+                catalog,
+                defaults.DefaultOrganism.Id,
+                defaults.DefaultMedium.Id);
+
+            selection.SelectNextOrganism();
+            selection.SelectPreviousMedium();
+            Assert.That(selection.Organism.Id, Is.EqualTo(secondOrganism.Id));
+            Assert.That(selection.Medium.Id, Is.EqualTo(secondMedium.Id));
+
+            selection.SelectNextOrganism();
+            selection.SelectNextMedium();
+            Assert.That(selection.Organism.Id, Is.EqualTo(defaults.DefaultOrganism.Id));
+            Assert.That(selection.Medium.Id, Is.EqualTo(defaults.DefaultMedium.Id));
+            Assert.That(catalog.OrganismCount, Is.EqualTo(2));
+            Assert.That(catalog.MediumCount, Is.EqualTo(2));
+            Assert.Throws<ArgumentOutOfRangeException>(() => catalog.GetOrganismAt(2));
+            Assert.Throws<ArgumentOutOfRangeException>(() => catalog.GetMediumAt(-1));
+        }
+
+        [Test]
+        public void ExperimentSetupSelectionRejectsUnknownActiveIds()
+        {
+            SimulationDefinitionCatalog catalog = SimulationDefinitionCatalog.LoadDefaultOrThrow();
+
+            Assert.Throws<DefinitionValidationException>(() =>
+                new ExperimentSetupSelection(
+                    catalog,
+                    "missing-selection-organism",
+                    catalog.DefaultMedium.Id));
+            Assert.Throws<DefinitionValidationException>(() =>
+                new ExperimentSetupSelection(
+                    catalog,
+                    catalog.DefaultOrganism.Id,
+                    "missing-selection-medium"));
         }
 
         [Test]
@@ -255,6 +489,34 @@ namespace PetriDish.Tests.Editor
             AssertSnapshotsEqual(expected, reader.Simulation.CreateSnapshot());
         }
 
+        [TestCase(SimulationDefinitionCatalog.NutrientAgarId)]
+        [TestCase(SimulationDefinitionCatalog.LowNutrientAgarId)]
+        public void SaccharomycesSelectionUsesSchemaThreeAndContinuesExactly(string mediumId)
+        {
+            ExperimentController writer = CreateController(ref firstControllerObject);
+            writer.StartNew(
+                314159,
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId,
+                mediumId);
+            writer.SetTemperature(32f);
+            for (int i = 0; i < 36; i++) writer.Simulation.Step();
+            Assert.That(writer.Simulation.CaptureSave().schemaVersion, Is.EqualTo(3));
+            Assert.That(writer.SaveToPath(savePath), Is.True, writer.LastPersistenceError);
+
+            for (int i = 0; i < 24; i++) writer.Simulation.Step();
+            SimulationSnapshot expected = writer.Simulation.CreateSnapshot();
+
+            ExperimentController reader = CreateController(ref secondControllerObject);
+            Assert.That(reader.LoadFromPath(savePath), Is.True, reader.LastPersistenceError);
+            Assert.That(
+                reader.Simulation.OrganismId,
+                Is.EqualTo(SimulationDefinitionCatalog.SaccharomycesCerevisiaeId));
+            Assert.That(reader.Simulation.MediumId, Is.EqualTo(mediumId));
+            for (int i = 0; i < 24; i++) reader.Simulation.Step();
+
+            AssertSnapshotsEqual(expected, reader.Simulation.CreateSnapshot());
+        }
+
         [Test]
         public void SameAndNewSeedRestartsPreserveSelectedDefinitions()
         {
@@ -296,7 +558,7 @@ namespace PetriDish.Tests.Editor
             for (int i = 0; i < 20; i++) writer.Simulation.Step();
             Assert.That(writer.SaveToPath(savePath), Is.True, writer.LastPersistenceError);
             string json = File.ReadAllText(savePath);
-            json = json.Replace("\"schemaVersion\": 3", "\"schemaVersion\": 2");
+            json = json.Replace("\"schemaVersion\": 4", "\"schemaVersion\": 2");
             File.WriteAllText(savePath, json);
 
             ExperimentController reader = CreateController(ref secondControllerObject);

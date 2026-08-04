@@ -6,9 +6,9 @@ Curious, observational, playful, and scientifically respectful. Avoid medical ho
 
 ## Organism archetypes
 
-### Rapid Bacterium
+### Bacillus subtilis
 
-Fast glossy colonies; teaches exponential growth, resource limits, drying, and temperature tolerance.
+A stylised model bacterium for exploring colony growth, resource limits, drying, and temperature response. Its simulation values are educational gameplay tuning, not strain-specific measurements or cultivation guidance.
 
 ### Filamentous Fungus
 
@@ -18,9 +18,12 @@ Branching threads and radial fans; teaches hyphal growth, moisture, and substrat
 
 Bright moving networks; teaches gradients, distributed behaviour, and efficient paths.
 
-### Yeast-like Culture
+### Saccharomyces cerevisiae
 
-Rounded budding clusters; teaches density, metabolism, and waste buildup.
+A stylised, non-strain-specific budding yeast culture for comparing temperature and
+nutrient responses. It forms rounded, compact clusters and spreads more slowly than the
+current *Bacillus subtilis* gameplay profile. The simulation does not model individual
+budding cells, fermentation, pseudohyphae, sporulation, or diagnostic appearance.
 
 ## Media
 

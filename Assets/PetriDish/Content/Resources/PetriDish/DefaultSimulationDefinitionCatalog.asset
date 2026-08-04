@@ -16,5 +16,7 @@ MonoBehaviour:
   defaultMedium: {fileID: 11400000, guid: 3eb51908dce04c7a8abfc8ea0fbc72f2, type: 2}
   organisms:
   - {fileID: 11400000, guid: fc6720dd85834f048e546660ba254b94, type: 2}
+  - {fileID: 11400000, guid: b5c3a0aebde34c2487994016ad06f31d, type: 2}
   media:
   - {fileID: 11400000, guid: 3eb51908dce04c7a8abfc8ea0fbc72f2, type: 2}
+  - {fileID: 11400000, guid: 64d593df94fe4beaa44c3720ed474ba1, type: 2}
