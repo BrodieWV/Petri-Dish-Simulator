@@ -19,10 +19,10 @@ namespace PetriDish.Editor
         private static readonly Color TextPrimary = new Color(0.92f, 0.97f, 0.93f, 1f);
         private static readonly Color TextMuted = new Color(0.62f, 0.74f, 0.66f, 1f);
 
-        [MenuItem("Petri Dish/UI/Build Responsive Interface")]
+        [MenuItem("Petri Dish/UI/Build Responsive Interface %#u")]
         public static void BuildResponsiveInterface()
         {
-            if (Application.isPlaying)
+            if (global::UnityEngine.Application.isPlaying)
             {
                 EditorUtility.DisplayDialog("Petri Dish UI", "Stop Play Mode before building the interface.", "OK");
                 return;
@@ -268,3 +268,5 @@ namespace PetriDish.Editor
         }
     }
 }
+
+

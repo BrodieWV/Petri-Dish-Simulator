@@ -144,7 +144,7 @@ MonoBehaviour:
   targetRenderer: {fileID: 1050874774}
   textureSource: {fileID: 0}
   texturePropertyName: _MainTex
-  hideFlatDishImageAfterSuccessfulBinding: 0
+  hideFlatDishImageAfterSuccessfulBinding: 1
   textureScale: {x: 1.7, y: 1.7}
   textureOffset: {x: 0.08, y: 0.08}
   flipX: 0
@@ -234,8 +234,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1645904202}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.38044012, y: 0.5206622, z: -0.27825657, w: 0.7118634}
+  m_LocalPosition: {x: 0.878815, y: 0.94341815, z: 1.29929}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -249,6 +249,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 78d9f072a87165044951f0c1838b35f0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.5
