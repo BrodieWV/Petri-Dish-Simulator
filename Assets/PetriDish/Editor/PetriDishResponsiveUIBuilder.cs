@@ -4,6 +4,7 @@ using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace PetriDish.Editor
@@ -99,6 +100,10 @@ namespace PetriDish.Editor
             UnityEventTools.AddPersistentListener(leftDrawerButton.GetComponent<Button>().onClick, layout.ToggleLeftDrawer);
             UnityEventTools.AddPersistentListener(rightDrawerButton.GetComponent<Button>().onClick, layout.ToggleRightDrawer);
 
+            PetriDishResponsiveUIBinder binder =
+                root.AddComponent<PetriDishResponsiveUIBinder>();
+            binder.AutoAssignReferences();
+
             Selection.activeGameObject = root;
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             Undo.RegisterCreatedObjectUndo(root, "Build responsive Petri Dish UI");
@@ -109,6 +114,68 @@ namespace PetriDish.Editor
                 "OK");
         }
 
+        [MenuItem("Petri Dish/UI/Integrate Responsive UI Into Vertical Slice")]
+        public static void IntegrateResponsiveUIIntoVerticalSlice()
+        {
+            const string prototypePath =
+                "Assets/PetriDish/Scenes/PetriDishUIPrototype.unity";
+            const string verticalSlicePath =
+                "Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity";
+
+            Scene prototype = EditorSceneManager.OpenScene(
+                prototypePath,
+                OpenSceneMode.Single);
+            GameObject prototypeRoot = FindSceneRoot(prototype, RootName);
+            if (prototypeRoot == null)
+                throw new System.InvalidOperationException(
+                    "The responsive UI prototype root is missing.");
+
+            PetriDishResponsiveUIBinder prototypeBinder =
+                prototypeRoot.GetComponent<PetriDishResponsiveUIBinder>();
+            if (prototypeBinder == null)
+                prototypeBinder = prototypeRoot.AddComponent<PetriDishResponsiveUIBinder>();
+            if (!prototypeBinder.AutoAssignReferences())
+                throw new System.InvalidOperationException(
+                    "The responsive UI prototype hierarchy is incomplete.");
+            EditorSceneManager.MarkSceneDirty(prototype);
+            EditorSceneManager.SaveScene(prototype);
+
+            GameObject clone = Object.Instantiate(prototypeRoot);
+            clone.name = RootName;
+            Scene verticalSlice = EditorSceneManager.OpenScene(
+                verticalSlicePath,
+                OpenSceneMode.Additive);
+            GameObject existing = FindSceneRoot(verticalSlice, RootName);
+            if (existing == null)
+            {
+                SceneManager.MoveGameObjectToScene(clone, verticalSlice);
+            }
+            else
+            {
+                Object.DestroyImmediate(clone);
+                PetriDishResponsiveUIBinder existingBinder =
+                    existing.GetComponent<PetriDishResponsiveUIBinder>();
+                if (existingBinder == null)
+                    existingBinder = existing.AddComponent<PetriDishResponsiveUIBinder>();
+                if (!existingBinder.AutoAssignReferences())
+                    throw new System.InvalidOperationException(
+                        "The responsive UI hierarchy in the vertical slice is incomplete.");
+            }
+
+            EditorSceneManager.MarkSceneDirty(verticalSlice);
+            EditorSceneManager.SaveScene(verticalSlice);
+            EditorSceneManager.CloseScene(prototype, true);
+            SceneManager.SetActiveScene(verticalSlice);
+            Selection.activeGameObject = FindSceneRoot(verticalSlice, RootName);
+        }
+
+        private static GameObject FindSceneRoot(Scene scene, string name)
+        {
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+                if (roots[i].name == name) return roots[i];
+            return null;
+        }
         private static void BuildSetupPanel(RectTransform panel)
         {
             CreateSectionTitle(panel, "EXPERIMENT SETUP", 0.89f, 0.98f);
