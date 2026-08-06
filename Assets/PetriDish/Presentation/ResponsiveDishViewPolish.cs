@@ -1,7 +1,6 @@
 using System.Collections;
 using PetriDish.Application;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace PetriDish.Presentation
@@ -22,6 +21,8 @@ namespace PetriDish.Presentation
         [SerializeField, Range(0.8f, 1.4f)] private float targetHeightFactor = 0.96f;
 
         private ExperimentController controller;
+        private Transform temperatureButton;
+        private Transform scientificTemperatureController;
         private Text stableTemperatureReadout;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -52,7 +53,7 @@ namespace PetriDish.Presentation
                 yield return null;
             }
 
-            if (binder == null || dishCamera == null || colonySurface == null)
+            if (binder == null)
             {
                 Destroy(gameObject);
                 yield break;
@@ -60,14 +61,24 @@ namespace PetriDish.Presentation
 
             controller = FindFirstObjectByType<ExperimentController>();
             BuildStableTemperatureReadout(binder.transform);
-            ConfigureLockedCamera(dishCamera, colonySurface);
+
+            if (dishCamera != null && colonySurface != null)
+                ConfigureLockedCamera(dishCamera, colonySurface);
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (stableTemperatureReadout == null || controller == null || controller.Simulation == null)
                 return;
 
+            // The binder and the runtime controller both update older labels. Some scene
+            // configurations can reactivate those labels after this component starts,
+            // producing an alternating TEMPERATURE/TARGET display. Enforce one owner at
+            // the end of every frame while preserving the minus and plus button labels.
+            DisableCompetingTemperatureLabels();
+
+            stableTemperatureReadout.gameObject.SetActive(true);
+            stableTemperatureReadout.transform.SetAsLastSibling();
             stableTemperatureReadout.text = string.Format(
                 "TARGET  {0:0.0} °C",
                 controller.Simulation.TargetTemperature);
@@ -75,20 +86,12 @@ namespace PetriDish.Presentation
 
         private void BuildStableTemperatureReadout(Transform uiRoot)
         {
-            Transform temperatureButton = FindTransform(uiRoot, "TemperatureButton");
+            temperatureButton = FindTransform(uiRoot, "TemperatureButton");
             if (temperatureButton == null)
                 return;
 
-            Text[] existingLabels = temperatureButton.GetComponentsInChildren<Text>(true);
-            foreach (Text label in existingLabels)
-            {
-                if (label.transform.name == "StableTemperatureReadout")
-                    continue;
-
-                Transform controllerTransform = temperatureButton.Find("ScientificTemperatureController");
-                if (controllerTransform == null || !label.transform.IsChildOf(controllerTransform))
-                    label.gameObject.SetActive(false);
-            }
+            scientificTemperatureController =
+                temperatureButton.Find("ScientificTemperatureController");
 
             Transform existing = temperatureButton.Find("StableTemperatureReadout");
             GameObject readoutObject;
@@ -124,6 +127,48 @@ namespace PetriDish.Presentation
             stableTemperatureReadout.horizontalOverflow = HorizontalWrapMode.Overflow;
             stableTemperatureReadout.verticalOverflow = VerticalWrapMode.Truncate;
             stableTemperatureReadout.text = "TARGET  21.0 °C";
+
+            DisableCompetingTemperatureLabels();
+            stableTemperatureReadout.gameObject.SetActive(true);
+            stableTemperatureReadout.transform.SetAsLastSibling();
+        }
+
+        private void DisableCompetingTemperatureLabels()
+        {
+            if (temperatureButton == null)
+                return;
+
+            if (scientificTemperatureController == null)
+                scientificTemperatureController =
+                    temperatureButton.Find("ScientificTemperatureController");
+
+            Text[] labels = temperatureButton.GetComponentsInChildren<Text>(true);
+            foreach (Text label in labels)
+            {
+                if (label == null || label == stableTemperatureReadout)
+                    continue;
+
+                if (IsTemperatureControlButtonLabel(label.transform))
+                    continue;
+
+                if (label.gameObject.activeSelf)
+                    label.gameObject.SetActive(false);
+            }
+        }
+
+        private bool IsTemperatureControlButtonLabel(Transform labelTransform)
+        {
+            if (scientificTemperatureController == null || labelTransform == null)
+                return false;
+            if (!labelTransform.IsChildOf(scientificTemperatureController))
+                return false;
+
+            Transform parent = labelTransform.parent;
+            if (parent == null)
+                return false;
+
+            return parent.name == "TemperatureMinus" ||
+                   parent.name == "TemperaturePlus";
         }
 
         private void ConfigureLockedCamera(Camera cameraComponent, ColonySurfacePresenter colonySurface)
