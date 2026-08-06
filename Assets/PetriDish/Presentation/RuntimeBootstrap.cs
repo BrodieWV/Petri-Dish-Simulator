@@ -14,9 +14,13 @@ namespace PetriDish.Presentation
         private static readonly Color BackgroundColor = new Color(0.035f, 0.055f, 0.047f);
         private static readonly Color DishPanelColor = new Color(0.075f, 0.115f, 0.095f);
 
+        [SerializeField] private bool generateLegacyRuntimeUi = true;
+
         private readonly Dictionary<Text, int> baseFontSizes = new Dictionary<Text, int>();
         private ExperimentController controller;
+        private PetriDishResponsiveUIBinder responsiveBinder;
         private DishRenderer renderer;
+        private bool legacyRuntimeUiGenerated;
         private Text instruction;
         private Text culture;
         private Text condition;
@@ -61,13 +65,26 @@ namespace PetriDish.Presentation
             controller = GetComponent<ExperimentController>();
             textScaleMode = TextScalePolicy.FromStoredValue(PlayerPrefs.GetInt(TextScalePreferenceKey, 0));
             CreateEventSystem();
-            BuildUI();
-            controller.SnapshotUpdated += OnSnapshot;
-            controller.StageChanged += OnStage;
-            renderer.DishTapped += OnDishTapped;
+            responsiveBinder = FindAnyObjectByType<PetriDishResponsiveUIBinder>(
+                FindObjectsInactive.Include);
+            if (ShouldGenerateLegacyRuntimeUi(
+                    generateLegacyRuntimeUi,
+                    responsiveBinder != null))
+            {
+                BuildUI();
+                legacyRuntimeUiGenerated = true;
+                controller.SnapshotUpdated += OnSnapshot;
+                controller.StageChanged += OnStage;
+                renderer.DishTapped += OnDishTapped;
+                RefreshPlaybackState();
+            }
+            else if (responsiveBinder != null)
+            {
+                renderer = responsiveBinder.Initialize(controller);
+            }
+
             SceneManager.sceneLoaded += OnSceneLoaded;
             BindColonySurfacePresenters();
-            RefreshPlaybackState();
         }
 
         private void OnDestroy()
@@ -82,6 +99,22 @@ namespace PetriDish.Presentation
         }
 
         public DishRenderer ColonyTextureSource => renderer;
+        public bool LegacyRuntimeUiGenerated => legacyRuntimeUiGenerated;
+
+        public void ConfigureLegacyRuntimeUi(bool enabled)
+        {
+            if (legacyRuntimeUiGenerated)
+                throw new System.InvalidOperationException(
+                    "Legacy runtime UI generation must be configured before RuntimeBootstrap.Awake.");
+            generateLegacyRuntimeUi = enabled;
+        }
+
+        public static bool ShouldGenerateLegacyRuntimeUi(
+            bool generationEnabled,
+            bool responsiveUiPresent)
+        {
+            return generationEnabled && !responsiveUiPresent;
+        }
 
         public bool BindColonySurfacePresenter(ColonySurfacePresenter presenter)
         {
@@ -95,6 +128,7 @@ namespace PetriDish.Presentation
 
         private void BindColonySurfacePresenters()
         {
+            if (renderer == null) return;
             ColonySurfacePresenter[] presenters = FindObjectsByType<ColonySurfacePresenter>(
                 FindObjectsInactive.Include,
                 FindObjectsSortMode.None);
