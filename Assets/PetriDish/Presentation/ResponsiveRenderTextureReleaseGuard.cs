@@ -15,8 +15,8 @@ namespace PetriDish.Presentation
         {
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
-            Application.quitting -= DetachResponsiveDishCamera;
-            Application.quitting += DetachResponsiveDishCamera;
+            global::UnityEngine.Application.quitting -= DetachResponsiveDishCamera;
+            global::UnityEngine.Application.quitting += DetachResponsiveDishCamera;
         }
 
         private static void OnSceneUnloaded(Scene scene)
