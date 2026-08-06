@@ -85,9 +85,8 @@ namespace PetriDish.Presentation
                 if (label.transform.name == "StableTemperatureReadout")
                     continue;
 
-                // The binder and the runtime temperature repair both write to the old label.
-                // Hiding it removes the visible text race without affecting the slider.
-                if (!label.transform.IsChildOf(temperatureButton.Find("ScientificTemperatureController")))
+                Transform controllerTransform = temperatureButton.Find("ScientificTemperatureController");
+                if (controllerTransform == null || !label.transform.IsChildOf(controllerTransform))
                     label.gameObject.SetActive(false);
             }
 
@@ -122,9 +121,9 @@ namespace PetriDish.Presentation
             stableTemperatureReadout.alignment = TextAnchor.MiddleCenter;
             stableTemperatureReadout.color = new Color(0.62f, 0.96f, 1f, 1f);
             stableTemperatureReadout.raycastTarget = false;
-            stableTemperatureReadout.horizontalOverflow = HorizontalWrapMode.Wrap;
+            stableTemperatureReadout.horizontalOverflow = HorizontalWrapMode.Overflow;
             stableTemperatureReadout.verticalOverflow = VerticalWrapMode.Truncate;
-            stableTemperatureReadout.text = "TARGET";
+            stableTemperatureReadout.text = "TARGET  21.0 °C";
         }
 
         private void ConfigureLockedCamera(Camera cameraComponent, ColonySurfacePresenter colonySurface)
@@ -166,8 +165,6 @@ namespace PetriDish.Presentation
             foreach (Renderer candidate in renderers)
             {
                 if (candidate == null || !candidate.enabled)
-                    continue;
-                if (candidate is ParticleSystemRenderer)
                     continue;
                 if (Vector3.Distance(candidate.bounds.center, bounds.center) > searchRadius)
                     continue;
