@@ -21,6 +21,8 @@ namespace PetriDish.Presentation
         private PetriDishResponsiveUIBinder responsiveBinder;
         private DishRenderer renderer;
         private bool legacyRuntimeUiGenerated;
+        private GameObject legacyRuntimeCanvas;
+        private GameObject generatedEventSystem;
         private Text instruction;
         private Text culture;
         private Text condition;
@@ -64,27 +66,8 @@ namespace PetriDish.Presentation
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             controller = GetComponent<ExperimentController>();
             textScaleMode = TextScalePolicy.FromStoredValue(PlayerPrefs.GetInt(TextScalePreferenceKey, 0));
-            CreateEventSystem();
-            responsiveBinder = FindAnyObjectByType<PetriDishResponsiveUIBinder>(
-                FindObjectsInactive.Include);
-            if (ShouldGenerateLegacyRuntimeUi(
-                    generateLegacyRuntimeUi,
-                    responsiveBinder != null))
-            {
-                BuildUI();
-                legacyRuntimeUiGenerated = true;
-                controller.SnapshotUpdated += OnSnapshot;
-                controller.StageChanged += OnStage;
-                renderer.DishTapped += OnDishTapped;
-                RefreshPlaybackState();
-            }
-            else if (responsiveBinder != null)
-            {
-                renderer = responsiveBinder.Initialize(controller);
-            }
-
             SceneManager.sceneLoaded += OnSceneLoaded;
-            BindColonySurfacePresenters();
+            ConfigurePresentationForScene(SceneManager.GetActiveScene());
         }
 
         private void OnDestroy()
@@ -116,36 +99,131 @@ namespace PetriDish.Presentation
             return generationEnabled && !responsiveUiPresent;
         }
 
+        public static bool ShouldInitializeExperimentPresentation(
+            bool hasExplicitRole,
+            PetriDishSceneRole explicitRole,
+            bool responsiveUiPresent)
+        {
+            if (hasExplicitRole)
+                return explicitRole == PetriDishSceneRole.Experiment;
+
+            // Existing responsive Phase 2 scenes predate the role marker. The
+            // binder is their scene-owned compatibility signal. Unmarked scenes
+            // never receive legacy presentation implicitly.
+            return responsiveUiPresent;
+        }
+
         public bool BindColonySurfacePresenter(ColonySurfacePresenter presenter)
         {
-            return presenter != null && presenter.Bind(renderer);
+            return presenter != null && renderer != null && presenter.Bind(renderer);
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            BindColonySurfacePresenters();
+            ConfigurePresentationForScene(scene);
         }
 
-        private void BindColonySurfacePresenters()
+        private void ConfigurePresentationForScene(Scene scene)
+        {
+            DetachExperimentPresentation();
+
+            PetriDishRuntimeScene ownership = FindInScene<PetriDishRuntimeScene>(scene);
+            responsiveBinder = FindInScene<PetriDishResponsiveUIBinder>(scene);
+            bool ownsExperimentPresentation = ShouldInitializeExperimentPresentation(
+                ownership != null,
+                ownership != null ? ownership.Role : PetriDishSceneRole.Experiment,
+                responsiveBinder != null);
+            if (!ownsExperimentPresentation)
+                return;
+
+            CreateEventSystem();
+            if (ShouldGenerateLegacyRuntimeUi(generateLegacyRuntimeUi, responsiveBinder != null))
+            {
+                BuildUI();
+                legacyRuntimeUiGenerated = true;
+                controller.SnapshotUpdated += OnSnapshot;
+                controller.StageChanged += OnStage;
+                renderer.DishTapped += OnDishTapped;
+                RefreshPlaybackState();
+            }
+            else if (responsiveBinder != null)
+            {
+                renderer = responsiveBinder.Initialize(controller);
+            }
+
+            BindColonySurfacePresenters(scene);
+        }
+
+        private void DetachExperimentPresentation()
+        {
+            if (controller != null)
+            {
+                controller.SnapshotUpdated -= OnSnapshot;
+                controller.StageChanged -= OnStage;
+            }
+            if (renderer != null)
+                renderer.DishTapped -= OnDishTapped;
+            renderer = null;
+            responsiveBinder = null;
+            legacyRuntimeUiGenerated = false;
+            baseFontSizes.Clear();
+
+            if (legacyRuntimeCanvas == null)
+            {
+                ReleaseGeneratedEventSystem();
+                return;
+            }
+            legacyRuntimeCanvas.SetActive(false);
+            Destroy(legacyRuntimeCanvas);
+            legacyRuntimeCanvas = null;
+            ReleaseGeneratedEventSystem();
+        }
+
+        private static T FindInScene<T>(Scene scene) where T : Component
+        {
+            if (!scene.IsValid() || !scene.isLoaded)
+                return null;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                T component = root.GetComponentInChildren<T>(true);
+                if (component != null)
+                    return component;
+            }
+            return null;
+        }
+
+        private void BindColonySurfacePresenters(Scene scene)
         {
             if (renderer == null) return;
-            ColonySurfacePresenter[] presenters = FindObjectsByType<ColonySurfacePresenter>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int i = 0; i < presenters.Length; i++)
-                presenters[i].Bind(renderer);
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                ColonySurfacePresenter[] presenters = root.GetComponentsInChildren<ColonySurfacePresenter>(true);
+                for (int i = 0; i < presenters.Length; i++)
+                    presenters[i].Bind(renderer);
+            }
         }
 
         private void CreateEventSystem()
         {
             if (FindAnyObjectByType<EventSystem>() != null) return;
             var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            generatedEventSystem = go;
             DontDestroyOnLoad(go);
+        }
+
+        private void ReleaseGeneratedEventSystem()
+        {
+            if (generatedEventSystem == null)
+                return;
+            generatedEventSystem.SetActive(false);
+            Destroy(generatedEventSystem);
+            generatedEventSystem = null;
         }
 
         private void BuildUI()
         {
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            legacyRuntimeCanvas = canvasGo;
             canvasGo.transform.SetParent(transform, false);
             canvasGo.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
             var scaler = canvasGo.GetComponent<CanvasScaler>();

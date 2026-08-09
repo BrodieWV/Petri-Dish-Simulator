@@ -81,3 +81,9 @@ The selected-culture preview instantiates `Assets/PetriDish/Presentation/Prefabs
 The Hub uses the existing `DishRenderer` once in the editor builder to bake `LaboratoryHubMockColony.asset`, then binds that saved texture through the existing `ColonySurfacePresenter` and a `MaterialPropertyBlock`. Runtime presentation owns one 768 x 768 RenderTexture, detaches and releases it on disable/destruction, and participates in the existing Play Mode teardown guard. The displayed culture remains mock presentation data and is not connected to Phase 2 simulation or saves.
 
 The navigation rail is a masked vertical `ScrollRect`; Settings remains inside its content and reachable on compact landscape sizes.
+
+## Runtime scene ownership
+
+`LaboratoryHub.unity` carries a `PetriDishRuntimeScene` marker with the `NonExperiment` role. `PetriDishRuntime` and its simulation controller may remain persistent across scene transitions, but `RuntimeBootstrap` attaches experiment presentation only when the active scene owns it. Entering the Hub detaches and removes any generated legacy experiment Canvas, renderer bindings, and generated EventSystem; entering an existing Phase 2 scene initializes its responsive binder or backward-compatible legacy presentation normally.
+
+Future non-experiment scenes should declare the same `NonExperiment` role instead of relying on scene-name checks. Existing Phase 2 experiment scenes remain compatible without immediate scene-asset migration because their responsive binder or enabled legacy presentation is treated as the experiment ownership signal.

@@ -79,6 +79,8 @@ namespace PetriDish.Tests.Editor
             Assert.That(hubCamera.targetTexture, Is.Null);
             Assert.That(hubCamera.cullingMask, Is.Zero);
             Assert.That(hub.GetComponent<LaboratoryHubPresenter>(), Is.Not.Null);
+            Assert.That(hub.GetComponent<PetriDishRuntimeScene>(), Is.Not.Null);
+            Assert.That(hub.GetComponent<PetriDishRuntimeScene>().Role, Is.EqualTo(PetriDishSceneRole.NonExperiment));
             Assert.That(hub.GetComponentInChildren<LaboratoryHubResponsiveLayout>(true), Is.Not.Null);
             Assert.That(hub.GetComponentInChildren<LaboratoryDishPreviewGraphic>(true), Is.Null);
             Assert.That(hub.GetComponentsInChildren<RawImage>(true).Any(image => image.name == "DishDisplayImage"), Is.True);
@@ -248,6 +250,12 @@ namespace PetriDish.Tests.Editor
 
             LaboratoryHubPresenter presenter = Object.FindAnyObjectByType<LaboratoryHubPresenter>();
             Assert.That(presenter, Is.Not.Null);
+            RuntimeBootstrap runtime = Object.FindAnyObjectByType<RuntimeBootstrap>();
+            Assert.That(runtime, Is.Not.Null);
+            Assert.That(runtime.LegacyRuntimeUiGenerated, Is.False);
+            Assert.That(runtime.GetComponentInChildren<Canvas>(true), Is.Null);
+            Assert.That(Object.FindAnyObjectByType<DishViewportPresenter>(), Is.Null);
+            Assert.That(Object.FindAnyObjectByType<Slider>(), Is.Null);
             PetriDishDisplayPresenter display = Object.FindAnyObjectByType<PetriDishDisplayPresenter>();
             Assert.That(display, Is.Not.Null);
             yield return null;
@@ -264,6 +272,36 @@ namespace PetriDish.Tests.Editor
             Assert.That(feedback.activeSelf, Is.True);
             Text message = feedback.GetComponentInChildren<Text>(true);
             Assert.That(message.text, Does.Contain("mock data"));
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTest]
+        public IEnumerator LegacyExperimentPresentationDoesNotLeakWhenLoadingLaboratoryHub()
+        {
+            EditorSceneManager.OpenScene("Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity", OpenSceneMode.Single);
+            yield return new EnterPlayMode();
+            yield return null;
+
+            RuntimeBootstrap runtime = Object.FindAnyObjectByType<RuntimeBootstrap>();
+            Assert.That(runtime, Is.Not.Null);
+            Assert.That(runtime.ColonyTextureSource, Is.Not.Null);
+            Assert.That(
+                runtime.LegacyRuntimeUiGenerated ||
+                Object.FindAnyObjectByType<PetriDishResponsiveUIBinder>() != null,
+                Is.True);
+            Assert.That(Object.FindAnyObjectByType<DishViewportPresenter>(), Is.Not.Null);
+
+            SceneManager.LoadScene("LaboratoryHub");
+            yield return null;
+            yield return null;
+
+            Assert.That(Object.FindAnyObjectByType<RuntimeBootstrap>(), Is.SameAs(runtime));
+            Assert.That(runtime.LegacyRuntimeUiGenerated, Is.False);
+            Assert.That(runtime.ColonyTextureSource, Is.Null);
+            Assert.That(runtime.GetComponentInChildren<Canvas>(true), Is.Null);
+            Assert.That(Object.FindAnyObjectByType<DishViewportPresenter>(), Is.Null);
+            Assert.That(Object.FindAnyObjectByType<PetriDishDisplayPresenter>(), Is.Not.Null);
+            Assert.That(Object.FindAnyObjectByType<LaboratoryHubPresenter>(), Is.Not.Null);
             yield return new ExitPlayMode();
         }
 

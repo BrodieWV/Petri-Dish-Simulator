@@ -72,6 +72,29 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void ExplicitSceneRoleOwnsExperimentPresentationDecision()
+        {
+            Assert.That(
+                RuntimeBootstrap.ShouldInitializeExperimentPresentation(
+                    true, PetriDishSceneRole.NonExperiment, false),
+                Is.False);
+            Assert.That(
+                RuntimeBootstrap.ShouldInitializeExperimentPresentation(
+                    true, PetriDishSceneRole.Experiment, false),
+                Is.True);
+            Assert.That(
+                RuntimeBootstrap.ShouldInitializeExperimentPresentation(
+                    false, PetriDishSceneRole.NonExperiment, true),
+                Is.True,
+                "Existing responsive Phase 2 scenes remain compatible without a marker.");
+            Assert.That(
+                RuntimeBootstrap.ShouldInitializeExperimentPresentation(
+                    false, PetriDishSceneRole.Experiment, false),
+                Is.False,
+                "Unmarked non-experiment scenes must not receive legacy presentation implicitly.");
+        }
+
+        [Test]
         public void OrganismAndMediumButtonsCycleStableDefinitionsWithoutDuplicateRenderer()
         {
             PetriDishResponsiveUIBinder binder = CreateResponsiveHierarchy();

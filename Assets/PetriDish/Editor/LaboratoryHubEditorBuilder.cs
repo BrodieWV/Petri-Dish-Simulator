@@ -271,6 +271,7 @@ namespace PetriDish.Editor
             hubCamera.orthographic = true;
             hubCamera.targetTexture = null;
             GameObject root = CreateObject("LaboratoryHub", null, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            root.AddComponent<PetriDishRuntimeScene>().Configure(PetriDishSceneRole.NonExperiment);
             Canvas canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler scaler = root.GetComponent<CanvasScaler>();
