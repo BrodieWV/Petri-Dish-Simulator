@@ -12,10 +12,10 @@ namespace PetriDish.Presentation.UI
         public Color background = new Color(0.957f, 0.945f, 0.918f, 1f);
         public Color bench = new Color(0.914f, 0.937f, 0.941f, 1f);
         public Color panel = new Color(0.995f, 0.995f, 0.988f, 1f);
-        public Color panelRaised = new Color(0.945f, 0.968f, 0.972f, 1f);
-        public Color panelHover = new Color(0.870f, 0.945f, 0.949f, 1f);
-        public Color border = new Color(0.755f, 0.817f, 0.827f, 1f);
-        public Color shadow = new Color(0.12f, 0.18f, 0.20f, 0.12f);
+        public Color panelRaised = new Color(0.965f, 0.976f, 0.976f, 1f);
+        public Color panelHover = new Color(0.892f, 0.949f, 0.949f, 1f);
+        public Color border = new Color(0.820f, 0.856f, 0.860f, 1f);
+        public Color shadow = new Color(0.12f, 0.18f, 0.20f, 0.09f);
 
         [Header("Signals")]
         public Color cyan = new Color(0.075f, 0.522f, 0.565f, 1f);
@@ -31,11 +31,11 @@ namespace PetriDish.Presentation.UI
 
         [Header("Responsive layout")]
         [Min(4f)] public float compactSpacing = 12f;
-        [Min(4f)] public float standardSpacing = 18f;
-        [Min(48f)] public float navigationWidth = 194f;
+        [Min(4f)] public float standardSpacing = 20f;
+        [Min(48f)] public float navigationWidth = 224f;
         [Min(48f)] public float compactNavigationWidth = 72f;
         [FormerlySerializedAs("activityWidth")]
-        [Min(280f)] public float notesWidth = 340f;
+        [Min(280f)] public float notesWidth = 360f;
         [Min(1.5f)] public float compactLandscapeAspect = 1.95f;
         [Min(800f)] public float compactLandscapeWidth = 1200f;
 

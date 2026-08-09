@@ -40,6 +40,8 @@ namespace PetriDish.Tests.Editor
                 Assert.That(theme.panel.grayscale, Is.GreaterThan(0.9f));
                 Assert.That(theme.textPrimary.grayscale, Is.LessThan(0.25f));
                 Assert.That(theme.border, Is.Not.EqualTo(theme.panel));
+                Assert.That(theme.navigationWidth, Is.GreaterThanOrEqualTo(220f));
+                Assert.That(theme.notesWidth, Is.GreaterThanOrEqualTo(350f));
                 Assert.That(theme.GetStatusColor(LaboratoryDishStatus.Growing), Is.EqualTo(theme.green));
                 Assert.That(theme.GetStatusColor(LaboratoryDishStatus.Stressed), Is.EqualTo(theme.amber));
                 Assert.That(theme.GetStatusColor(LaboratoryDishStatus.Severe), Is.EqualTo(theme.red));
@@ -70,6 +72,11 @@ namespace PetriDish.Tests.Editor
             Assert.That(hubRoots, Has.Length.EqualTo(1));
 
             GameObject hub = hubRoots[0];
+            Camera hubCamera = scene.GetRootGameObjects().Single(owner => owner.name == "LaboratoryHubCamera")
+                .GetComponent<Camera>();
+            Assert.That(hubCamera.enabled, Is.True);
+            Assert.That(hubCamera.targetTexture, Is.Null);
+            Assert.That(hubCamera.cullingMask, Is.Zero);
             Assert.That(hub.GetComponent<LaboratoryHubPresenter>(), Is.Not.Null);
             Assert.That(hub.GetComponentInChildren<LaboratoryHubResponsiveLayout>(true), Is.Not.Null);
             Assert.That(hub.GetComponentInChildren<LaboratoryDishPreviewGraphic>(true), Is.Not.Null);
@@ -83,6 +90,9 @@ namespace PetriDish.Tests.Editor
             Assert.That(PrefabUtility.IsPartOfPrefabInstance(FindNamed(hub.transform, "SelectedDish")), Is.True);
             Assert.That(PrefabUtility.IsPartOfPrefabInstance(FindNamed(hub.transform, "LatestDiscovery")), Is.True);
             Assert.That(CountMissingScripts(hub), Is.Zero);
+            string[] visibleText = hub.GetComponentsInChildren<Text>(true).Select(text => text.text).ToArray();
+            Assert.That(visibleText.Any(value => value.Contains("No cameras rendering")), Is.False);
+            Assert.That(visibleText.Any(value => value.Contains("Display 1")), Is.False);
         }
 
         [Test]
@@ -148,30 +158,55 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
-        public void FeaturedDishSectionsAreContainedAndDoNotOverlapVertically()
+        public void FeaturedDishUsesLargeUnboxedPreviewAndCohesiveSummary()
         {
             GameObject hub = OpenHub();
-            RectTransform dishName = FindNamed(hub.transform, "DishName").GetComponent<RectTransform>();
-            RectTransform organism = FindNamed(hub.transform, "Organism").GetComponent<RectTransform>();
-            RectTransform medium = FindNamed(hub.transform, "Medium").GetComponent<RectTransform>();
             RectTransform preview = FindNamed(hub.transform, "DishPreviewWell").GetComponent<RectTransform>();
+            RectTransform summary = FindNamed(hub.transform, "CultureSummary").GetComponent<RectTransform>();
             RectTransform metrics = FindNamed(hub.transform, "AgeMetric").GetComponent<RectTransform>();
             RectTransform environment = FindNamed(hub.transform, "EnvironmentSummary").GetComponent<RectTransform>();
             RectTransform open = FindNamed(hub.transform, "OpenDishButton").GetComponent<RectTransform>();
             RectTransform navigation = FindNamed(hub.transform, "DishNavigation").GetComponent<RectTransform>();
 
-            Assert.That(organism.anchorMax.y, Is.LessThanOrEqualTo(dishName.anchorMin.y));
-            Assert.That(medium.anchorMax.y, Is.LessThanOrEqualTo(organism.anchorMin.y));
-            Assert.That(preview.anchorMax.y, Is.LessThan(medium.anchorMin.y));
-            Assert.That(metrics.anchorMax.y, Is.LessThan(preview.anchorMin.y));
-            Assert.That(environment.anchorMax.y, Is.LessThan(metrics.anchorMin.y));
-            Assert.That(open.anchorMax.y, Is.LessThan(environment.anchorMin.y));
-            Assert.That(navigation.anchorMax.y, Is.LessThan(open.anchorMin.y));
-            Assert.That(preview.anchorMin.x, Is.GreaterThan(0f));
-            Assert.That(preview.anchorMax.x, Is.LessThan(1f));
+            Assert.That(preview.GetComponent<Image>(), Is.Null);
+            Assert.That(preview.anchorMax.x - preview.anchorMin.x, Is.GreaterThanOrEqualTo(0.59f));
+            Assert.That(preview.anchorMax.y - preview.anchorMin.y, Is.GreaterThanOrEqualTo(0.57f));
+            Assert.That(preview.anchorMax.x, Is.LessThan(summary.anchorMin.x));
+            Assert.That(summary.GetComponent<Image>(), Is.Not.Null);
+            Assert.That(metrics.GetComponent<Image>(), Is.Null);
+            Assert.That(environment.GetComponent<Image>(), Is.Null);
+            Assert.That(open.anchorMin.x, Is.GreaterThan(summary.anchorMin.x));
+            Assert.That(navigation.anchorMax.y, Is.LessThanOrEqualTo(preview.anchorMin.y));
         }
 
-        [UnityTest]        public IEnumerator LaboratoryHubEntersPlayModeAndPlaceholderActionsRespond()
+        [Test]
+        public void NavigationHeaderNotesAndActionsUseRefinedVisualHierarchy()
+        {
+            GameObject hub = OpenHub();
+            Assert.That(TextOf(hub, "Title"), Is.EqualTo("PETRI LAB"));
+            Assert.That(FindNamed(hub.transform, "Subtitle"), Is.Null);
+            Assert.That(FindNamed(hub.transform, "ActionDock"), Is.Not.Null);
+            Assert.That(TextOf(hub, "ActionPrompt"), Is.EqualTo("Continue your laboratory work"));
+
+            Transform navigation = FindNamed(hub.transform, "NavigationRail");
+            Text[] labels = navigation.GetComponentsInChildren<Text>(true)
+                .Where(text => text.name == "Label").ToArray();
+            Assert.That(labels, Has.Length.EqualTo(7));
+            Assert.That(labels.All(label => label.fontSize >= 18), Is.True);
+            Assert.That(FindNamed(navigation, "SelectedEdge").GetComponent<RectTransform>().anchorMax.x,
+                Is.LessThanOrEqualTo(0.012f));
+
+            Transform observation = FindNamed(hub.transform, "CurrentObservation");
+            Assert.That(observation.GetComponent<Outline>(), Is.Null);
+            Assert.That(observation.GetComponent<Shadow>(), Is.Null);
+            Assert.That(FindNamed(observation, "AccentLine"), Is.Not.Null);
+            Assert.That(FindNamed(observation, "Title").GetComponent<Text>().fontSize, Is.GreaterThanOrEqualTo(19));
+            Assert.That(FindNamed(hub.transform, "HeaderJournalButton").GetComponent<Outline>(), Is.Null);
+            Assert.That(FindNamed(hub.transform, "HeaderSettingsButton").GetComponent<Outline>(), Is.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator LaboratoryHubEntersPlayModeAndPlaceholderActionsRespond()
         {
             EditorSceneManager.OpenScene(LaboratoryHubEditorBuilder.ScenePath, OpenSceneMode.Single);
             yield return new EnterPlayMode();

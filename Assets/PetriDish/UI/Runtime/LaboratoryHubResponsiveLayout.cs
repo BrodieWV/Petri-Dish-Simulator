@@ -12,6 +12,8 @@ namespace PetriDish.Presentation.UI
         [SerializeField] private GameObject[] navigationLabels;
         [SerializeField] private HorizontalLayoutGroup columns;
         [SerializeField] private LayoutElement notes;
+        [SerializeField] private LayoutElement actionsLeftInset;
+        [SerializeField] private LayoutElement actionsRightInset;
         [SerializeField] private GameObject notesDrawerButton;
         [SerializeField] private GameObject notesDrawer;
         [SerializeField] private bool forceCompactLandscape;
@@ -39,7 +41,7 @@ namespace PetriDish.Presentation.UI
 
         public void Configure(PetriDishUITheme value, RectTransform root, LayoutElement nav,
             GameObject[] labels, HorizontalLayoutGroup columnGroup, LayoutElement notesPanel,
-            GameObject drawerButton, GameObject drawer)
+            LayoutElement actionLeft, LayoutElement actionRight, GameObject drawerButton, GameObject drawer)
         {
             theme = value;
             observedRoot = root;
@@ -47,6 +49,8 @@ namespace PetriDish.Presentation.UI
             navigationLabels = labels;
             columns = columnGroup;
             notes = notesPanel;
+            actionsLeftInset = actionLeft;
+            actionsRightInset = actionRight;
             notesDrawerButton = drawerButton;
             notesDrawer = drawer;
             Refresh();
@@ -73,6 +77,15 @@ namespace PetriDish.Presentation.UI
                 notes.preferredWidth = theme != null ? theme.notesWidth : 340f;
                 notes.gameObject.SetActive(!IsCompact);
             }
+            if (actionsLeftInset != null)
+                actionsLeftInset.preferredWidth = theme != null
+                    ? (IsCompact ? theme.compactNavigationWidth : theme.navigationWidth) +
+                      (IsCompact ? theme.compactSpacing : theme.standardSpacing)
+                    : (IsCompact ? 84f : 244f);
+            if (actionsRightInset != null)
+                actionsRightInset.preferredWidth = IsCompact
+                    ? 0f
+                    : (theme != null ? theme.notesWidth + theme.standardSpacing : 380f);
             if (notesDrawerButton != null) notesDrawerButton.SetActive(IsCompact);
             if (!IsCompact && notesDrawer != null) notesDrawer.SetActive(false);
             if (navigationLabels != null)

@@ -9,23 +9,32 @@ modified by this work.
 
 The hub uses a clean modern laboratory presentation with warm off-white
 backgrounds, white cards, pale cool-grey work surfaces, charcoal typography,
-thin cool-grey borders, subtle shadows, and restrained teal interaction accents.
+lightweight dividers, subtle shadows, and restrained teal interaction accents.
 Healthy, warning, and severe colours remain semantic. The organism and dish
 illustration provide the strongest colour in the workspace.
+
+The selected dish is the visual focal point. Its camera-free illustration uses a
+translucent glass rim, soft agar, restrained colony clusters, and layered depth
+directly on the white presentation surface rather than inside a grey preview box.
+The scene includes a background-only camera with no culling or RenderTexture
+target so Unity never exposes its `Display 1 / No cameras rendering` overlay.
 
 ## Scope
 
 The hub provides editable mock presentation for:
 
 - one selected dish, with `Dish A` shown at `1 / 1`;
-- a deliberate illustrated petri-dish placeholder with no camera dependency;
+- a large deliberate illustrated petri-dish placeholder with no preview-camera dependency;
 - *Bacillus subtilis* on Nutrient Agar at 18 h and 42% coverage;
 - a `Growing well` status and a 26°C, 42% moisture, nutrients-OK summary;
 - disabled previous/next controls ready for later multi-dish browsing;
 - Lab Notes for observation, discovery, challenge, and recent-update mock entries;
 - persistent desktop/tablet navigation without a separate Dishes destination;
 - compact phone-landscape navigation and a serialized Lab Notes drawer;
-- prominent Start New Experiment, Compare, Open Dish, Journal, and Settings actions.
+- a cohesive culture/environment summary with fewer framed metric boxes;
+- observation-style Lab Notes with whitespace, accent rules, and lightweight dividers;
+- an aligned action dock for Start New Experiment and Compare, plus Open Dish in the culture card;
+- quiet header access to Journal and Settings.
 
 All values and button results are placeholders. This foundation does not add
 multi-dish persistence, swipe gestures, lineage, colony transfer, a comparison
@@ -49,13 +58,14 @@ so repeated runs do not duplicate or reset them.
 ## Manual verification
 
 1. Open `Assets/PetriDish/Scenes/LaboratoryHub.unity`.
-2. Enter Play Mode at 1920x1080 and confirm the persistent rail, dominant selected
-   dish, contained illustration, Lab Notes, primary action, and hover/press states.
+2. Enter Play Mode at 1920x1080 and confirm the persistent wider rail, dominant selected
+   dish, translucent rim, unboxed white presentation, Lab Notes, integrated action dock,
+   and hover/press states. Confirm no `Display 1 / No cameras rendering` text appears.
 3. At 1366x768 confirm dish metadata, environmental summary, Open Dish, and the
    disabled `Dish A  1 / 1` control remain readable without clipping.
 4. At 1136x640 or a phone wider than 1.95:1, confirm navigation labels collapse,
    the selected dish stays primary, Start New Experiment remains reachable, and
-   the Lab Notes button toggles the drawer.
+   the Lab Notes button toggles the drawer and the aligned action dock remains reachable.
 5. Confirm previous and next dish controls remain disabled while `1 / 1` is shown.
 6. Select Start New Experiment, Open Dish, Compare, Journal, Settings, and rail
    actions; confirm mock-data feedback appears and no Console errors occur.
