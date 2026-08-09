@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/PetriDish/Scenes/PetriDishVerticalSlice.unity
     guid: a2c6a060c0786604fb72d54878f0593d
+  - enabled: 1
+    path: Assets/PetriDish/Scenes/LaboratoryHub.unity
+    guid: 5f2e979b0bc8b12408787e0fb39d5e99
   m_configObjects: {}
