@@ -199,7 +199,7 @@ namespace PetriDish.Editor
             footerLayout.childControlWidth = true;
             footerLayout.childControlHeight = true;
             footerLayout.childForceExpandWidth = true;
-            Button newExperiment = CreateButton("NewExperimentButton", footer, "+  NEW EXPERIMENT", theme, true);
+            Button newExperiment = CreateButton("NewExperimentButton", footer, "+  Start New Experiment", theme, true);
             Button activeButton = CreateButton("ActiveDishesButton", footer, "ACTIVE DISHES", theme, false);
             Button compare = CreateButton("CompareButton", footer, "COMPARE", theme, false);
             Button journal = CreateButton("JournalButton", footer, "JOURNAL", theme, false);

@@ -95,6 +95,10 @@ namespace PetriDish.Tests.Editor
                 Assert.That(button.colors.highlightedColor, Is.Not.EqualTo(button.colors.normalColor), actionName);
                 Assert.That(button.colors.pressedColor, Is.Not.EqualTo(button.colors.normalColor), actionName);
             }
+
+            Button newExperiment = FindNamed(hub.transform, "NewExperimentButton").GetComponent<Button>();
+            Assert.That(newExperiment.GetComponentInChildren<Text>(true).text,
+                Is.EqualTo("+  Start New Experiment"));
         }
 
         [UnityTest]
