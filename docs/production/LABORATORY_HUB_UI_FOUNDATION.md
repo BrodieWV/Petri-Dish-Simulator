@@ -73,3 +73,11 @@ so repeated runs do not duplicate or reset them.
 
 Product-owner visual review on representative landscape devices remains required
 before this presentation foundation is treated as shipping M7 UI.
+
+## Shared 3D dish presentation
+
+The selected-culture preview instantiates `Assets/PetriDish/Presentation/Prefabs/PetriDishDisplay.prefab`. The prefab nests the existing `Assets/PetriDish/Art/models/PetriDish.fbx` below a `RotationPivot`, retaining its embedded glass, agar, and colony-surface materials. Its camera and neutral presentation lights stay outside the pivot so future orbit, zoom, and reset controls can be added without restructuring the model.
+
+The Hub uses the existing `DishRenderer` once in the editor builder to bake `LaboratoryHubMockColony.asset`, then binds that saved texture through the existing `ColonySurfacePresenter` and a `MaterialPropertyBlock`. Runtime presentation owns one 768 x 768 RenderTexture, detaches and releases it on disable/destruction, and participates in the existing Play Mode teardown guard. The displayed culture remains mock presentation data and is not connected to Phase 2 simulation or saves.
+
+The navigation rail is a masked vertical `ScrollRect`; Settings remains inside its content and reachable on compact landscape sizes.

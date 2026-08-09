@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using PetriDish.Presentation;
 using PetriDish.Presentation.UI;
+using PetriDish.Simulation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -19,6 +21,9 @@ namespace PetriDish.Editor
         private const string NavigationPath = "Assets/PetriDish/UI/Prefabs/Navigation/";
         private const string ExperimentsPath = "Assets/PetriDish/UI/Prefabs/Experiments/";
         private const string LaboratoryPath = "Assets/PetriDish/UI/Prefabs/Laboratory/";
+        public const string DisplayPrefabPath = "Assets/PetriDish/Presentation/Prefabs/PetriDishDisplay.prefab";
+        public const string MockColonyTexturePath = "Assets/PetriDish/Presentation/Textures/LaboratoryHubMockColony.asset";
+        private const string DishModelPath = "Assets/PetriDish/Art/models/PetriDish.fbx";
 
         [MenuItem("Petri Dish/Build Laboratory Hub")]
         public static void BuildLaboratoryHub()
@@ -60,6 +65,9 @@ namespace PetriDish.Editor
             EnsureFolder("Assets/PetriDish/UI/Prefabs", "Navigation");
             EnsureFolder("Assets/PetriDish/UI/Prefabs", "Experiments");
             EnsureFolder("Assets/PetriDish/UI/Prefabs", "Laboratory");
+            EnsureFolder("Assets/PetriDish", "Presentation");
+            EnsureFolder("Assets/PetriDish/Presentation", "Prefabs");
+            EnsureFolder("Assets/PetriDish/Presentation", "Textures");
         }
 
         private static void EnsureFolder(string parent, string child)
@@ -79,6 +87,8 @@ namespace PetriDish.Editor
 
         private static void EnsurePrefabs(PetriDishUITheme theme)
         {
+            EnsureMockColonyTexture();
+            EnsureDishDisplayPrefab();
             EnsurePrefab(CommonPath + "Panel.prefab", () => CreatePanel("Panel", null, theme.panel, theme));
             EnsurePrefab(CommonPath + "PrimaryButton.prefab", () => CreateButton("PrimaryButton", null, "Primary action", theme, true).gameObject);
             EnsurePrefab(CommonPath + "SecondaryButton.prefab", () => CreateButton("SecondaryButton", null, "Secondary action", theme, false).gameObject);
@@ -91,6 +101,96 @@ namespace PetriDish.Editor
             EnsurePrefab(LaboratoryPath + "LaboratoryActivityCard.prefab", () => CreateActivityCard("LaboratoryActivityCard", null, "CURRENT OBSERVATION", "Colony edge expanding steadily.", "Observation recorded just now.", theme.cyan, theme));
             EnsurePrefab(LaboratoryPath + "DiscoveryCard.prefab", () => CreateActivityCard("DiscoveryCard", null, "LATEST DISCOVERY", "Optimal temperature range observed.", "Growth remains within the simplified model.", theme.green, theme));
             EnsurePrefab(LaboratoryPath + "ChallengeCard.prefab", () => CreateActivityCard("ChallengeCard", null, "CURRENT CHALLENGE", "Maintain stable growth for another 6 hours.", "Mock challenge progress", theme.amber, theme));
+        }
+
+        private static void EnsureMockColonyTexture()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(MockColonyTexturePath) != null) return;
+
+            GameObject temporary = new GameObject("MockDishRenderer", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            DishRenderer renderer = temporary.AddComponent<DishRenderer>();
+            typeof(DishRenderer).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(renderer, null);
+            const int size = 48;
+            float[] biomass = new float[size * size];
+            float[] health = new float[size * size];
+            float[] moisture = new float[size * size];
+            float[] nutrients = new float[size * size];
+            Vector2[] centres = { new Vector2(-0.28f, 0.18f), new Vector2(0.22f, 0.25f), new Vector2(0.13f, -0.22f), new Vector2(-0.18f, -0.28f) };
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int index = y * size + x;
+                Vector2 point = new Vector2((x + 0.5f) / size * 2f - 1f, (y + 0.5f) / size * 2f - 1f);
+                float growth = 0f;
+                foreach (Vector2 centre in centres)
+                    growth = Mathf.Max(growth, Mathf.Clamp01(1f - Vector2.Distance(point, centre) / 0.29f));
+                biomass[index] = growth;
+                health[index] = 0.92f;
+                moisture[index] = 0.42f;
+                nutrients[index] = 0.76f;
+            }
+            renderer.Render(new SimulationSnapshot(size, size, 18, 26f, 0.42f, 0.92f, 0.42f, 0.76f,
+                biomass, health, moisture, nutrients));
+            Texture2D saved = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "LaboratoryHubMockColony" };
+            saved.SetPixels32(renderer.ColonyTexture.GetPixels32());
+            saved.Apply(false, false);
+            saved.filterMode = FilterMode.Bilinear;
+            saved.wrapMode = TextureWrapMode.Clamp;
+            AssetDatabase.CreateAsset(saved, MockColonyTexturePath);
+            UnityEngine.Object.DestroyImmediate(temporary);
+        }
+
+        private static void EnsureDishDisplayPrefab()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(DisplayPrefabPath) != null) return;
+
+            GameObject root = new GameObject("PetriDishDisplay", typeof(PetriDishDisplayPresenter));
+            Transform pivot = new GameObject("RotationPivot").transform;
+            pivot.SetParent(root.transform, false);
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(DishModelPath);
+            GameObject model = (GameObject)PrefabUtility.InstantiatePrefab(source);
+            model.name = "PetriDish3D";
+            model.transform.SetParent(pivot, false);
+            model.transform.localScale = Vector3.one * 5f;
+            Transform lid = FindChild(model.transform, "PetriDish_Lid");
+            if (lid != null) lid.localRotation = Quaternion.Euler(270f, 0f, 0f);
+
+            Transform colony = FindChild(model.transform, "PetriDish_ColonySurface");
+            MeshRenderer colonyRenderer = colony.GetComponent<MeshRenderer>();
+            ColonySurfacePresenter colonyPresenter = colony.gameObject.AddComponent<ColonySurfacePresenter>();
+            colonyPresenter.ConfigureStatic(colonyRenderer, "_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>(MockColonyTexturePath));
+            colonyPresenter.SetTextureAlignment(new Vector2(1.7f, 1.7f), new Vector2(0.08f, 0.08f));
+
+            GameObject cameraObject = new GameObject("DishDisplayCamera", typeof(Camera));
+            cameraObject.transform.SetParent(root.transform, false);
+            Camera displayCamera = cameraObject.GetComponent<Camera>();
+            displayCamera.enabled = false;
+            displayCamera.clearFlags = CameraClearFlags.SolidColor;
+            displayCamera.backgroundColor = Color.clear;
+            displayCamera.fieldOfView = 32f;
+            displayCamera.allowHDR = true;
+            displayCamera.allowMSAA = true;
+
+            Light key = CreatePresentationLight("NeutralKeyLight", root.transform, new Vector3(-35f, 25f, 0f), 1.05f);
+            Light fill = CreatePresentationLight("SoftFillLight", root.transform, new Vector3(45f, -20f, 0f), 0.52f);
+            PetriDishDisplayPresenter presenter = root.GetComponent<PetriDishDisplayPresenter>();
+            presenter.ConfigureRig(pivot, displayCamera, new[] { key, fill });
+            PrefabUtility.SaveAsPrefabAsset(root, DisplayPrefabPath);
+            UnityEngine.Object.DestroyImmediate(root);
+        }
+
+        private static Light CreatePresentationLight(string name, Transform parent, Vector3 euler, float intensity)
+        {
+            GameObject owner = new GameObject(name, typeof(Light));
+            owner.transform.SetParent(parent, false);
+            owner.transform.localRotation = Quaternion.Euler(euler);
+            Light light = owner.GetComponent<Light>();
+            light.type = LightType.Directional;
+            light.color = new Color(0.96f, 0.98f, 1f);
+            light.intensity = intensity;
+            light.shadows = LightShadows.Soft;
+            light.enabled = false;
+            return light;
         }
 
         private static void EnsurePrefab(string path, Func<GameObject> factory)
@@ -113,28 +213,46 @@ namespace PetriDish.Editor
         private static GameObject CreateNavigationRailPrefab(PetriDishUITheme theme)
         {
             GameObject rail = CreatePanel("NavigationRail", null, theme.panel, theme);
-            VerticalLayoutGroup group = rail.AddComponent<VerticalLayoutGroup>();
+            ScrollRect scroll = rail.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 28f;
+            RectTransform viewport = CreateRect("NavigationViewport", rail.transform);
+            Stretch(viewport);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            RectTransform content = CreateRect("NavigationContent", viewport);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = Vector2.one;
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero;
+            content.offsetMax = Vector2.zero;
+            VerticalLayoutGroup group = content.gameObject.AddComponent<VerticalLayoutGroup>();
             group.padding = new RectOffset(16, 16, 22, 18);
             group.spacing = 8f;
             group.childControlHeight = false;
             group.childForceExpandHeight = false;
+            ContentSizeFitter contentFitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            scroll.viewport = viewport;
+            scroll.content = content;
 
-            CreateTextWithLayout("RailTitle", rail.transform, "PETRI LAB", 20, FontStyle.Bold, theme.textPrimary, 44f);
-            CreateTextWithLayout("RailSectionLabel", rail.transform, "WORKSPACE", 12, FontStyle.Bold,
+            CreateTextWithLayout("RailTitle", content, "PETRI LAB", 20, FontStyle.Bold, theme.textPrimary, 44f);
+            CreateTextWithLayout("RailSectionLabel", content, "WORKSPACE", 12, FontStyle.Bold,
                 theme.textSecondary, 28f);
             string[] names = { "Lab", "New Experiment", "Compare", "Journal", "Collection", "Challenges" };
-            string[] icons = { "L", "+", "<>", "J", "C", "!" };
+            string[] icons = { "\u2302", "+", "\u21C4", "\u2261", "\u25CE", "!" };
             for (int i = 0; i < names.Length; i++)
-                CreateNavigationButton("Nav" + names[i].Replace(" ", string.Empty) + "Button", rail.transform, names[i], icons[i], theme, i == 0);
+                CreateNavigationButton("Nav" + names[i].Replace(" ", string.Empty) + "Button", content, names[i], icons[i], theme, i == 0);
 
-            RectTransform spacer = CreateRect("NavigationSpacer", rail.transform);
+            RectTransform spacer = CreateRect("NavigationSpacer", content);
             LayoutElement spacerLayout = spacer.gameObject.AddComponent<LayoutElement>();
-            spacerLayout.flexibleHeight = 1f;
-            Image divider = CreateImage("SettingsDivider", rail.transform, theme.border);
+            spacerLayout.preferredHeight = 120f;
+            Image divider = CreateImage("SettingsDivider", content, theme.border);
             LayoutElement dividerLayout = divider.gameObject.AddComponent<LayoutElement>();
             dividerLayout.preferredHeight = 1f;
             dividerLayout.minHeight = 1f;
-            CreateNavigationButton("NavSettingsButton", rail.transform, "Settings", "S", theme, false);
+            CreateNavigationButton("NavSettingsButton", content, "Settings", "\u2699", theme, false);
             return rail;
         }
 
@@ -175,8 +293,6 @@ namespace PetriDish.Editor
             Anchor(header, new Vector2(0f, 0.91f), Vector2.one, new Vector2(28f, 0f), new Vector2(-28f, -4f));
             CreateTextAnchored("Title", header, "PETRI LAB", 35, FontStyle.Bold, TextAnchor.MiddleLeft,
                 new Vector2(0f, 0f), new Vector2(0.60f, 1f), theme.textPrimary);
-            Button journalHeader = CreateQuietButton("HeaderJournalButton", header, "Journal", theme);
-            Anchor(journalHeader.GetComponent<RectTransform>(), new Vector2(0.82f, 0.23f), new Vector2(0.90f, 0.77f), Vector2.zero, Vector2.zero);
             Button settingsHeader = CreateQuietButton("HeaderSettingsButton", header, "Settings", theme);
             Anchor(settingsHeader.GetComponent<RectTransform>(), new Vector2(0.91f, 0.23f), new Vector2(1f, 0.77f), Vector2.zero, Vector2.zero);
 
@@ -201,6 +317,10 @@ namespace PetriDish.Editor
             LayoutElement featuredLayout = featured.AddComponent<LayoutElement>();
             featuredLayout.minWidth = 520f;
             featuredLayout.flexibleWidth = 1f;
+            GameObject dishDisplay = InstantiatePrefab(DisplayPrefabPath, null);
+            dishDisplay.name = "SelectedDish3DDisplay";
+            RawImage dishOutput = FindChild(featured.transform, "DishDisplayImage").GetComponent<RawImage>();
+            dishDisplay.GetComponent<PetriDishDisplayPresenter>().ConfigureOutput(dishOutput);
 
             GameObject notes = CreatePanel("LabNotesPanel", body, theme.panel, theme);
             LayoutElement notesLayout = notes.AddComponent<LayoutElement>();
@@ -266,7 +386,7 @@ namespace PetriDish.Editor
             drawerButton.onClick.AddListener(responsive.ToggleNotesDrawer);
 
             LaboratoryHubPresenter presenter = root.AddComponent<LaboratoryHubPresenter>();
-            List<Button> actions = new List<Button> { newExperiment, compare, journalHeader, settingsHeader };
+            List<Button> actions = new List<Button> { newExperiment, compare, settingsHeader };
             actions.AddRange(nav.GetComponentsInChildren<Button>(true));
             actions.Add(FindChild(featured.transform, "OpenDishButton").GetComponent<Button>());
             SerializedObject serializedPresenter = new SerializedObject(presenter);
@@ -310,10 +430,12 @@ namespace PetriDish.Editor
 
             RectTransform previewWell = CreateRect("DishPreviewWell", panel.transform);
             Anchor(previewWell, new Vector2(0.035f, 0.145f), new Vector2(0.635f, 0.720f), Vector2.zero, Vector2.zero);
-            GameObject preview = CreateObject("DishPreview", previewWell.transform,
-                typeof(RectTransform), typeof(LaboratoryDishPreviewGraphic));
+            GameObject preview = CreateObject("DishDisplayImage", previewWell.transform,
+                typeof(RectTransform), typeof(RawImage));
             Anchor(preview.GetComponent<RectTransform>(), new Vector2(0.01f, 0.01f), new Vector2(0.99f, 0.99f), Vector2.zero, Vector2.zero);
-            preview.GetComponent<LaboratoryDishPreviewGraphic>().raycastTarget = false;
+            RawImage previewImage = preview.GetComponent<RawImage>();
+            previewImage.color = Color.white;
+            previewImage.raycastTarget = false;
             AspectRatioFitter fitter = preview.AddComponent<AspectRatioFitter>();
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using PetriDish.Editor;
+using PetriDish.Presentation;
 using PetriDish.Presentation.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -79,7 +80,16 @@ namespace PetriDish.Tests.Editor
             Assert.That(hubCamera.cullingMask, Is.Zero);
             Assert.That(hub.GetComponent<LaboratoryHubPresenter>(), Is.Not.Null);
             Assert.That(hub.GetComponentInChildren<LaboratoryHubResponsiveLayout>(true), Is.Not.Null);
-            Assert.That(hub.GetComponentInChildren<LaboratoryDishPreviewGraphic>(true), Is.Not.Null);
+            Assert.That(hub.GetComponentInChildren<LaboratoryDishPreviewGraphic>(true), Is.Null);
+            Assert.That(hub.GetComponentsInChildren<RawImage>(true).Any(image => image.name == "DishDisplayImage"), Is.True);
+            PetriDishDisplayPresenter display = scene.GetRootGameObjects()
+                .Single(owner => owner.name == "SelectedDish3DDisplay")
+                .GetComponent<PetriDishDisplayPresenter>();
+            Assert.That(display, Is.Not.Null);
+            Assert.That(PrefabUtility.IsPartOfPrefabInstance(display), Is.True);
+            Assert.That(display.RotationPivot, Is.Not.Null);
+            Assert.That(display.DisplayCamera.transform.IsChildOf(display.RotationPivot), Is.False);
+            Assert.That(display.Output.name, Is.EqualTo("DishDisplayImage"));
             Assert.That(FindNamed(hub.transform, "SelectedDish"), Is.Not.Null);
             Assert.That(FindNamed(hub.transform, "LabNotesPanel"), Is.Not.Null);
             Assert.That(FindNamed(hub.transform, "DishNavigation"), Is.Not.Null);
@@ -109,6 +119,26 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void SharedDisplayReusesPhaseTwoModelMaterialsAndColonyPresenter()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(LaboratoryHubEditorBuilder.DisplayPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            Transform model = FindNamed(prefab.transform, "PetriDish3D");
+            Assert.That(model, Is.Not.Null);
+            Assert.That(PrefabUtility.GetCorrespondingObjectFromSource(model.gameObject), Is.Not.Null);
+
+            Transform colony = FindNamed(model, "PetriDish_ColonySurface");
+            ColonySurfacePresenter colonyPresenter = colony.GetComponent<ColonySurfacePresenter>();
+            Assert.That(colonyPresenter, Is.Not.Null);
+            Assert.That(colonyPresenter.StaticTexture, Is.Not.Null);
+            Assert.That(colonyPresenter.TextureSource, Is.Null);
+            Assert.That(colonyPresenter.TextureScale, Is.EqualTo(new Vector2(1.7f, 1.7f)));
+            Assert.That(colonyPresenter.TextureOffset, Is.EqualTo(new Vector2(0.08f, 0.08f)));
+            Assert.That(AssetDatabase.GetAssetPath(colony.GetComponent<MeshRenderer>().sharedMaterial),
+                Is.EqualTo("Assets/PetriDish/Art/models/PetriDish.fbx"));
+        }
+
+        [Test]
         public void SingleDishNavigationIsVisibleAndDisabledAtOneOfOne()
         {
             GameObject hub = OpenHub();
@@ -132,6 +162,11 @@ namespace PetriDish.Tests.Editor
             Assert.That(FindNamed(hub.transform, "NavSettingsButton"), Is.Not.Null);
             Assert.That(FindNamed(hub.transform, "NavDishesButton"), Is.Null);
             Assert.That(FindNamed(hub.transform, "NavigationSpacer"), Is.Not.Null);
+            ScrollRect scroll = FindNamed(hub.transform, "NavigationRail").GetComponent<ScrollRect>();
+            Assert.That(scroll, Is.Not.Null);
+            Assert.That(scroll.vertical, Is.True);
+            Assert.That(scroll.viewport.GetComponent<RectMask2D>(), Is.Not.Null);
+            Assert.That(FindNamed(hub.transform, "NavSettingsButton").IsChildOf(scroll.content), Is.True);
         }
 
         [Test]
@@ -141,7 +176,7 @@ namespace PetriDish.Tests.Editor
             string[] actionNames =
             {
                 "NewExperimentButton", "CompareButton", "OpenDishButton",
-                "HeaderJournalButton", "HeaderSettingsButton"
+                "HeaderSettingsButton"
             };
 
             foreach (string actionName in actionNames)
@@ -201,7 +236,7 @@ namespace PetriDish.Tests.Editor
             Assert.That(observation.GetComponent<Shadow>(), Is.Null);
             Assert.That(FindNamed(observation, "AccentLine"), Is.Not.Null);
             Assert.That(FindNamed(observation, "Title").GetComponent<Text>().fontSize, Is.GreaterThanOrEqualTo(19));
-            Assert.That(FindNamed(hub.transform, "HeaderJournalButton").GetComponent<Outline>(), Is.Null);
+            Assert.That(FindNamed(hub.transform, "HeaderJournalButton"), Is.Null);
             Assert.That(FindNamed(hub.transform, "HeaderSettingsButton").GetComponent<Outline>(), Is.Null);
         }
 
@@ -213,6 +248,13 @@ namespace PetriDish.Tests.Editor
 
             LaboratoryHubPresenter presenter = Object.FindAnyObjectByType<LaboratoryHubPresenter>();
             Assert.That(presenter, Is.Not.Null);
+            PetriDishDisplayPresenter display = Object.FindAnyObjectByType<PetriDishDisplayPresenter>();
+            Assert.That(display, Is.Not.Null);
+            yield return null;
+            Assert.That(display.ActiveRenderTexture, Is.Not.Null);
+            Assert.That(display.ActiveRenderTexture.IsCreated(), Is.True);
+            Assert.That(display.DisplayCamera.targetTexture, Is.SameAs(display.ActiveRenderTexture));
+            Assert.That(display.Output.texture, Is.SameAs(display.ActiveRenderTexture));
             GameObject feedback = FindNamed(presenter.transform, "PlaceholderFeedback").gameObject;
             Assert.That(feedback.activeSelf, Is.False);
 
