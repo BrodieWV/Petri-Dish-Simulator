@@ -11,17 +11,17 @@ namespace PetriDish.Presentation.UI
         [SerializeField] private LayoutElement navigation;
         [SerializeField] private GameObject[] navigationLabels;
         [SerializeField] private HorizontalLayoutGroup columns;
-        [SerializeField] private LayoutElement activeDishes;
-        [SerializeField] private AdaptiveDishCardLayoutGroup activeDishLayout;
-        [SerializeField] private LayoutElement activity;
-        [SerializeField] private GameObject activityDrawerButton;
-        [SerializeField] private GameObject activityDrawer;
+        [SerializeField] private LayoutElement notes;
+        [SerializeField] private GameObject notesDrawerButton;
+        [SerializeField] private GameObject notesDrawer;
         [SerializeField] private bool forceCompactLandscape;
         private Vector2 lastSize;
         private bool lastForced;
+
         public bool IsCompact { get; private set; }
 
-        private void OnEnable() { Refresh(); }
+        private void OnEnable() => Refresh();
+
         private void Update()
         {
             RectTransform root = observedRoot != null ? observedRoot : transform as RectTransform;
@@ -29,21 +29,27 @@ namespace PetriDish.Presentation.UI
             if (size != lastSize || lastForced != forceCompactLandscape) Refresh();
         }
 
-        public static bool ShouldUseCompactLayout(float width, float height, bool forced, float aspectThreshold = 1.95f, float widthThreshold = 1200f)
+        public static bool ShouldUseCompactLayout(float width, float height, bool forced,
+            float aspectThreshold = 1.95f, float widthThreshold = 1200f)
         {
             if (forced) return true;
             if (width <= 0f || height <= 0f || width < height) return false;
             return width <= widthThreshold || width / height >= aspectThreshold;
         }
 
-        public void Configure(PetriDishUITheme value, RectTransform root, LayoutElement nav, GameObject[] labels,
-            HorizontalLayoutGroup columnGroup, LayoutElement dishes, AdaptiveDishCardLayoutGroup dishLayout,
-            LayoutElement activityPanel,
+        public void Configure(PetriDishUITheme value, RectTransform root, LayoutElement nav,
+            GameObject[] labels, HorizontalLayoutGroup columnGroup, LayoutElement notesPanel,
             GameObject drawerButton, GameObject drawer)
         {
-            theme = value; observedRoot = root; navigation = nav; navigationLabels = labels; columns = columnGroup;
-            activeDishes = dishes; activeDishLayout = dishLayout;
-            activity = activityPanel; activityDrawerButton = drawerButton; activityDrawer = drawer; Refresh();
+            theme = value;
+            observedRoot = root;
+            navigation = nav;
+            navigationLabels = labels;
+            columns = columnGroup;
+            notes = notesPanel;
+            notesDrawerButton = drawerButton;
+            notesDrawer = drawer;
+            Refresh();
         }
 
         public void Refresh()
@@ -53,17 +59,33 @@ namespace PetriDish.Presentation.UI
             float aspect = theme != null ? theme.compactLandscapeAspect : 1.95f;
             float widthLimit = theme != null ? theme.compactLandscapeWidth : 1200f;
             IsCompact = ShouldUseCompactLayout(size.x, size.y, forceCompactLandscape, aspect, widthLimit);
-            if (columns != null) columns.spacing = theme != null ? (IsCompact ? theme.compactSpacing : theme.standardSpacing) : (IsCompact ? 12f : 18f);
-            if (navigation != null) navigation.preferredWidth = theme != null ? (IsCompact ? theme.compactNavigationWidth : theme.navigationWidth) : (IsCompact ? 76f : 184f);
-            if (activeDishes != null) activeDishes.preferredWidth = IsCompact ? -1f : (theme != null ? theme.activeDishesWidth : 330f);
-            if (activeDishLayout != null) activeDishLayout.IsVertical = !IsCompact;
-            if (activity != null) { activity.preferredWidth = theme != null ? theme.activityWidth : 320f; activity.gameObject.SetActive(!IsCompact); }
-            if (activityDrawerButton != null) activityDrawerButton.SetActive(IsCompact);
-            if (!IsCompact && activityDrawer != null) activityDrawer.SetActive(false);
-            if (navigationLabels != null) foreach (GameObject label in navigationLabels) if (label != null) label.SetActive(!IsCompact);
-            lastSize = size; lastForced = forceCompactLandscape;
+
+            if (columns != null)
+                columns.spacing = theme != null
+                    ? (IsCompact ? theme.compactSpacing : theme.standardSpacing)
+                    : (IsCompact ? 12f : 18f);
+            if (navigation != null)
+                navigation.preferredWidth = theme != null
+                    ? (IsCompact ? theme.compactNavigationWidth : theme.navigationWidth)
+                    : (IsCompact ? 72f : 194f);
+            if (notes != null)
+            {
+                notes.preferredWidth = theme != null ? theme.notesWidth : 340f;
+                notes.gameObject.SetActive(!IsCompact);
+            }
+            if (notesDrawerButton != null) notesDrawerButton.SetActive(IsCompact);
+            if (!IsCompact && notesDrawer != null) notesDrawer.SetActive(false);
+            if (navigationLabels != null)
+                foreach (GameObject label in navigationLabels)
+                    if (label != null) label.SetActive(!IsCompact);
+
+            lastSize = size;
+            lastForced = forceCompactLandscape;
         }
 
-        public void ToggleActivityDrawer() { if (activityDrawer != null) activityDrawer.SetActive(!activityDrawer.activeSelf); }
+        public void ToggleNotesDrawer()
+        {
+            if (notesDrawer != null) notesDrawer.SetActive(!notesDrawer.activeSelf);
+        }
     }
 }

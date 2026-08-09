@@ -5,27 +5,38 @@ The serialized Phase 3 presentation foundation lives at
 `PetriDishVerticalSlice.unity` remains the first enabled build scene and is not
 modified by this work.
 
+## Current visual direction
+
+The hub uses a clean modern laboratory presentation with warm off-white
+backgrounds, white cards, pale cool-grey work surfaces, charcoal typography,
+thin cool-grey borders, subtle shadows, and restrained teal interaction accents.
+Healthy, warning, and severe colours remain semantic. The organism and dish
+illustration provide the strongest colour in the workspace.
+
 ## Scope
 
 The hub provides editable mock presentation for:
 
-- one dominant featured/live dish;
-- three active dish summaries;
-- laboratory activity, discoveries, challenge progress, and recent unlocks;
-- persistent desktop/tablet navigation;
-- compact phone-landscape navigation, horizontal active-dish cards, and an
-  activity drawer;
-- primary New Experiment, Active Dishes, Compare, Journal, and Open Dish actions.
+- one selected dish, with `Dish A` shown at `1 / 1`;
+- a deliberate illustrated petri-dish placeholder with no camera dependency;
+- *Bacillus subtilis* on Nutrient Agar at 18 h and 42% coverage;
+- a `Growing well` status and a 26°C, 42% moisture, nutrients-OK summary;
+- disabled previous/next controls ready for later multi-dish browsing;
+- Lab Notes for observation, discovery, challenge, and recent-update mock entries;
+- persistent desktop/tablet navigation without a separate Dishes destination;
+- compact phone-landscape navigation and a serialized Lab Notes drawer;
+- prominent Start New Experiment, Compare, Open Dish, Journal, and Settings actions.
 
 All values and button results are placeholders. This foundation does not add
-multi-dish persistence, lineage, colony transfer, a comparison engine, journal
-storage, unlock logic, challenges, contamination, or new simulation rules.
+multi-dish persistence, swipe gestures, lineage, colony transfer, a comparison
+engine, journal storage, unlock logic, challenges, contamination, live dish data
+binding, or new simulation rules.
 
 ## Reusable assets
 
-The theme is `Assets/PetriDish/UI/Styles/PetriDishUITheme.asset`. Surface,
-signal, typography, spacing, navigation-width, column-width, and compact
-breakpoint values remain Inspector-editable.
+The theme is `Assets/PetriDish/UI/Styles/PetriDishUITheme.asset`. Laboratory
+surfaces, borders, shadow, semantic signals, typography, spacing, navigation
+width, notes width, and compact breakpoints remain Inspector-editable.
 
 Reusable serialized prefabs are grouped below
 `Assets/PetriDish/UI/Prefabs` into Common, Navigation, Experiments, and
@@ -38,17 +49,17 @@ so repeated runs do not duplicate or reset them.
 ## Manual verification
 
 1. Open `Assets/PetriDish/Scenes/LaboratoryHub.unity`.
-2. Enter Play Mode at 1920x1080 and confirm the three-column layout, persistent
-   labelled rail, dominant featured dish, vertical active cards, activity cards,
-   and button hover/press feedback.
-3. Use a landscape tablet resolution such as 1366x768 and confirm all primary
-   actions remain readable and reachable.
-4. Use a compact landscape resolution such as 1136x640 or a phone wider than
-   1.95:1. Confirm navigation labels collapse, active cards become horizontal,
-   the featured dish remains primary, and the Activity button toggles the drawer.
-5. Select New Experiment, Open Dish, Compare, Journal, and navigation actions;
-   confirm the temporary mock-data feedback appears and no Console errors occur.
-6. Confirm portrait is not presented as a supported layout for this foundation.
+2. Enter Play Mode at 1920x1080 and confirm the persistent rail, dominant selected
+   dish, contained illustration, Lab Notes, primary action, and hover/press states.
+3. At 1366x768 confirm dish metadata, environmental summary, Open Dish, and the
+   disabled `Dish A  1 / 1` control remain readable without clipping.
+4. At 1136x640 or a phone wider than 1.95:1, confirm navigation labels collapse,
+   the selected dish stays primary, Start New Experiment remains reachable, and
+   the Lab Notes button toggles the drawer.
+5. Confirm previous and next dish controls remain disabled while `1 / 1` is shown.
+6. Select Start New Experiment, Open Dish, Compare, Journal, Settings, and rail
+   actions; confirm mock-data feedback appears and no Console errors occur.
+7. Confirm portrait is not presented as a supported layout.
 
-This presentation-only asset requires product-owner visual review on target
-landscape devices before M7 implementation can use it as a shipping hub.
+Product-owner visual review on representative landscape devices remains required
+before this presentation foundation is treated as shipping M7 UI.

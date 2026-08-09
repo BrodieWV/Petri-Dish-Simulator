@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace PetriDish.Presentation.UI
 {
@@ -7,28 +8,34 @@ namespace PetriDish.Presentation.UI
     [CreateAssetMenu(fileName = "PetriDishUITheme", menuName = "Petri Dish/UI Theme")]
     public sealed class PetriDishUITheme : ScriptableObject
     {
-        [Header("Surfaces")]
-        public Color background = new Color(0.018f, 0.024f, 0.027f, 1f);
-        public Color bench = new Color(0.026f, 0.035f, 0.038f, 1f);
-        public Color panel = new Color(0.043f, 0.057f, 0.062f, 0.98f);
-        public Color panelRaised = new Color(0.062f, 0.080f, 0.086f, 1f);
-        public Color panelHover = new Color(0.085f, 0.112f, 0.119f, 1f);
+        [Header("Laboratory surfaces")]
+        public Color background = new Color(0.957f, 0.945f, 0.918f, 1f);
+        public Color bench = new Color(0.914f, 0.937f, 0.941f, 1f);
+        public Color panel = new Color(0.995f, 0.995f, 0.988f, 1f);
+        public Color panelRaised = new Color(0.945f, 0.968f, 0.972f, 1f);
+        public Color panelHover = new Color(0.870f, 0.945f, 0.949f, 1f);
+        public Color border = new Color(0.755f, 0.817f, 0.827f, 1f);
+        public Color shadow = new Color(0.12f, 0.18f, 0.20f, 0.12f);
+
         [Header("Signals")]
-        public Color cyan = new Color(0.20f, 0.82f, 0.88f, 1f);
-        public Color green = new Color(0.28f, 0.75f, 0.45f, 1f);
-        public Color amber = new Color(0.95f, 0.65f, 0.20f, 1f);
-        public Color red = new Color(0.88f, 0.28f, 0.28f, 1f);
+        public Color cyan = new Color(0.075f, 0.522f, 0.565f, 1f);
+        public Color green = new Color(0.220f, 0.596f, 0.380f, 1f);
+        public Color amber = new Color(0.765f, 0.470f, 0.145f, 1f);
+        public Color red = new Color(0.745f, 0.235f, 0.235f, 1f);
+
         [Header("Typography")]
-        public Color textPrimary = new Color(0.92f, 0.96f, 0.97f, 1f);
-        public Color textSecondary = new Color(0.62f, 0.70f, 0.72f, 1f);
-        public Color textDisabled = new Color(0.37f, 0.43f, 0.45f, 1f);
-        [Header("Layout")]
+        public Color textPrimary = new Color(0.105f, 0.145f, 0.155f, 1f);
+        public Color textSecondary = new Color(0.310f, 0.380f, 0.400f, 1f);
+        public Color textDisabled = new Color(0.570f, 0.625f, 0.640f, 1f);
+        public Color textOnAccent = new Color(0.985f, 1f, 1f, 1f);
+
+        [Header("Responsive layout")]
         [Min(4f)] public float compactSpacing = 12f;
         [Min(4f)] public float standardSpacing = 18f;
-        [Min(48f)] public float navigationWidth = 184f;
-        [Min(48f)] public float compactNavigationWidth = 76f;
-        [Min(240f)] public float activeDishesWidth = 330f;
-        [Min(240f)] public float activityWidth = 320f;
+        [Min(48f)] public float navigationWidth = 194f;
+        [Min(48f)] public float compactNavigationWidth = 72f;
+        [FormerlySerializedAs("activityWidth")]
+        [Min(280f)] public float notesWidth = 340f;
         [Min(1.5f)] public float compactLandscapeAspect = 1.95f;
         [Min(800f)] public float compactLandscapeWidth = 1200f;
 
