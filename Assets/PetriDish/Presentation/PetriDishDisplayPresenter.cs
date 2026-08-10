@@ -16,6 +16,8 @@ namespace PetriDish.Presentation
         [SerializeField] private RawImage output;
         [SerializeField, Min(256)] private int renderTextureSize = 768;
         [SerializeField, Min(1f)] private float framingPadding = 1.18f;
+        [SerializeField, Min(1f)] private float framingScale = 1f;
+        [SerializeField, Range(-0.25f, 0.25f)] private float verticalFramingOffset;
 
         private RenderTexture activeRenderTexture;
 
@@ -23,6 +25,8 @@ namespace PetriDish.Presentation
         public Camera DisplayCamera => displayCamera;
         public RawImage Output => output;
         public RenderTexture ActiveRenderTexture => activeRenderTexture;
+        public float FramingScale => framingScale;
+        public float VerticalFramingOffset => verticalFramingOffset;
 
         public void ConfigureRig(Transform pivot, Camera camera, Light[] lights)
         {
@@ -38,6 +42,14 @@ namespace PetriDish.Presentation
             output = target;
             if (output != null && activeRenderTexture != null)
                 output.texture = activeRenderTexture;
+        }
+
+        public void ConfigureFraming(float scale, float verticalOffset)
+        {
+            framingScale = Mathf.Max(1f, scale);
+            verticalFramingOffset = Mathf.Clamp(verticalOffset, -0.25f, 0.25f);
+            if (activeRenderTexture != null)
+                FrameCamera();
         }
 
         private void OnEnable()
@@ -104,10 +116,11 @@ namespace PetriDish.Presentation
 
             float radius = Mathf.Max(bounds.extents.magnitude, 0.1f);
             float halfFov = Mathf.Max(1f, displayCamera.fieldOfView * 0.5f) * Mathf.Deg2Rad;
-            float distance = radius * framingPadding / Mathf.Sin(halfFov);
+            float distance = radius * framingPadding / (Mathf.Sin(halfFov) * framingScale);
             Vector3 direction = new Vector3(0f, 0.78f, -1f).normalized;
-            displayCamera.transform.position = bounds.center + direction * distance;
-            displayCamera.transform.rotation = Quaternion.LookRotation(bounds.center - displayCamera.transform.position, Vector3.up);
+            Vector3 target = bounds.center - Vector3.up * radius * verticalFramingOffset;
+            displayCamera.transform.position = target + direction * distance;
+            displayCamera.transform.rotation = Quaternion.LookRotation(target - displayCamera.transform.position, Vector3.up);
             displayCamera.nearClipPlane = Mathf.Max(0.01f, distance - radius * 2f);
             displayCamera.farClipPlane = distance + radius * 3f;
         }

@@ -86,4 +86,8 @@ The navigation rail is a masked vertical `ScrollRect`; Settings remains inside i
 
 `LaboratoryHub.unity` carries a `PetriDishRuntimeScene` marker with the `NonExperiment` role. `PetriDishRuntime` and its simulation controller may remain persistent across scene transitions, but `RuntimeBootstrap` attaches experiment presentation only when the active scene owns it. Entering the Hub detaches and removes any generated legacy experiment Canvas, renderer bindings, and generated EventSystem; entering an existing Phase 2 scene initializes its responsive binder or backward-compatible legacy presentation normally.
 
-Future non-experiment scenes should declare the same `NonExperiment` role instead of relying on scene-name checks. Existing Phase 2 experiment scenes remain compatible without immediate scene-asset migration because their responsive binder or enabled legacy presentation is treated as the experiment ownership signal.
+Future non-experiment scenes should declare the same `NonExperiment` role instead of relying on scene-name checks. Existing responsive Phase 2 experiment scenes remain compatible because their scene-owned binder is treated as an experiment signal. Any future scene that needs generated legacy presentation must explicitly declare the `Experiment` role; unmarked scenes do not receive legacy UI.
+
+## Final visual polish
+
+The Hub applies a consistent 1.25 typography scale to builder-owned text. Its selected-dish camera uses Hub-specific 1.35 framing with a small upward composition offset while retaining the shared `PetriDishDisplay` pivot, model, materials, and RenderTexture lifecycle. Growing state is shown as a compact healthy badge beside the dish identity, the redundant header Settings and footer prompt are removed, disabled dish-navigation arrows remain legible, and Current Observation receives restrained emphasis. The navigation rail remains masked and scrollable.

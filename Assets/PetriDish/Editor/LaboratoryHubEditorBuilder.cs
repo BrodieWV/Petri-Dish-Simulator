@@ -24,6 +24,9 @@ namespace PetriDish.Editor
         public const string DisplayPrefabPath = "Assets/PetriDish/Presentation/Prefabs/PetriDishDisplay.prefab";
         public const string MockColonyTexturePath = "Assets/PetriDish/Presentation/Textures/LaboratoryHubMockColony.asset";
         private const string DishModelPath = "Assets/PetriDish/Art/models/PetriDish.fbx";
+        private const float TypographyScale = 1.25f;
+        private const float HubDishFramingScale = 1.35f;
+        private const float HubDishVerticalOffset = 0.06f;
 
         [MenuItem("Petri Dish/Build Laboratory Hub")]
         public static void BuildLaboratoryHub()
@@ -294,9 +297,6 @@ namespace PetriDish.Editor
             Anchor(header, new Vector2(0f, 0.91f), Vector2.one, new Vector2(28f, 0f), new Vector2(-28f, -4f));
             CreateTextAnchored("Title", header, "PETRI LAB", 35, FontStyle.Bold, TextAnchor.MiddleLeft,
                 new Vector2(0f, 0f), new Vector2(0.60f, 1f), theme.textPrimary);
-            Button settingsHeader = CreateQuietButton("HeaderSettingsButton", header, "Settings", theme);
-            Anchor(settingsHeader.GetComponent<RectTransform>(), new Vector2(0.91f, 0.23f), new Vector2(1f, 0.77f), Vector2.zero, Vector2.zero);
-
             RectTransform body = CreateRect("Workspace", safeArea);
             Anchor(body, new Vector2(0f, 0.105f), new Vector2(1f, 0.905f), new Vector2(28f, 0f), new Vector2(-28f, 0f));
             HorizontalLayoutGroup columns = body.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -321,7 +321,9 @@ namespace PetriDish.Editor
             GameObject dishDisplay = InstantiatePrefab(DisplayPrefabPath, null);
             dishDisplay.name = "SelectedDish3DDisplay";
             RawImage dishOutput = FindChild(featured.transform, "DishDisplayImage").GetComponent<RawImage>();
-            dishDisplay.GetComponent<PetriDishDisplayPresenter>().ConfigureOutput(dishOutput);
+            PetriDishDisplayPresenter dishPresenter = dishDisplay.GetComponent<PetriDishDisplayPresenter>();
+            dishPresenter.ConfigureOutput(dishOutput);
+            dishPresenter.ConfigureFraming(HubDishFramingScale, HubDishVerticalOffset);
 
             GameObject notes = CreatePanel("LabNotesPanel", body, theme.panel, theme);
             LayoutElement notesLayout = notes.AddComponent<LayoutElement>();
@@ -351,11 +353,9 @@ namespace PetriDish.Editor
             actionLayout.childControlHeight = true;
             actionLayout.childForceExpandWidth = false;
             actionLayout.childForceExpandHeight = true;
-            Text actionPrompt = CreateText("ActionPrompt", actionDock.transform, "Continue your laboratory work", 15,
-                FontStyle.Normal, TextAnchor.MiddleLeft, theme.textSecondary);
-            LayoutElement promptLayout = actionPrompt.gameObject.AddComponent<LayoutElement>();
+            RectTransform actionSpacer = CreateRect("ActionSpacer", actionDock.transform);
+            LayoutElement promptLayout = actionSpacer.gameObject.AddComponent<LayoutElement>();
             promptLayout.flexibleWidth = 1f;
-            promptLayout.minWidth = 120f;
             Button compare = CreateButton("CompareButton", actionDock.transform, "COMPARE", theme, false);
             LayoutElement compareLayout = compare.gameObject.AddComponent<LayoutElement>();
             compareLayout.preferredWidth = 170f;
@@ -387,7 +387,7 @@ namespace PetriDish.Editor
             drawerButton.onClick.AddListener(responsive.ToggleNotesDrawer);
 
             LaboratoryHubPresenter presenter = root.AddComponent<LaboratoryHubPresenter>();
-            List<Button> actions = new List<Button> { newExperiment, compare, settingsHeader };
+            List<Button> actions = new List<Button> { newExperiment, compare };
             actions.AddRange(nav.GetComponentsInChildren<Button>(true));
             actions.Add(FindChild(featured.transform, "OpenDishButton").GetComponent<Button>());
             SerializedObject serializedPresenter = new SerializedObject(presenter);
@@ -414,20 +414,14 @@ namespace PetriDish.Editor
             }
 
             GameObject panel = CreatePanel(name, parent, theme.panel, theme);
-            Image liveStrip = CreateImage("LiveStatusStrip", panel.transform,
-                new Color(theme.cyan.r, theme.cyan.g, theme.cyan.b, 0.065f));
-            Anchor(liveStrip.rectTransform, new Vector2(0.04f, 0.905f), new Vector2(0.96f, 0.975f), Vector2.zero, Vector2.zero);
-            CreateTextAnchored("LiveLabel", liveStrip.transform, "\u25CF  Live culture", 16, FontStyle.Bold,
-                TextAnchor.MiddleLeft, new Vector2(0.03f, 0f), new Vector2(0.48f, 1f), theme.cyan);
-            CreateStatusBadge("StatusBadge", liveStrip.transform, "Growing well", theme.green, theme,
-                new Vector2(0.72f, 0.15f), new Vector2(0.97f, 0.85f));
-
             CreateTextAnchored("DishName", panel.transform, "Dish A", 40, FontStyle.Bold, TextAnchor.MiddleLeft,
-                new Vector2(0.05f, 0.820f), new Vector2(0.56f, 0.895f), theme.textPrimary);
+                new Vector2(0.05f, 0.835f), new Vector2(0.34f, 0.925f), theme.textPrimary);
+            CreateStatusBadge("StatusBadge", panel.transform, "\u25CF  Growing well", theme.green, theme,
+                new Vector2(0.35f, 0.855f), new Vector2(0.58f, 0.91f));
             CreateTextAnchored("Organism", panel.transform, "Bacillus subtilis", 24, FontStyle.Italic,
-                TextAnchor.MiddleLeft, new Vector2(0.05f, 0.765f), new Vector2(0.58f, 0.825f), theme.textPrimary);
+                TextAnchor.MiddleLeft, new Vector2(0.05f, 0.775f), new Vector2(0.58f, 0.84f), theme.textPrimary);
             CreateTextAnchored("Medium", panel.transform, "Nutrient Agar", 17, FontStyle.Normal,
-                TextAnchor.MiddleLeft, new Vector2(0.05f, 0.720f), new Vector2(0.58f, 0.770f), theme.textSecondary);
+                TextAnchor.MiddleLeft, new Vector2(0.05f, 0.72f), new Vector2(0.58f, 0.78f), theme.textSecondary);
 
             RectTransform previewWell = CreateRect("DishPreviewWell", panel.transform);
             Anchor(previewWell, new Vector2(0.035f, 0.145f), new Vector2(0.635f, 0.720f), Vector2.zero, Vector2.zero);
@@ -471,11 +465,13 @@ namespace PetriDish.Editor
             Button previous = CreateQuietButton("PreviousDishButton", navigation, "\u2039", theme);
             Anchor(previous.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0.16f, 1f), Vector2.zero, Vector2.zero);
             previous.interactable = false;
+            ConfigureDisabledDishNavigationButton(previous, theme);
             CreateTextAnchored("DishNavigationState", navigation.transform, "Dish A     1 / 1", 16,
                 FontStyle.Bold, TextAnchor.MiddleCenter, new Vector2(0.17f, 0f), new Vector2(0.83f, 1f), theme.textPrimary);
             Button next = CreateQuietButton("NextDishButton", navigation, "\u203A", theme);
             Anchor(next.GetComponent<RectTransform>(), new Vector2(0.84f, 0f), Vector2.one, Vector2.zero, Vector2.zero);
             next.interactable = false;
+            ConfigureDisabledDishNavigationButton(next, theme);
             return panel;
         }
 
@@ -599,6 +595,16 @@ namespace PetriDish.Editor
                 FindChild(instance.transform, "Detail").GetComponent<Text>().text = detail;
                 Transform instanceAccent = FindChild(instance.transform, "AccentLine");
                 if (instanceAccent != null) instanceAccent.GetComponent<Image>().color = accent;
+                if (name == "CurrentObservation")
+                {
+                    LayoutElement observationLayout = instance.GetComponent<LayoutElement>();
+                    observationLayout.minHeight = 128f;
+                    observationLayout.preferredHeight = 162f;
+                    observationLayout.flexibleHeight = 1.2f;
+                    instance.GetComponent<Image>().color = theme.panelRaised;
+                    Anchor(instanceAccent.GetComponent<RectTransform>(),
+                        new Vector2(0f, 0.10f), new Vector2(0.018f, 0.90f), Vector2.zero, Vector2.zero);
+                }
                 return instance;
             }
 
@@ -625,7 +631,7 @@ namespace PetriDish.Editor
         {
             Button button = CreateButton(name, parent, "", theme, false);
             LayoutElement layout = button.gameObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 62f;
+            layout.preferredHeight = 68f;
             if (selected)
             {
                 ColorBlock colors = button.colors;
@@ -637,7 +643,7 @@ namespace PetriDish.Editor
             }
             Image iconPlate = CreateImage("IconPlate", button.transform,
                 selected ? new Color(theme.cyan.r, theme.cyan.g, theme.cyan.b, 0.10f) : theme.panelRaised);
-            Anchor(iconPlate.rectTransform, new Vector2(0.04f, 0.18f), new Vector2(0.25f, 0.82f), Vector2.zero, Vector2.zero);
+            Anchor(iconPlate.rectTransform, new Vector2(0.04f, 0.17f), new Vector2(0.25f, 0.83f), Vector2.zero, Vector2.zero);
             CreateTextAnchored("Icon", iconPlate.transform, icon, 16, FontStyle.Bold, TextAnchor.MiddleCenter,
                 Vector2.zero, Vector2.one, selected ? theme.cyan : theme.textSecondary);
             CreateTextAnchored("Label", button.transform, label, 18, selected ? FontStyle.Bold : FontStyle.Normal,
@@ -673,6 +679,16 @@ namespace PetriDish.Editor
             CreateTextAnchored("Label", owner.transform, label, 15, FontStyle.Normal, TextAnchor.MiddleCenter,
                 new Vector2(0.04f, 0f), new Vector2(0.96f, 1f), theme.textSecondary);
             return button;
+        }
+
+        private static void ConfigureDisabledDishNavigationButton(Button button, PetriDishUITheme theme)
+        {
+            ColorBlock colors = button.colors;
+            colors.disabledColor = new Color(theme.panelRaised.r, theme.panelRaised.g, theme.panelRaised.b, 0.72f);
+            button.colors = colors;
+            Text label = button.GetComponentInChildren<Text>(true);
+            label.color = new Color(theme.textSecondary.r, theme.textSecondary.g, theme.textSecondary.b, 0.88f);
+            label.fontStyle = FontStyle.Bold;
         }
 
         private static Button CreateButton(string name, Transform parent, string label, PetriDishUITheme theme, bool primary)
@@ -722,15 +738,16 @@ namespace PetriDish.Editor
         private static Text CreateText(string name, Transform parent, string value, int size, FontStyle style, TextAnchor alignment, Color color)
         {
             Text text = CreateObject(name, parent, typeof(RectTransform), typeof(Text)).GetComponent<Text>();
+            int scaledSize = Mathf.CeilToInt(size * TypographyScale);
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.text = value;
-            text.fontSize = size;
+            text.fontSize = scaledSize;
             text.fontStyle = style;
             text.alignment = alignment;
             text.color = color;
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 12;
-            text.resizeTextMaxSize = size;
+            text.resizeTextMinSize = Mathf.CeilToInt(12f * TypographyScale);
+            text.resizeTextMaxSize = scaledSize;
             text.raycastTarget = false;
             return text;
         }

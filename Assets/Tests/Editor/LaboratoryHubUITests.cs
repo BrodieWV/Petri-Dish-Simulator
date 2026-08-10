@@ -92,6 +92,8 @@ namespace PetriDish.Tests.Editor
             Assert.That(display.RotationPivot, Is.Not.Null);
             Assert.That(display.DisplayCamera.transform.IsChildOf(display.RotationPivot), Is.False);
             Assert.That(display.Output.name, Is.EqualTo("DishDisplayImage"));
+            Assert.That(display.FramingScale, Is.EqualTo(1.35f).Within(0.001f));
+            Assert.That(display.VerticalFramingOffset, Is.EqualTo(0.06f).Within(0.001f));
             Assert.That(FindNamed(hub.transform, "SelectedDish"), Is.Not.Null);
             Assert.That(FindNamed(hub.transform, "LabNotesPanel"), Is.Not.Null);
             Assert.That(FindNamed(hub.transform, "DishNavigation"), Is.Not.Null);
@@ -148,6 +150,10 @@ namespace PetriDish.Tests.Editor
             Button next = FindNamed(hub.transform, "NextDishButton").GetComponent<Button>();
             Assert.That(previous.interactable, Is.False);
             Assert.That(next.interactable, Is.False);
+            Assert.That(previous.colors.disabledColor.a, Is.GreaterThanOrEqualTo(0.7f));
+            Assert.That(next.colors.disabledColor.a, Is.GreaterThanOrEqualTo(0.7f));
+            Assert.That(previous.GetComponentInChildren<Text>(true).fontSize, Is.GreaterThanOrEqualTo(19));
+            Assert.That(next.GetComponentInChildren<Text>(true).fontSize, Is.GreaterThanOrEqualTo(19));
             Assert.That(TextOf(hub, "DishNavigationState"), Is.EqualTo("Dish A     1 / 1"));
         }
 
@@ -177,8 +183,7 @@ namespace PetriDish.Tests.Editor
             GameObject hub = OpenHub();
             string[] actionNames =
             {
-                "NewExperimentButton", "CompareButton", "OpenDishButton",
-                "HeaderSettingsButton"
+                "NewExperimentButton", "CompareButton", "OpenDishButton"
             };
 
             foreach (string actionName in actionNames)
@@ -221,15 +226,18 @@ namespace PetriDish.Tests.Editor
         {
             GameObject hub = OpenHub();
             Assert.That(TextOf(hub, "Title"), Is.EqualTo("PETRI LAB"));
+            Assert.That(FindNamed(hub.transform, "Title").GetComponent<Text>().fontSize, Is.EqualTo(44));
             Assert.That(FindNamed(hub.transform, "Subtitle"), Is.Null);
             Assert.That(FindNamed(hub.transform, "ActionDock"), Is.Not.Null);
-            Assert.That(TextOf(hub, "ActionPrompt"), Is.EqualTo("Continue your laboratory work"));
+            Assert.That(FindNamed(hub.transform, "ActionPrompt"), Is.Null);
+            Assert.That(FindNamed(hub.transform, "ActionSpacer"), Is.Not.Null);
+            Assert.That(FindNamed(hub.transform, "HeaderSettingsButton"), Is.Null);
 
             Transform navigation = FindNamed(hub.transform, "NavigationRail");
             Text[] labels = navigation.GetComponentsInChildren<Text>(true)
                 .Where(text => text.name == "Label").ToArray();
             Assert.That(labels, Has.Length.EqualTo(7));
-            Assert.That(labels.All(label => label.fontSize >= 18), Is.True);
+            Assert.That(labels.All(label => label.fontSize >= 23), Is.True);
             Assert.That(FindNamed(navigation, "SelectedEdge").GetComponent<RectTransform>().anchorMax.x,
                 Is.LessThanOrEqualTo(0.012f));
 
@@ -239,7 +247,24 @@ namespace PetriDish.Tests.Editor
             Assert.That(FindNamed(observation, "AccentLine"), Is.Not.Null);
             Assert.That(FindNamed(observation, "Title").GetComponent<Text>().fontSize, Is.GreaterThanOrEqualTo(19));
             Assert.That(FindNamed(hub.transform, "HeaderJournalButton"), Is.Null);
-            Assert.That(FindNamed(hub.transform, "HeaderSettingsButton").GetComponent<Outline>(), Is.Null);
+            LayoutElement observationLayout = observation.GetComponent<LayoutElement>();
+            LayoutElement discoveryLayout = FindNamed(hub.transform, "LatestDiscovery").GetComponent<LayoutElement>();
+            Assert.That(observationLayout.preferredHeight, Is.GreaterThan(discoveryLayout.preferredHeight));
+        }
+
+        [Test]
+        public void FeaturedDishUsesCompactHealthyStatusAndScaledTypography()
+        {
+            GameObject hub = OpenHub();
+            Transform selectedDish = FindNamed(hub.transform, "SelectedDish");
+            Transform status = FindNamed(selectedDish, "StatusBadge");
+            Assert.That(status.parent, Is.EqualTo(selectedDish));
+            Assert.That(TextOf(status.gameObject, "Label"), Is.EqualTo("\u25CF  Growing well"));
+            Assert.That(FindNamed(selectedDish, "LiveStatusStrip"), Is.Null);
+            Assert.That(FindNamed(selectedDish, "DishName").GetComponent<Text>().fontSize, Is.EqualTo(50));
+            Assert.That(FindNamed(selectedDish, "Organism").GetComponent<Text>().fontSize, Is.EqualTo(30));
+            Assert.That(FindNamed(selectedDish, "Medium").GetComponent<Text>().fontSize, Is.EqualTo(22));
+            Assert.That(FindNamed(status, "Label").GetComponent<Text>().fontSize, Is.EqualTo(15));
         }
 
         [UnityTest]
@@ -263,6 +288,7 @@ namespace PetriDish.Tests.Editor
             Assert.That(display.ActiveRenderTexture.IsCreated(), Is.True);
             Assert.That(display.DisplayCamera.targetTexture, Is.SameAs(display.ActiveRenderTexture));
             Assert.That(display.Output.texture, Is.SameAs(display.ActiveRenderTexture));
+            AssertDisplayRenderersInsideViewport(display);
             GameObject feedback = FindNamed(presenter.transform, "PlaceholderFeedback").gameObject;
             Assert.That(feedback.activeSelf, Is.False);
 
@@ -330,6 +356,26 @@ namespace PetriDish.Tests.Editor
             int count = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(root);
             foreach (Transform child in root.transform) count += CountMissingScripts(child.gameObject);
             return count;
+        }
+
+        private static void AssertDisplayRenderersInsideViewport(PetriDishDisplayPresenter display)
+        {
+            Renderer[] renderers = display.RotationPivot.GetComponentsInChildren<Renderer>(true);
+            Assert.That(renderers, Is.Not.Empty);
+            foreach (Renderer renderer in renderers)
+            {
+                Bounds bounds = renderer.bounds;
+                for (int x = -1; x <= 1; x += 2)
+                for (int y = -1; y <= 1; y += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    Vector3 corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z));
+                    Vector3 viewport = display.DisplayCamera.WorldToViewportPoint(corner);
+                    Assert.That(viewport.z, Is.GreaterThan(0f), renderer.name);
+                    Assert.That(viewport.x, Is.InRange(0f, 1f), renderer.name);
+                    Assert.That(viewport.y, Is.InRange(0f, 1f), renderer.name);
+                }
+            }
         }
     }
 }
