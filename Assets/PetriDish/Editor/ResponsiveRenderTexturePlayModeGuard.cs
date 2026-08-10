@@ -63,6 +63,12 @@ namespace PetriDish.Editor
                     continue;
                 camera.targetTexture = null;
             }
+
+            PetriDishDisplayPresenter[] displays =
+                Resources.FindObjectsOfTypeAll<PetriDishDisplayPresenter>();
+            foreach (PetriDishDisplayPresenter display in displays)
+                if (display != null)
+                    display.ReleaseRenderTexture();
         }
     }
 }

@@ -43,6 +43,27 @@ namespace PetriDish.Tests.Editor
         }
 
         [Test]
+        public void SavedPreviewTextureUsesSamePropertyBlockPathWithoutMutatingMaterial()
+        {
+            ColonySurfacePresenter presenter = CreatePresenter(out MeshRenderer target);
+            Texture2D preview = new Texture2D(4, 4) { name = "SavedPreview" };
+            try
+            {
+                Assert.That(presenter.ConfigureStatic(target, "_MainTex", preview), Is.True, presenter.LastValidationError);
+                Assert.That(presenter.StaticTexture, Is.SameAs(preview));
+                Assert.That(presenter.TextureSource, Is.Null);
+                var block = new MaterialPropertyBlock();
+                target.GetPropertyBlock(block);
+                Assert.That(block.GetTexture(Shader.PropertyToID("_MainTex")), Is.SameAs(preview));
+                Assert.That(material.GetTexture("_MainTex"), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(preview);
+            }
+        }
+
+        [Test]
         public void DefaultAlignmentPreservesCurrentTextureTransform()
         {
             DishRenderer source = CreateSource();

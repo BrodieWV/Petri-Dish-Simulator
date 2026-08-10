@@ -46,6 +46,11 @@ and representative mobile performance verification remain before M6 is closed.
 
 Four organisms, four media, twelve guided experiments, ten challenges, journal, progression, discovery flow, cloning into multiple dishes, content validation, and responsive screens.
 
+Implementation note: the serialized Laboratory Hub presentation foundation is
+available for product-owner review. It contains mock data and placeholder
+interactions only; M7 simulation, persistence, progression, journal, challenge,
+unlock, comparison, transfer, and contamination systems remain not started.
+
 ## M8 — Mobile release candidate — Not started
 
 Performance, save integrity, accessibility, tutorial, analytics, monetisation boundaries, privacy, and store requirements pass.

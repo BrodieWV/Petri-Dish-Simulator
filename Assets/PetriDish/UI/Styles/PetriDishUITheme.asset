@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9133368b2494c5a458a334892505eabe, type: 3}
+  m_Name: PetriDishUITheme
+  m_EditorClassIdentifier: Assembly-CSharp::PetriDish.Presentation.UI.PetriDishUITheme
+  background: {r: 0.957, g: 0.945, b: 0.918, a: 1}
+  bench: {r: 0.914, g: 0.937, b: 0.941, a: 1}
+  panel: {r: 0.995, g: 0.995, b: 0.988, a: 1}
+  panelRaised: {r: 0.965, g: 0.976, b: 0.976, a: 1}
+  panelHover: {r: 0.892, g: 0.949, b: 0.949, a: 1}
+  border: {r: 0.82, g: 0.856, b: 0.86, a: 1}
+  shadow: {r: 0.12, g: 0.18, b: 0.2, a: 0.09}
+  cyan: {r: 0.075, g: 0.522, b: 0.565, a: 1}
+  green: {r: 0.22, g: 0.596, b: 0.38, a: 1}
+  amber: {r: 0.765, g: 0.47, b: 0.145, a: 1}
+  red: {r: 0.745, g: 0.235, b: 0.235, a: 1}
+  textPrimary: {r: 0.105, g: 0.145, b: 0.155, a: 1}
+  textSecondary: {r: 0.31, g: 0.38, b: 0.4, a: 1}
+  textDisabled: {r: 0.57, g: 0.625, b: 0.64, a: 1}
+  textOnAccent: {r: 0.985, g: 1, b: 1, a: 1}
+  compactSpacing: 12
+  standardSpacing: 20
+  navigationWidth: 224
+  compactNavigationWidth: 72
+  notesWidth: 360
+  compactLandscapeAspect: 1.95
+  compactLandscapeWidth: 1200

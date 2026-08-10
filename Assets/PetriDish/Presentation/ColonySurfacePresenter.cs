@@ -13,6 +13,8 @@ namespace PetriDish.Presentation
         [Header("Texture Binding")]
         [SerializeField] private MeshRenderer targetRenderer;
         [SerializeField] private DishRenderer textureSource;
+        [Tooltip("Optional saved colony texture used by previews that do not have a live DishRenderer.")]
+        [SerializeField] private Texture staticTexture;
         [Tooltip("Shader texture property that receives the live colony texture. Its matching '<property>_ST' vector receives alignment values.")]
         [SerializeField] private string texturePropertyName = DefaultTexturePropertyName;
         [SerializeField] private bool hideFlatDishImageAfterSuccessfulBinding;
@@ -36,6 +38,7 @@ namespace PetriDish.Presentation
 
         public MeshRenderer TargetRenderer => targetRenderer;
         public DishRenderer TextureSource => textureSource;
+        public Texture StaticTexture => staticTexture;
         public string TexturePropertyName => texturePropertyName;
         public Vector2 TextureScale => textureScale;
         public Vector2 TextureOffset => textureOffset;
@@ -56,16 +59,19 @@ namespace PetriDish.Presentation
 
         private void OnValidate()
         {
-            if (!isActiveAndEnabled || textureSource == null || textureSource.ColonyTexture == null)
+            Texture texture = GetCurrentTexture();
+            if (!isActiveAndEnabled || texture == null)
                 return;
-            TryApply(textureSource.ColonyTexture, false);
+            TryApply(texture, false);
         }
 
         private void OnEnable()
         {
-            if (textureSource == null) return;
-            SubscribeToSource();
-            TryApply(textureSource.ColonyTexture, true);
+            if (textureSource != null)
+                SubscribeToSource();
+            Texture texture = GetCurrentTexture();
+            if (texture != null)
+                TryApply(texture, true);
         }
 
         private void OnDisable()
@@ -89,6 +95,24 @@ namespace PetriDish.Presentation
             hideFlatDishImageAfterSuccessfulBinding = hideFlatDishImage;
         }
 
+        public bool ConfigureStatic(
+            MeshRenderer renderer,
+            string shaderTextureProperty,
+            Texture texture)
+        {
+            UnsubscribeFromSource();
+            ClearAppliedTexture();
+            targetRenderer = renderer;
+            textureSource = null;
+            staticTexture = texture;
+            texturePropertyName = shaderTextureProperty;
+            hideFlatDishImageAfterSuccessfulBinding = false;
+
+            if (!isActiveAndEnabled)
+                return ValidateConfiguration(out string error) || Fail(error, true);
+            return TryApply(staticTexture, true);
+        }
+
         public bool SetTextureAlignment(
             Vector2 scale,
             Vector2 offset,
@@ -100,7 +124,8 @@ namespace PetriDish.Presentation
             flipX = horizontalFlip;
             flipY = verticalFlip;
 
-            if (!isActiveAndEnabled || textureSource == null || textureSource.ColonyTexture == null)
+            Texture texture = GetCurrentTexture();
+            if (!isActiveAndEnabled || texture == null)
             {
                 if (!ValidateAlignment(out string error))
                     return Fail(error, true);
@@ -108,7 +133,7 @@ namespace PetriDish.Presentation
                 return true;
             }
 
-            return TryApply(textureSource.ColonyTexture, true);
+            return TryApply(texture, true);
         }
 
         public bool AutoCentre()
@@ -156,6 +181,7 @@ namespace PetriDish.Presentation
                 textureSource.SetFlatPresentationVisible(true);
             UnsubscribeFromSource();
             textureSource = source;
+            staticTexture = null;
             if (textureSource == null)
                 return Fail("A DishRenderer texture source is required.", true);
 
@@ -226,6 +252,9 @@ namespace PetriDish.Presentation
         {
             TryApply(colonyTexture, true);
         }
+
+        private Texture GetCurrentTexture() =>
+            textureSource != null ? textureSource.ColonyTexture : staticTexture;
 
         private bool TryApply(Texture colonyTexture, bool logError)
         {
