@@ -41,7 +41,7 @@ Exit: the current vertical slice runs through external definitions, two organism
 
 Qualified microbiology review and representative manual/device verification remain useful before final release sign-off.
 
-## M6.5 — Laboratory Hub interaction and navigation — Next
+## M6.5 — Laboratory Hub interaction and navigation — Implementation in review
 
 Make the current Laboratory Hub functional before beginning M7 content/system expansion.
 
@@ -64,6 +64,8 @@ Required outcomes:
 - Play/Stop and scene transitions do not leak presentation resources or duplicate EventSystems/cameras.
 
 Exit: the current UI behaves like a functioning game interface and the dish can be inspected naturally before multiple-dish, comparison, progression, and content expansion are added.
+
+Implementation status: code and regression tests are present on `feature/lab-hub-functionalisation`. Independent code review is complete. Full Unity execution and manual checks at desktop/tablet and compact-phone landscape sizes remain required before this milestone can be marked verified.
 
 ## M7 — Content-complete MVP — Not started
 

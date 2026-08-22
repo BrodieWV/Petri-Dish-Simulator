@@ -321,6 +321,15 @@ namespace PetriDish.Editor
             GameObject dishDisplay = InstantiatePrefab(DisplayPrefabPath, null);
             dishDisplay.name = "SelectedDish3DDisplay";
             RawImage dishOutput = FindChild(featured.transform, "DishDisplayImage").GetComponent<RawImage>();
+            dishOutput.raycastTarget = true;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(dishOutput);
+            Transform previewWell = FindChild(featured.transform, "DishPreviewWell");
+            if (FindChild(featured.transform, "ResetDishViewButton") == null)
+            {
+                Button resetView = CreateButton("ResetDishViewButton", previewWell, "RESET VIEW", theme, false);
+                Anchor(resetView.GetComponent<RectTransform>(), new Vector2(0.76f, 0.88f), new Vector2(0.98f, 0.98f),
+                    Vector2.zero, Vector2.zero);
+            }
             PetriDishDisplayPresenter dishPresenter = dishDisplay.GetComponent<PetriDishDisplayPresenter>();
             dishPresenter.ConfigureOutput(dishOutput);
             dishPresenter.ConfigureFraming(HubDishFramingScale, HubDishVerticalOffset);
@@ -384,7 +393,6 @@ namespace PetriDish.Editor
             LaboratoryHubResponsiveLayout responsive = body.gameObject.AddComponent<LaboratoryHubResponsiveLayout>();
             responsive.Configure(theme, safeArea, navLayout, navLabels.ToArray(), columns, notesLayout,
                 footerSpacerLayout, footerSpacerRightLayout, drawerButton.gameObject, drawer);
-            drawerButton.onClick.AddListener(responsive.ToggleNotesDrawer);
 
             LaboratoryHubPresenter presenter = root.AddComponent<LaboratoryHubPresenter>();
             List<Button> actions = new List<Button> { newExperiment, compare };
@@ -430,10 +438,14 @@ namespace PetriDish.Editor
             Anchor(preview.GetComponent<RectTransform>(), new Vector2(0.01f, 0.01f), new Vector2(0.99f, 0.99f), Vector2.zero, Vector2.zero);
             RawImage previewImage = preview.GetComponent<RawImage>();
             previewImage.color = Color.white;
-            previewImage.raycastTarget = false;
+            previewImage.raycastTarget = true;
+            if (PrefabUtility.IsPartOfPrefabInstance(previewImage))
+                PrefabUtility.RecordPrefabInstancePropertyModifications(previewImage);
             AspectRatioFitter fitter = preview.AddComponent<AspectRatioFitter>();
             fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = 1f;
+            Button resetView = CreateButton("ResetDishViewButton", previewWell, "RESET VIEW", theme, false);
+            Anchor(resetView.GetComponent<RectTransform>(), new Vector2(0.76f, 0.88f), new Vector2(0.98f, 0.98f), Vector2.zero, Vector2.zero);
 
             Image summary = CreateImage("CultureSummary", panel.transform,
                 new Color(theme.panelRaised.r, theme.panelRaised.g, theme.panelRaised.b, 0.82f));

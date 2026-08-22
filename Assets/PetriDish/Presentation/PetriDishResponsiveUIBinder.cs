@@ -1,6 +1,7 @@
 using System;
 using PetriDish.Application;
 using PetriDish.Content;
+using PetriDish.Presentation.UI;
 using PetriDish.Simulation;
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,6 +47,7 @@ namespace PetriDish.Presentation
         private int selectedX = -1;
         private int selectedY = -1;
         private string feedback;
+        private Button hubReturnButton;
 
         public DishRenderer ColonyTextureSource => dishRenderer;
         public bool IsInitialized => initialized;
@@ -63,6 +65,7 @@ namespace PetriDish.Presentation
             controller = value;
             EnsureDishRenderer();
             ConfigureViewport();
+            EnsureHubReturnButton();
             BindListeners();
             controller.SnapshotUpdated += OnSnapshot;
             controller.StageChanged += OnStageChanged;
@@ -73,6 +76,33 @@ namespace PetriDish.Presentation
         }
 
         private void OnDestroy() => Unbind();
+
+        public void PresentNewExperimentSetup()
+        {
+            if (!CanInteract()) return;
+            Transform setupPanel = FindNamedTransform("SetupPanel");
+            ResponsivePetriDishLayout layout = GetComponentInChildren<ResponsivePetriDishLayout>(true);
+            if (layout != null && layout.IsCompact && setupPanel != null && !setupPanel.gameObject.activeSelf)
+                layout.ToggleLeftDrawer();
+            feedback = "Choose an organism and medium in Experiment Setup to start a new experiment.";
+            RefreshAll();
+        }
+
+        public void PresentOpenSelectedDish(string dishId)
+        {
+            if (!CanInteract()) return;
+            feedback = string.IsNullOrWhiteSpace(dishId)
+                ? "Current experiment opened."
+                : "Dish " + dishId + " opened without restarting the experiment.";
+            RefreshAll();
+        }
+
+        public void ReturnToLaboratoryHub()
+        {
+            new UnityLaboratoryHubNavigator().Navigate(
+                LaboratoryHubAction.Lab,
+                new LaboratoryHubNavigationContext(null, 0));
+        }
 
         [ContextMenu("Auto Assign Responsive UI References")]
         public bool AutoAssignReferences()
@@ -370,6 +400,8 @@ namespace PetriDish.Presentation
             loadButton.onClick.AddListener(LoadExperiment);
             restartButton.onClick.AddListener(RestartSameSeed);
             newSeedButton.onClick.AddListener(RestartNewSeed);
+            if (hubReturnButton != null)
+                hubReturnButton.onClick.AddListener(ReturnToLaboratoryHub);
             listenersBound = true;
         }
 
@@ -395,10 +427,23 @@ namespace PetriDish.Presentation
                 loadButton.onClick.RemoveListener(LoadExperiment);
                 restartButton.onClick.RemoveListener(RestartSameSeed);
                 newSeedButton.onClick.RemoveListener(RestartNewSeed);
+                if (hubReturnButton != null)
+                    hubReturnButton.onClick.RemoveListener(ReturnToLaboratoryHub);
             }
             listenersBound = false;
             initialized = false;
             controller = null;
+        }
+
+        private void EnsureHubReturnButton()
+        {
+            if (hubReturnButton != null) return;
+            Transform existing = FindNamedTransform("LabHubButton") ?? FindNamedTransform("SettingsButton");
+            if (existing == null) return;
+            existing.name = "LabHubButton";
+            hubReturnButton = existing.GetComponent<Button>();
+            if (hubReturnButton != null)
+                Label(hubReturnButton, "Lab");
         }
 
         private void EnsureDishRenderer()

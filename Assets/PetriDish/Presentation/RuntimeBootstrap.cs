@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PetriDish.Application;
+using PetriDish.Presentation.UI;
 using PetriDish.Simulation;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -50,6 +51,8 @@ namespace PetriDish.Presentation
         private bool hasSnapshot;
         private int selectedX = -1;
         private int selectedY = -1;
+        private PetriDishDisplayPresenter hubDisplayPresenter;
+        private Button hubResetViewButton;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartRuntime()
@@ -134,7 +137,10 @@ namespace PetriDish.Presentation
                 ownership != null ? ownership.Role : PetriDishSceneRole.Experiment,
                 responsiveBinder != null);
             if (!ownsExperimentPresentation)
+            {
+                ConfigureLaboratoryHubPresentation(scene);
                 return;
+            }
 
             CreateEventSystem();
             if (ShouldGenerateLegacyRuntimeUi(generateLegacyRuntimeUi, responsiveBinder != null))
@@ -152,6 +158,7 @@ namespace PetriDish.Presentation
             }
 
             BindColonySurfacePresenters(scene);
+            ApplyPendingExperimentEntry();
         }
 
         private void DetachExperimentPresentation()
@@ -165,6 +172,10 @@ namespace PetriDish.Presentation
                 renderer.DishTapped -= OnDishTapped;
             renderer = null;
             responsiveBinder = null;
+            if (hubResetViewButton != null && hubDisplayPresenter != null)
+                hubResetViewButton.onClick.RemoveListener(hubDisplayPresenter.ResetView);
+            hubResetViewButton = null;
+            hubDisplayPresenter = null;
             legacyRuntimeUiGenerated = false;
             baseFontSizes.Clear();
 
@@ -177,6 +188,87 @@ namespace PetriDish.Presentation
             Destroy(legacyRuntimeCanvas);
             legacyRuntimeCanvas = null;
             ReleaseGeneratedEventSystem();
+        }
+
+        public bool ApplyPendingExperimentEntry()
+        {
+            if (responsiveBinder != null && !responsiveBinder.IsInitialized)
+                return false;
+            if (responsiveBinder == null && setupPanel == null)
+                return false;
+            if (!LaboratoryHubExperimentEntry.TryConsume(out ExperimentEntryRequest request))
+                return false;
+
+            if (request.Intent == ExperimentEntryIntent.NewExperimentSetup)
+            {
+                if (responsiveBinder != null)
+                    responsiveBinder.PresentNewExperimentSetup();
+                else if (setupPanel != null)
+                    OpenSetup();
+            }
+            else if (request.Intent == ExperimentEntryIntent.OpenSelectedDish)
+            {
+                if (responsiveBinder != null)
+                    responsiveBinder.PresentOpenSelectedDish(request.DishId);
+                else if (outcome != null)
+                    outcome.text = "Current dish opened without restarting the experiment.";
+            }
+            return true;
+        }
+
+        private void ConfigureLaboratoryHubPresentation(Scene scene)
+        {
+            LaboratoryHubPresenter hubPresenter = FindInScene<LaboratoryHubPresenter>(scene);
+            if (hubPresenter != null && controller != null && controller.Simulation != null)
+            {
+                var organism = controller.DefinitionCatalog.ResolveOrganism(controller.Simulation.OrganismId);
+                var medium = controller.DefinitionCatalog.ResolveMedium(controller.Simulation.MediumId);
+                hubPresenter.ConfigureDishProvider(new SingleLaboratoryDishProvider(
+                    new LaboratoryDishViewData(
+                        "current-experiment",
+                        "Dish A",
+                        organism.DisplayName,
+                        medium.DisplayName)));
+            }
+
+            hubDisplayPresenter = FindInScene<PetriDishDisplayPresenter>(scene);
+            if (hubDisplayPresenter == null || hubDisplayPresenter.Output == null)
+                return;
+
+            hubDisplayPresenter.Output.raycastTarget = true;
+            Transform host = hubDisplayPresenter.Output.transform.parent;
+            Transform existing = host.Find("ResetDishViewButton");
+            hubResetViewButton = existing != null
+                ? existing.GetComponent<Button>()
+                : CreateHubResetViewButton(host);
+            if (hubResetViewButton == null)
+                return;
+            hubResetViewButton.onClick.RemoveListener(hubDisplayPresenter.ResetView);
+            hubResetViewButton.onClick.AddListener(hubDisplayPresenter.ResetView);
+        }
+
+        private Button CreateHubResetViewButton(Transform parent)
+        {
+            GameObject owner = new GameObject(
+                "ResetDishViewButton",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button));
+            owner.transform.SetParent(parent, false);
+            RectTransform rect = owner.GetComponent<RectTransform>();
+            SetRect(rect, new Vector2(0.76f, 0.88f), new Vector2(0.98f, 0.98f));
+            Image image = owner.GetComponent<Image>();
+            image.color = new Color(0.055f, 0.09f, 0.075f, 0.94f);
+            Button button = owner.GetComponent<Button>();
+            ColorBlock colours = button.colors;
+            colours.highlightedColor = new Color(0.11f, 0.19f, 0.16f, 1f);
+            colours.pressedColor = new Color(0.03f, 0.06f, 0.05f, 1f);
+            button.colors = colours;
+            Text label = Text(owner.transform, "Label", 16, TextAnchor.MiddleCenter);
+            SetRect(label.rectTransform, Vector2.zero, Vector2.one);
+            label.text = "Reset view";
+            label.raycastTarget = false;
+            return button;
         }
 
         private static T FindInScene<T>(Scene scene) where T : Component

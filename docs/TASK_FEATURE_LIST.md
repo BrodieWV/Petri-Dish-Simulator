@@ -15,7 +15,7 @@ This file records features the user wants implemented in Petri Dish Simulator. I
 
 ### F-001 — Rotate and zoom around the petri dish
 
-**Status:** Designed  
+**Status:** Implemented
 **Priority:** High  
 **Area:** Camera and dish interaction  
 **Milestone:** M6.5 / Phase 3.0
@@ -66,7 +66,7 @@ The Laboratory Hub now uses a reusable real 3D petri-dish display with a dedicat
 
 ### F-002 — Laboratory Hub controls and navigation
 
-**Status:** Designed  
+**Status:** Implemented
 **Priority:** High  
 **Area:** UI navigation and screen flow  
 **Milestone:** M6.5 / Phase 3.0
@@ -96,7 +96,7 @@ Every visible Laboratory Hub control must behave intentionally before broader Ph
 
 ### F-003 — Laboratory Hub dish selection controls
 
-**Status:** Designed  
+**Status:** Implemented
 **Priority:** High  
 **Area:** Hub dish selection / future multi-dish support  
 **Milestone:** M6.5 / Phase 3.0 foundation
