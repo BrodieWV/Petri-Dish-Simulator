@@ -19,10 +19,18 @@ namespace PetriDish.Presentation.UI
         [SerializeField] private bool forceCompactLandscape;
         private Vector2 lastSize;
         private bool lastForced;
+        private Button notesDrawerToggle;
+        private bool notesDrawerListenerBound;
 
         public bool IsCompact { get; private set; }
 
-        private void OnEnable() => Refresh();
+        private void OnEnable()
+        {
+            BindNotesDrawerButton();
+            Refresh();
+        }
+
+        private void OnDisable() => UnbindNotesDrawerButton();
 
         private void Update()
         {
@@ -53,6 +61,7 @@ namespace PetriDish.Presentation.UI
             actionsRightInset = actionRight;
             notesDrawerButton = drawerButton;
             notesDrawer = drawer;
+            BindNotesDrawerButton();
             Refresh();
         }
 
@@ -99,6 +108,25 @@ namespace PetriDish.Presentation.UI
         public void ToggleNotesDrawer()
         {
             if (notesDrawer != null) notesDrawer.SetActive(!notesDrawer.activeSelf);
+        }
+
+        private void BindNotesDrawerButton()
+        {
+            Button resolved = notesDrawerButton != null ? notesDrawerButton.GetComponent<Button>() : null;
+            if (notesDrawerListenerBound && notesDrawerToggle == resolved) return;
+            UnbindNotesDrawerButton();
+            notesDrawerToggle = resolved;
+            if (notesDrawerToggle == null) return;
+            notesDrawerToggle.onClick.AddListener(ToggleNotesDrawer);
+            notesDrawerListenerBound = true;
+        }
+
+        private void UnbindNotesDrawerButton()
+        {
+            if (notesDrawerListenerBound && notesDrawerToggle != null)
+                notesDrawerToggle.onClick.RemoveListener(ToggleNotesDrawer);
+            notesDrawerListenerBound = false;
+            notesDrawerToggle = null;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 ## Current status
 
-Phase 1 is complete. Phase 2 automated implementation is complete and the Laboratory Hub presentation foundation is merged. The immediate next milestone is Phase 3.0: make the Laboratory Hub and dish inspection experience function correctly before expanding Phase 3 systems.
+Phase 1 is complete. Phase 2 automated implementation is complete and the Laboratory Hub presentation foundation is merged. Phase 3.0 Laboratory Hub functionalisation is implemented on its feature branch and remains in review pending the full Unity suite and supported-landscape manual verification.
 
 ## Phase 0 — Foundation — Complete
 
@@ -29,7 +29,7 @@ Exit: players can select organisms and media, run meaningfully different experim
 
 The integrated branch passes the complete automated suite. Qualified scientific review and representative manual/device verification remain useful, but Phase 3 expansion must not begin by adding more content or systems until the current Laboratory Hub interaction and navigation are functional.
 
-## Phase 3.0 — Laboratory Hub Functionalisation — Next
+## Phase 3.0 — Laboratory Hub Functionalisation — Implementation in review
 
 Correct and complete the existing Laboratory Hub before expanding Phase 3 gameplay systems.
 
@@ -53,6 +53,8 @@ Scope:
 - Play/Stop and scene changes must not leak cameras, RenderTextures, EventSystems, or presentation objects.
 
 Exit: every visible control behaves intentionally, navigation is coherent, the real 3D dish can be inspected comfortably, and the existing UI is stable enough to support Phase 3 expansion.
+
+Implementation includes shared navigation actions, honest unavailable states, a controller-derived single-dish presentation source, constrained mouse/touch dish inspection, Reset View, runtime Lab Notes binding, and Hub/experiment lifecycle regression coverage. Broader Phase 3 remains blocked until the full Unity run and manual landscape/input inspection pass.
 
 ## Phase 3 — Comparative Experiments and Progression
 

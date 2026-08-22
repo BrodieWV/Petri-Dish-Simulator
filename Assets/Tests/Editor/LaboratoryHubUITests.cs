@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using PetriDish.Application;
+using PetriDish.Content;
 using PetriDish.Editor;
 using PetriDish.Presentation;
 using PetriDish.Presentation.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -29,6 +32,29 @@ namespace PetriDish.Tests.Editor
         public void ForcedCompactLayoutOverridesDesktopClassification()
         {
             Assert.That(LaboratoryHubResponsiveLayout.ShouldUseCompactLayout(1920f, 1080f, true), Is.True);
+        }
+
+        [Test]
+        public void CompactNotesButtonTogglesDrawerThroughRuntimeBinding()
+        {
+            GameObject root = new GameObject("CompactHub", typeof(RectTransform));
+            GameObject buttonOwner = new GameObject(
+                "NotesDrawerButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonOwner.transform.SetParent(root.transform, false);
+            GameObject drawer = new GameObject("NotesDrawer", typeof(RectTransform));
+            drawer.transform.SetParent(root.transform, false);
+            drawer.SetActive(false);
+            RectTransform rootRect = root.GetComponent<RectTransform>();
+            rootRect.sizeDelta = new Vector2(1136f, 640f);
+            LaboratoryHubResponsiveLayout layout = root.AddComponent<LaboratoryHubResponsiveLayout>();
+            layout.Configure(null, rootRect, null, null, null, null, null, null, buttonOwner, drawer);
+
+            buttonOwner.GetComponent<Button>().onClick.Invoke();
+            Assert.That(drawer.activeSelf, Is.True);
+            buttonOwner.GetComponent<Button>().onClick.Invoke();
+            Assert.That(drawer.activeSelf, Is.False);
+
+            Object.DestroyImmediate(root);
         }
 
         [Test]
@@ -92,6 +118,8 @@ namespace PetriDish.Tests.Editor
             Assert.That(display.RotationPivot, Is.Not.Null);
             Assert.That(display.DisplayCamera.transform.IsChildOf(display.RotationPivot), Is.False);
             Assert.That(display.Output.name, Is.EqualTo("DishDisplayImage"));
+            Assert.That(display.Output.raycastTarget, Is.True);
+            Assert.That(FindNamed(hub.transform, "ResetDishViewButton"), Is.Not.Null);
             Assert.That(display.FramingScale, Is.EqualTo(1.35f).Within(0.001f));
             Assert.That(display.VerticalFramingOffset, Is.EqualTo(0.06f).Within(0.001f));
             Assert.That(FindNamed(hub.transform, "SelectedDish"), Is.Not.Null);
@@ -288,7 +316,15 @@ namespace PetriDish.Tests.Editor
             Assert.That(display.ActiveRenderTexture.IsCreated(), Is.True);
             Assert.That(display.DisplayCamera.targetTexture, Is.SameAs(display.ActiveRenderTexture));
             Assert.That(display.Output.texture, Is.SameAs(display.ActiveRenderTexture));
+            Assert.That(display.Output.raycastTarget, Is.True);
             AssertDisplayRenderersInsideViewport(display);
+            Button resetView = FindNamed(presenter.transform, "ResetDishViewButton").GetComponent<Button>();
+            Assert.That(resetView, Is.Not.Null);
+            display.OrbitBy(new Vector2(120f, -60f));
+            Assert.That(display.YawDegrees, Is.Not.Zero);
+            resetView.onClick.Invoke();
+            Assert.That(display.YawDegrees, Is.Zero.Within(0.001f));
+            Assert.That(display.PitchDegrees, Is.Zero.Within(0.001f));
             GameObject feedback = FindNamed(presenter.transform, "PlaceholderFeedback").gameObject;
             Assert.That(feedback.activeSelf, Is.False);
 
@@ -328,6 +364,93 @@ namespace PetriDish.Tests.Editor
             Assert.That(Object.FindAnyObjectByType<DishViewportPresenter>(), Is.Null);
             Assert.That(Object.FindAnyObjectByType<PetriDishDisplayPresenter>(), Is.Not.Null);
             Assert.That(Object.FindAnyObjectByType<LaboratoryHubPresenter>(), Is.Not.Null);
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTest]
+        public IEnumerator HubExperimentEntriesAndReturnPreserveAuthoritativeRuntimeState()
+        {
+            EditorSceneManager.OpenScene(LaboratoryHubEditorBuilder.ScenePath, OpenSceneMode.Single);
+            yield return new EnterPlayMode();
+            yield return null;
+
+            RuntimeBootstrap runtime = Object.FindAnyObjectByType<RuntimeBootstrap>();
+            ExperimentController controller = runtime.GetComponent<ExperimentController>();
+            LaboratoryHubPresenter hub = Object.FindAnyObjectByType<LaboratoryHubPresenter>();
+            object initialSimulation = controller.Simulation;
+            int initialSeed = controller.Simulation.Seed;
+
+            hub.Execute(LaboratoryHubAction.NewExperiment);
+            yield return null;
+            yield return null;
+
+            Assert.That(SceneManager.GetActiveScene().name,
+                Is.EqualTo(UnityLaboratoryHubNavigator.ExperimentSceneName));
+            Assert.That(Object.FindAnyObjectByType<RuntimeBootstrap>(), Is.SameAs(runtime));
+            Assert.That(controller.Simulation, Is.SameAs(initialSimulation),
+                "Opening setup must not restart the current experiment before confirmation.");
+            Assert.That(controller.Simulation.Seed, Is.EqualTo(initialSeed));
+            Assert.That(LaboratoryHubExperimentEntry.HasPendingRequest, Is.False);
+            PetriDishResponsiveUIBinder binder = Object.FindAnyObjectByType<PetriDishResponsiveUIBinder>();
+            Assert.That(binder, Is.Not.Null);
+            Text inspection = FindNamed(binder.transform, "InspectionText").GetComponent<Text>();
+            Assert.That(inspection.text, Does.Contain("Choose an organism and medium"));
+            Button lab = FindNamed(binder.transform, "LabHubButton").GetComponent<Button>();
+            Assert.That(lab.GetComponentInChildren<Text>(true).text, Is.EqualTo("Lab"));
+            controller.StartNew(
+                987654,
+                SimulationDefinitionCatalog.SaccharomycesCerevisiaeId,
+                SimulationDefinitionCatalog.LowNutrientAgarId);
+
+            lab.onClick.Invoke();
+            yield return null;
+            yield return null;
+
+            Assert.That(SceneManager.GetActiveScene().name,
+                Is.EqualTo(UnityLaboratoryHubNavigator.HubSceneName));
+            Assert.That(Object.FindAnyObjectByType<RuntimeBootstrap>(), Is.SameAs(runtime));
+            Assert.That(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            hub = Object.FindAnyObjectByType<LaboratoryHubPresenter>();
+            Assert.That(FindNamed(hub.transform, "Organism").GetComponent<Text>().text,
+                Is.EqualTo("Saccharomyces cerevisiae"));
+            Assert.That(FindNamed(hub.transform, "Medium").GetComponent<Text>().text,
+                Is.EqualTo("Low-Nutrient Agar"));
+
+            PetriDishDisplayPresenter previousHubDisplay = Object.FindAnyObjectByType<PetriDishDisplayPresenter>();
+            RenderTexture previousHubTexture = previousHubDisplay.ActiveRenderTexture;
+            object selectedSimulation = controller.Simulation;
+            long selectedTick = controller.Simulation.Tick;
+            hub.Execute(LaboratoryHubAction.OpenDish);
+            yield return null;
+            yield return null;
+
+            Assert.That(controller.Simulation, Is.SameAs(selectedSimulation));
+            Assert.That(controller.Simulation.Seed, Is.EqualTo(987654));
+            Assert.That(controller.Simulation.Tick, Is.EqualTo(selectedTick));
+            Assert.That(LaboratoryHubExperimentEntry.HasPendingRequest, Is.False);
+            Assert.That(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(previousHubTexture == null, Is.True,
+                "The previous Hub RenderTexture must be released when its display is destroyed.");
+
+            binder = Object.FindAnyObjectByType<PetriDishResponsiveUIBinder>();
+            lab = FindNamed(binder.transform, "LabHubButton").GetComponent<Button>();
+            lab.onClick.Invoke();
+            yield return null;
+            yield return null;
+
+            Assert.That(SceneManager.GetActiveScene().name,
+                Is.EqualTo(UnityLaboratoryHubNavigator.HubSceneName));
+            Assert.That(Object.FindObjectsByType<RuntimeBootstrap>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<PetriDishDisplayPresenter>(FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(Object.FindAnyObjectByType<PetriDishResponsiveUIBinder>(), Is.Null,
+                "Experiment presentation must not remain over the Laboratory Hub.");
+            PetriDishDisplayPresenter returnedDisplay = Object.FindAnyObjectByType<PetriDishDisplayPresenter>();
+            Assert.That(returnedDisplay.DisplayCamera, Is.Not.Null);
+            Assert.That(returnedDisplay.ActiveRenderTexture, Is.Not.Null);
+            Assert.That(returnedDisplay.ActiveRenderTexture.IsCreated(), Is.True);
+            Assert.That(FindNamed(Object.FindAnyObjectByType<LaboratoryHubPresenter>().transform, "Organism")
+                .GetComponent<Text>().text, Is.EqualTo("Saccharomyces cerevisiae"));
             yield return new ExitPlayMode();
         }
 

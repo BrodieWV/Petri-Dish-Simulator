@@ -1,10 +1,12 @@
 # Implementation Status — Phase 1 Complete / Phase 2 Active
 
-Updated: 3 August 2026.
+Updated: 22 August 2026.
 
 ## Current project state
 
-The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 is active.
+The Phase 1 vertical slice is functionally complete and verified in Unity `6000.5.3f1`. Phase 2 automated implementation is complete, and M6.5 Laboratory Hub functionalisation is implemented for review.
+
+The M6.5 feature branch gives every visible Hub control an intentional action, routes both New Experiment and Compare entry points consistently, preserves the authoritative experiment when opening the selected dish, and exposes honest unavailable states for deferred Phase 3 destinations. The real Hub dish supports constrained mouse/touch orbit and zoom with Reset View and UI-overlay isolation. The single-dish card is derived from the persistent experiment controller while its arrows remain truthfully disabled. Automated coverage includes routing, presentation constraints, compact Notes behavior, and the Hub-to-experiment-to-Hub lifecycle. Full Unity execution and manual supported-landscape inspection remain release gates.
 
 The data-driven organism and medium framework and live colony-texture bridge are merged.
 Draft Phase 2 PRs add the product-owner-approved *Bacillus subtilis* identity (#9), reconcile

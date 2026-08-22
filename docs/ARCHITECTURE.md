@@ -65,6 +65,20 @@ a readable mesh and fail without replacing an existing live texture binding othe
 surface. Hiding its image changes only its alpha, preserving inspection raycasts until a
 separate reviewed 3D raycast-mapping task is approved.
 
+The Laboratory Hub uses a presentation-only navigation adapter and one-shot entry intent to
+distinguish opening the current dish from entering the existing experiment-setup flow. The
+persistent `ExperimentController` remains authoritative across scene changes; Hub view data is
+resolved from its selected organism and medium definitions rather than copied into a second
+simulation model. Explicit `PetriDishRuntimeScene` roles still decide whether experiment
+presentation may bind, while scene names are used only as navigation destinations.
+
+`PetriDishDisplayPresenter` owns Hub inspection input for the existing `RotationPivot` and
+presentation camera. It constrains yaw, pitch, and zoom, restores the authored view, and rejects
+gestures beginning under raycastable UI. These controls never reference or mutate simulation,
+application, or save state. `RuntimeBootstrap` binds the Hub Reset View action and releases the
+Hub RenderTexture/listeners on scene transitions. The current single-dish provider is an
+extension boundary for later multi-dish persistence, not a persistence implementation.
+
 The current project uses Unity's built-in render pipeline. The presenter defaults to the
 Standard shader texture property `_MainTex`, but the property name is serialized and
 validated so another compatible shader can be configured explicitly.
