@@ -84,3 +84,7 @@ requested and delivered amounts. Simulation saves remain schema v3; the applicat
 wrapper uses schema v4 and migrates schema-v3 experiments to full unused supply, no
 pending delivery, no cooldown, and empty history. These are educational gameplay values,
 not laboratory dosing guidance.
+
+## D-019 — Functionalise the Laboratory Hub before expanding Phase 3
+
+Accepted by the product owner on 22 August 2026. The current Laboratory Hub presentation is considered visually sufficient to proceed, but Phase 3 content and system expansion is paused until the Hub behaves as an intentional game interface. The immediate M6.5 / Phase 3.0 work is to wire visible navigation/actions, provide honest temporary states for unfinished destinations, make the selected real 3D dish directly inspectable with constrained orbit and zoom, establish truthful single-dish selector behaviour, and verify Hub-to-experiment navigation and presentation lifecycle cleanup. This work must reuse the existing real 3D dish and rotation-pivot presentation architecture rather than introducing a second fake dish implementation. Multiple dishes, additional organisms/media, comparison, lineage, progression, journal, challenges, contamination, achievements, and statistics resume after M6.5 is verified.
