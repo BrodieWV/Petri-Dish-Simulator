@@ -24,7 +24,7 @@ Temperature and moisture controls, delayed effects, limiting-factor feedback, pa
 
 Complete setup-to-outcome flow, one guided experiment, saving, onboarding, informative failure, phone-safe layout, and automated verification.
 
-Remaining presentation work includes the 3D dish integration, final materials, audio, haptics, and final art.
+Remaining presentation work includes final materials, audio, haptics, and final art.
 
 ## M6 — Data-driven experimental framework — Automated implementation complete; review active
 
@@ -35,21 +35,41 @@ Remaining presentation work includes the 3D dish integration, final materials, a
 - Live colony texture connected to the approved 3D dish
 - Nutrient intervention
 - Content validation and regression tests
+- Laboratory Hub presentation foundation using the reusable 3D dish
 
 Exit: the current vertical slice runs through external definitions, two organisms and two media produce meaningfully different outcomes, and all tests pass.
 
-The integrated completion branch satisfies the automated exit checks. Qualified
-microbiology review, approved-scene Play Mode checks, portrait/touch/readability review,
-and representative mobile performance verification remain before M6 is closed.
+Qualified microbiology review and representative manual/device verification remain useful before final release sign-off.
+
+## M6.5 — Laboratory Hub interaction and navigation — Next
+
+Make the current Laboratory Hub functional before beginning M7 content/system expansion.
+
+Required outcomes:
+
+- Every visible Hub button has intentional behaviour.
+- Lab navigation returns to the Hub.
+- New Experiment entry points open experiment setup.
+- Open Dish enters the selected experiment view.
+- Compare entry points open comparison or a clear requirements/unavailable state.
+- Journal, Collection, Challenges, and Settings are wired to implemented screens or explicit temporary states rather than dead controls.
+- Left/right dish selectors are functional at the UI layer and ready for multiple dishes.
+- The real 3D dish supports constrained orbit/rotation and zoom.
+- Desktop/Editor input supports mouse drag, wheel zoom, and reset view.
+- Touch input supports drag orbit and pinch zoom where practical.
+- UI input does not trigger dish-camera movement.
+- Camera controls do not modify simulation state.
+- Dish framing is stable across supported landscape resolutions.
+- Hub → Open Dish → Lab navigation is verified.
+- Play/Stop and scene transitions do not leak presentation resources or duplicate EventSystems/cameras.
+
+Exit: the current UI behaves like a functioning game interface and the dish can be inspected naturally before multiple-dish, comparison, progression, and content expansion are added.
 
 ## M7 — Content-complete MVP — Not started
 
-Four organisms, four media, twelve guided experiments, ten challenges, journal, progression, discovery flow, cloning into multiple dishes, content validation, and responsive screens.
+Four organisms, four media, twelve guided experiments, ten challenges, journal, progression, discovery flow, cloning into multiple dishes, content validation, comparison, transfer/lineage, contamination, and responsive screens.
 
-Implementation note: the serialized Laboratory Hub presentation foundation is
-available for product-owner review. It contains mock data and placeholder
-interactions only; M7 simulation, persistence, progression, journal, challenge,
-unlock, comparison, transfer, and contamination systems remain not started.
+Implementation note: the serialized Laboratory Hub presentation foundation is merged. M6.5 now converts its mock/placeholder interactions into functional navigation and 3D dish inspection. M7 simulation, persistence, progression, journal, challenge, unlock, comparison, transfer, and contamination systems remain not started until M6.5 is verified.
 
 ## M8 — Mobile release candidate — Not started
 
