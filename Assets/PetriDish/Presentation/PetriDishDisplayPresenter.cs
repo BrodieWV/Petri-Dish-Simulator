@@ -177,21 +177,28 @@ namespace PetriDish.Presentation
             if (canvas == null)
                 return false;
 
-            IList<Graphic> graphics = GraphicRegistry.GetGraphicsForCanvas(canvas);
-            int outputDepth = output.depth;
+            Graphic[] graphics = canvas.GetComponentsInChildren<Graphic>(false);
             Camera eventCamera = OutputEventCamera();
-            for (int i = 0; i < graphics.Count; i++)
+            bool reachedOutput = false;
+            for (int i = 0; i < graphics.Length; i++)
             {
                 Graphic graphic = graphics[i];
-                if (graphic == null || graphic == output || !graphic.raycastTarget ||
-                    !graphic.isActiveAndEnabled || graphic.depth <= outputDepth)
+                if (graphic == output)
+                {
+                    reachedOutput = true;
+                    continue;
+                }
+                if (!reachedOutput || graphic == null || !graphic.raycastTarget || !graphic.isActiveAndEnabled)
                     continue;
 
                 Transform graphicTransform = graphic.transform;
                 if (graphicTransform.IsChildOf(output.transform) || output.transform.IsChildOf(graphicTransform))
                     continue;
 
-                if (graphic.Raycast(screenPosition, eventCamera))
+                if (RectTransformUtility.RectangleContainsScreenPoint(
+                    graphic.rectTransform,
+                    screenPosition,
+                    eventCamera))
                     return true;
             }
             return false;
