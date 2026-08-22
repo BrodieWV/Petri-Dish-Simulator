@@ -31,6 +31,11 @@ namespace PetriDish.Presentation.UI
 
         private void OnEnable()
         {
+            InitializePresentation();
+        }
+
+        private void InitializePresentation()
+        {
             if (navigator == null) navigator = new UnityLaboratoryHubNavigator();
             if (selection == null) selection = new LaboratoryHubDishSelection(new SingleLaboratoryDishProvider());
             ResolveSelectionControls();
@@ -52,12 +57,13 @@ namespace PetriDish.Presentation.UI
         public void ConfigureNavigation(ILaboratoryHubNavigator navigation)
         {
             navigator = navigation ?? throw new ArgumentNullException(nameof(navigation));
+            InitializePresentation();
         }
 
         public void ConfigureDishProvider(ILaboratoryDishProvider provider)
         {
             selection = new LaboratoryHubDishSelection(provider);
-            if (isActiveAndEnabled) RefreshSelection();
+            InitializePresentation();
         }
 
         public void Execute(LaboratoryHubAction action)

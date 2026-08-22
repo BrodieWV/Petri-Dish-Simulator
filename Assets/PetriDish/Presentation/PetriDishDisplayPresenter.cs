@@ -133,6 +133,8 @@ namespace PetriDish.Presentation
                 return false;
 
             EventSystem eventSystem = EventSystem.current;
+            if (HasBlockingGraphicAboveOutput(screenPosition))
+                return false;
             if (eventSystem == null)
                 return true;
 
@@ -167,6 +169,32 @@ namespace PetriDish.Presentation
                     return false;
             }
             return true;
+        }
+
+        private bool HasBlockingGraphicAboveOutput(Vector2 screenPosition)
+        {
+            Canvas canvas = output.canvas;
+            if (canvas == null)
+                return false;
+
+            IList<Graphic> graphics = GraphicRegistry.GetGraphicsForCanvas(canvas);
+            int outputDepth = output.depth;
+            Camera eventCamera = OutputEventCamera();
+            for (int i = 0; i < graphics.Count; i++)
+            {
+                Graphic graphic = graphics[i];
+                if (graphic == null || graphic == output || !graphic.raycastTarget ||
+                    !graphic.isActiveAndEnabled || graphic.depth <= outputDepth)
+                    continue;
+
+                Transform graphicTransform = graphic.transform;
+                if (graphicTransform.IsChildOf(output.transform) || output.transform.IsChildOf(graphicTransform))
+                    continue;
+
+                if (graphic.Raycast(screenPosition, eventCamera))
+                    return true;
+            }
+            return false;
         }
 
         private void Awake()
